@@ -250,13 +250,46 @@ $env:CGO_ENABLED="0"; go build -trimpath -ldflags="-s -w" -o squad-harness.exe .
 .\squad-harness.exe report                                           # Relatório Executivo ASCII (Horas e Economia US$/R$)
 ```
 
-### 3. Control Center Web (`.\squad-harness.exe ui`) & Relatório Executivo `QUID` (`.\squad-harness.exe report`)
+### 3. Como Gerar o Relatório Executivo de Uso (`report` / Gatilho Natural / `QUID` Offline)
 
-- **Catálogo Web & Monitor em Tempo Real (`http://127.0.0.1:9090`)**: exibe telemetria viva (`Heap`, `GOMEMLIMIT`, `RAM Livre Host`, `106 Skills`, `Nós SEKG`), busca via `HybridRouter`, aviso inteligente de sincronização multi-agente, índice navegável de seções `SKILL.md` e botão **`📂 Abrir skill`**.
-- **Relatório Executivo ASCII & ID Quântico (`QUID-SQ8-...`) 100% Offline**:
-  - Acionado por `"Squad ai, gere relatorio de uso"`, `"Squad ai. me mostre seu relatorio"` ou `.\squad-harness.exe report`.
-  - Consolida os **últimos 3 meses** (agrupado por mês e dia): **Horas Trabalhadas**, **Horas Economizadas (`~7.0x`)** e **Economia de Tokens em `US$` e `R$`** com overhead `< 15 µs`.
-  - Consultável **100% offline** (sem bloqueio de firewall) por gestores ou agentes na rede local via `.\squad-harness.exe report --quid QUID-SQ8-...`, via **MCP** (`squad_usage_report` / `squad_resolve_quid`) ou via **HTTP LAN** (`/api/telemetry/ascii?quid=QUID-SQ8-...`).
+O módulo de telemetria interna ([`internal/telemetry/`](internal/telemetry/), overhead `< 15 µs`) consolida os **últimos 3 meses** agrupados por mês e dia (**Horas Usando IA**, **Horas Economizadas `~7.1x`** e **Tokens Economizados em `US$` e `R$`**), com **Rodapé Consolidador (`Mês Atual × Total Acumulado`)** e **ID Quântico Universal (`QUID-SQ8-...`)** 100% offline:
+
+```powershell
+# Forma 1 — Comando CLI direto (exibe o relatório ASCII completo dos últimos 3 meses)
+.\squad-harness.exe report
+
+# Forma 2 — Gatilho em linguagem natural (no chat do agente ou via preflight)
+.\squad-harness.exe preflight "Squad ai, gere relatorio de uso"
+.\squad-harness.exe preflight "Squad ai. me mostre seu relatorio"
+
+# Forma 3 — Consulta pelo Gestor via ID Quântico Universal do repositório clonado (100% Offline, sem firewall)
+.\squad-harness.exe report --quid QUID-SQ8-8552-C841-B36A-2F0F
+
+# Forma 4 — Exportar dados estruturados em JSON ou listar todos os QUIDs registrados na estação
+.\squad-harness.exe report --json
+.\squad-harness.exe report --list-quids
+```
+
+- **Consulta por outras ferramentas agênticas / LLMs na rede local (MCP & HTTP Offline)**:
+  - **MCP (`stdio`)**: tools `squad_usage_report` e `squad_resolve_quid` (resource `squad://telemetry/ascii`).
+  - **HTTP Local / LAN** (com `.\squad-harness.exe ui` ativo): `http://127.0.0.1:9090/api/telemetry/ascii?quid=QUID-SQ8-...`
+
+```text
+╠════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ [5] RODAPÉ CONSOLIDADOR EM DESTAQUE — MÊS ATUAL (OUT/2026) X TOTAL ACUMULADO (3 MESES)             ║
+╟────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │ ★ HORAS USANDO IA (MÊS X TOTAL)    : 12.68h (12h40m) mês x 24.15h (24h09m) total (52.5%)     │  ║
+║  │ ★ HORAS ECONOMIZADAS (MÊS X TOTAL) : 76.27h (76h16m) mês x 146.65h (146h39m) total (7.1x)    │  ║
+║  │ ★ TOKENS ECONOMIZADOS (MÊS X TOTAL): 5.674.100 tok mês x 10.995.800 tok total (51.6%)        │  ║
+║  │ ★ ECONOMIA FINANCEIRA (MÊS X TOTAL): US$ 85.11 / R$ 489.38 mês x US$ 164.94 / R$ 948.41 total│  ║
+║  └──────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 4. Control Center Web (`.\squad-harness.exe ui`)
+
+- **Catálogo Interativo & Monitor em Tempo Real (`http://127.0.0.1:9090`)**: exibe telemetria viva (`Heap`, `GOMEMLIMIT`, `RAM Livre Host`, `106 Skills`, `Nós SEKG`), busca via `HybridRouter`, aviso inteligente de sincronização multi-agente em 1 clique, índice navegável de seções `SKILL.md` e botão **`📂 Abrir skill`**.
 
 ---
 
