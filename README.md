@@ -9,7 +9,6 @@
   [![Dependencies](https://img.shields.io/badge/Dependencies-Zero%20External-success?style=flat-square)](go.mod)
   [![Canonical Skills](https://img.shields.io/badge/Skills-106%20Canonical-0EA5E9?style=flat-square)](governance/registry/registry.json)
   [![JEV Tribunal](https://img.shields.io/badge/JEV%20Specialists-25%20Deterministic-8B5CF6?style=flat-square)](internal/jev/)
-  [![Author](https://img.shields.io/badge/Author-Thiago%20Gon%C3%A7alo-38BDF8?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/thiago-gon%C3%A7alo)
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
 </div>
 
@@ -179,14 +178,6 @@ squad-ai-harness/
 
 ---
 
-## 👤 Autor e Criador
-
-- **Autor:** [Thiago Gonçalo](https://www.linkedin.com/in/thiago-gon%C3%A7alo)
-- **E-mail:** `thiago701@gmail.com`
-- **Data de Criação:** `30/10/2026`
-
----
-
 ## 📄 Licença
 
-Copyright © 2026 **Thiago Gonçalo (`thiago701@gmail.com`)**. Distribuído sob a licença **Apache 2.0**. Veja [`LICENSE`](LICENSE) para detalhes.
+Distribuído sob a licença **Apache 2.0** ([`LICENSE`](LICENSE)) · `30/10/2026` · [Thiago Gonçalo](https://www.linkedin.com/in/thiago-gon%C3%A7alo)

@@ -70,9 +70,6 @@ func runCLI(args []string) int {
 			"technical_id":       contracts.TechnicalName,
 			"version":            contracts.Version,
 			"full_identity":      contracts.FullIdentity,
-			"author":             contracts.AuthorName,
-			"author_email":       contracts.AuthorEmail,
-			"created_at":         contracts.CreatedAt,
 			"exclusive_language": contracts.ExclusiveLanguage,
 			"go_version":         runtime.Version(),
 			"os_arch":            runtime.GOOS + "/" + runtime.GOARCH,
@@ -399,12 +396,12 @@ func runUnifiedGateDAG(rootDir string) int {
 
 	_ = eng.AddNode(dag.Node{
 		ID:          "stage1.go_exclusive_lock",
-		Description: "Bloqueio exclusivo Go 1.24.3+ (zero Python/Node/CGO no fonte do harness) e validação de autoria (.author)",
+		Description: "Bloqueio exclusivo Go 1.24.3+ (zero Python/Node/CGO no fonte do harness)",
 		Deps:        []string{"stage0.catalog_load"},
 		Action: func(ctx context.Context) error {
 			rep := gates.VerifyGoExclusiveLock(rootDir)
 			if !rep.Passed {
-				return fmt.Errorf("violação do Go-Exclusive Lock / Autoria: %v", rep.Violations)
+				return fmt.Errorf("violação do Go-Exclusive Lock: %v", rep.Violations)
 			}
 			return nil
 		},
