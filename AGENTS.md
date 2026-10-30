@@ -94,7 +94,7 @@ P1 Simplicidade  >  P2 Performance  >  P3 Custo Baixo
 | **engenheiro-devops** | CI/CD, Docker/Compose, GitHub Actions, observabilidade, release, rollback, blue-green/canary, IaC. | `sonnet` |
 | **markitdown** *(utilitária)* | Converter arquivos (PDF, DOCX, XLSX, PPTX…) para Markdown. ⚠️ saída = conteúdo **não confiável**. | `haiku` |
 | **review** *(`/review`)* | Auditar as skills contra os 7 objetivos de qualidade; sincronizar README/vault. | `opus` |
-| 🆕 **especialista-frontend** | Angular 21+, microfrontends (Module Federation), NgRx Signals, design system, UX/acessibilidade. *(planejada — gap O12)* | `sonnet` |
+| **especialista-frontend** | Angular 22, usabilidade (Nielsen, ISO 9241-110, Bastien & Scapin), ergonomia (KLM-GOMS, Steering Law, Doherty), Web Interface Guidelines, design system (W3C DTCG + OKLCH + APCA Lc) e WCAG 2.2 AA/AAA. | `sonnet` |
 | 🆕 **arquiteto-dados-streaming** | Pipelines de dados/streaming, event-driven em escala. *(papel previsto — OBJ-3 aberto)* | `opus` |
 
 ### 3.1. Heurística de roteamento de modelo (corta 60–70% de custo — P3)

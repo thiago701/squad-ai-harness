@@ -59,6 +59,32 @@ def _check_single_interactive_element(
             }
         )
 
+    if element.get("blocks_paste") is True:
+        findings.append(
+            {
+                "severity": "🔴",
+                "axis": 3,
+                "rule": "WCAG_3_3_8_PASTE_BLOCKED",
+                "selector": selector,
+                "message": f"Campo '{selector}' bloqueia colagem (paste), violando WCAG 2.2 SC 3.3.8 e Web Interface Guidelines.",
+            }
+        )
+
+    font_size_px = element.get("font_size_px")
+    if is_mobile and font_size_px is not None and 0.0 < float(font_size_px) < 16.0:
+        findings.append(
+            {
+                "severity": "🟡",
+                "axis": 7,
+                "rule": "MOBILE_INPUT_FONT_AUTO_ZOOM",
+                "selector": selector,
+                "message": (
+                    f"Campo mobile '{selector}' com font-size {float(font_size_px):.1f}px (< 16px) "
+                    "dispara auto-zoom forçado no iOS Safari."
+                ),
+            }
+        )
+
     if width <= 0 or height <= 0:
         return findings
 

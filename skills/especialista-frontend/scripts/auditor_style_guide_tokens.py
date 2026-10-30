@@ -203,16 +203,50 @@ def contrast_ratio(fg_hex: str, bg_hex: str) -> float:
     return round((lighter + 0.05) / (darker + 0.05), 2)
 
 
+def calculate_apca_lc(fg_hex: str, bg_hex: str) -> float:
+    """Calcula o contraste perceptual direcional APCA 0.98G (Lc, WCAG 3.0 Draft)."""
+    r_t, g_t, b_t = _parse_hex_rgb(fg_hex)
+    r_b, g_b, b_b = _parse_hex_rgb(bg_hex)
+
+    y_txt = 0.2126729 * (r_t ** 2.4) + 0.7151522 * (g_t ** 2.4) + 0.0721750 * (b_t ** 2.4)
+    y_bg = 0.2126729 * (r_b ** 2.4) + 0.7151522 * (g_b ** 2.4) + 0.0721750 * (b_b ** 2.4)
+
+    blk_thrs = 0.022
+    blk_clmp = 1.414
+    if y_txt < blk_thrs:
+        y_txt += (blk_thrs - y_txt) ** blk_clmp
+    if y_bg < blk_thrs:
+        y_bg += (blk_thrs - y_bg) ** blk_clmp
+
+    if abs(y_bg - y_txt) < 0.0005:
+        return 0.0
+
+    scale_bow = 1.14
+    lo_offset = 0.027
+
+    if y_bg > y_txt:
+        sapc = ((y_bg ** 0.56) - (y_txt ** 0.57)) * scale_bow
+        lc = 0.0 if sapc < 0.1 else (sapc - lo_offset) * 100.0
+        return round(-abs(lc), 1)
+
+    sapc = ((y_txt ** 0.62) - (y_bg ** 0.65)) * scale_bow
+    lc = 0.0 if sapc < 0.1 else (sapc - lo_offset) * 100.0
+    return round(abs(lc), 1)
+
+
 def evaluate_wcag_contrast(
     fg_hex: str,
     bg_hex: str,
     is_large_text: bool = False,
     is_ui_component: bool = False,
 ) -> dict[str, Any]:
-    """Avalia conformidade WCAG 2.2 AA e AAA para um par de cores."""
+    """Avalia conformidade WCAG 2.2 AA/AAA e contraste perceptual APCA Lc para um par de cores."""
     ratio = contrast_ratio(fg_hex, bg_hex)
+    apca_lc = calculate_apca_lc(fg_hex, bg_hex)
+    abs_lc = abs(apca_lc)
     aa_threshold = 3.0 if (is_large_text or is_ui_component) else 4.5
     aaa_threshold = 4.5 if is_large_text else 7.0
+    apca_min = 30.0 if is_ui_component else (45.0 if is_large_text else 60.0)
     return {
         "foreground": fg_hex,
         "background": bg_hex,
@@ -221,6 +255,10 @@ def evaluate_wcag_contrast(
         "aaa_threshold": aaa_threshold,
         "aa_pass": ratio >= aa_threshold,
         "aaa_pass": ratio >= aaa_threshold,
+        "apca_lc": apca_lc,
+        "apca_min_lc": apca_min,
+        "apca_pass": abs_lc >= apca_min,
+        "apca_fluent_body": abs_lc >= 75.0,
     }
 
 
@@ -229,11 +267,18 @@ def _strip_root_and_comments(css_text: str) -> str:
     return re.sub(r":root\s*\{[^}]*\}", "", without_comments, flags=re.DOTALL)
 
 
+SCALE_ZERO_PATTERN = re.compile(r"\bscale\(\s*0(?:\.0+)?\s*\)", re.IGNORECASE)
+LAYOUT_THRASH_TRANSITION_PATTERN = re.compile(
+    r"transition(?:-property)?\s*:[^;]*\b(width|height|top|left|margin|padding)\b",
+    re.IGNORECASE,
+)
+
+
 def audit_css_style_guide(
     css_text: str,
     require_interactive_states: bool = False,
 ) -> dict[str, Any]:
-    """Audita CSS de componentes contra valores mágicos e lacunas de acessibilidade/estados."""
+    """Audita CSS de componentes contra valores mágicos e lacunas de acessibilidade/estados/movimento."""
     component_css = _strip_root_and_comments(css_text)
     magic_hex = HEX_COLOR_PATTERN.findall(component_css)
     magic_funcs = RAW_COLOR_FUNC_PATTERN.findall(component_css)
@@ -246,6 +291,9 @@ def audit_css_style_guide(
     has_motion = bool(MOTION_PATTERN.search(component_css))
     has_reduced_motion = bool(REDUCED_MOTION_PATTERN.search(css_text))
     missing_reduced_motion = has_motion and not has_reduced_motion
+
+    has_scale_zero = bool(SCALE_ZERO_PATTERN.search(component_css))
+    layout_thrash_props = sorted(set(LAYOUT_THRASH_TRANSITION_PATTERN.findall(component_css)))
 
     present_states = [
         state for state, pattern in CANONICAL_STATES.items() if pattern.search(component_css)
@@ -267,6 +315,8 @@ def audit_css_style_guide(
         "magic_colors": magic_colors,
         "outline_suppressed": outline_suppressed,
         "missing_reduced_motion": missing_reduced_motion,
+        "scale_zero_anti_pattern": has_scale_zero,
+        "layout_thrashing_transitions": layout_thrash_props,
         "present_states": present_states,
         "missing_states": missing_states,
     }

@@ -78,17 +78,57 @@ $$T = b \log_2(n + 1)$$
   - Otimize obsessivamente os pontos de maior fricção (ex: tela de checkout, confirmação de transferência, resolução de pendência).
   - O momento final deve ser recompensador: telas de sucesso com confirmação clara, comprovante gerado instantaneamente e próximo passo evidente.
 
+### 2.8. Limiar de Doherty (`< 400ms`) e Responsividade `INP <= 200ms`
+- **Definição (Walter J. Doherty, 1982):** A produtividade e o engajamento do usuário disparam quando o computador e o humano interagem em um ritmo (**`< 400ms`**) que garante que nenhum dos dois precise esperar pelo outro.
+- **Aplicação prática em UI:**
+  - Feedback tátil/visual instantâneo em **`< 100ms`** e **Interaction to Next Paint (`INP <= 200ms`)** cedendo a main thread via `await scheduler.yield()`.
+  - Uso de **Optimistic UI** com rollback seguro para ações frequentes (favoritar, reordenar, alternar status) e skeletons estruturais para leituras de rede entre `150ms` e `1s`.
+
+### 2.9. Lei de Tesler (Lei da Conservação da Complexidade)
+- **Definição (Larry Tesler):** Todo sistema possui uma quantidade inerente e irredutível de complexidade. A única escolha de engenharia é **quem carrega essa complexidade**: o código do sistema ou o usuário humano.
+- **Aplicação prática em UI:**
+  - O engenheiro frontend deve absorver a complexidade no código: preenchimento automático de endereço via CEP, inferência automática da bandeira do cartão, cálculo em tempo real de impostos/parcelas com Signals (`computed()`) e defaults inteligentes baseados no histórico.
+
+### 2.10. Lei do Túnel de Accot-Zhai (`Steering Law`) e `Safe Triangle`
+$$T = a + b \int_C \frac{ds}{W(s)}$$
+- **Definição:** O tempo para conduzir um ponteiro por um caminho delimitado (túnel de comprimento $D$ e largura $W$) cresce proporcionalmente a $D/W$.
+- **Aplicação prática em UI:**
+  - Menus em cascata obrigam o cursor a viajar por corredores estreitos; implemente o **Safe Triangle (Corredor Triangular de Intenção de Hover)** ou substitua cascatas de 3+ níveis por **Mega-Menus** ou **Command Palette (`Ctrl+K`)**.
+
 ---
 
-## 3. Checklist de Auditoria Heurística Rápida para PRs de Frontend
+## 3. Normas Internacionais de Ergonomia: ISO 9241-110:2020 e Bastien & Scapin (1993)
+
+### 3.1. Os 7 Princípios de Interação da ISO 9241-110:2020
+1. **Adequação à Tarefa (*Suitability for the user's tasks*):** o fluxo reflete o objetivo humano real, não a modelagem relacional de tabelas do banco.
+2. **Autodescrição (*Self-descriptiveness*):** cada tela e componente deixa evidente onde o usuário está, o que pode fazer e qual o estado atual (`default`, `hover`, `focus-visible`, `active`, `loading`, `disabled`, `error`).
+3. **Conformidade com as Expectativas (*Conformity with user expectations*):** vocabulário, ícones e atalhos previsíveis (Enter submete, Escape fecha, Ctrl+K busca).
+4. **Adequação ao Aprendizado (*Learnability*):** descoberta progressiva (*progressive disclosure*), empty states instrutivos e feedback imediato que consolida o modelo mental.
+5. **Controlabilidade (*Controllability*):** o usuário inicia, pausa, cancela (`AbortController`), desfaz (`Undo`) e compartilha o estado exato da tela via URL (`URL as State`).
+6. **Robustez contra Erros de Uso (*Use error robustness*):** prevenção ativa, tolerância de formato (Postel), preservação dos dados digitados em caso de falha de rede e confirmação explícita apenas em ações destrutivas irreversíveis.
+7. **Engajamento do Usuário (*User engagement*):** acabamento artesanal (Anti-"AI Slop"), zero layout shift (`CLS < 0.1`) e microinterações naturais (`Spring Physics`).
+
+### 3.2. Os 8 Critérios Ergonômicos de Bastien & Scapin (18 Subcritérios)
+- **C1. Condução:** Presteza (*Prompting*), Agrupamento/Distinção por Localização e por Formato (Gestalt), Feedback Imediato e Legibilidade (contraste WCAG 2.2 AA + **APCA $|L_c| \ge 60$**).
+- **C2. Carga de Trabalho:** Brevidade (Concisão nos rótulos + **Ações Mínimas medidas via KLM-GOMS**, eliminando alternâncias teclado↔mouse) e Densidade Informacional equilibrada.
+- **C3. Controle Explícito:** Ações Explícitas do Usuário (nada submete sozinho sem intenção clara) e Controle do Usuário sobre processamentos em andamento.
+- **C4. Adaptabilidade:** Flexibilidade (múltiplos caminhos para a mesma meta: mouse, teclado, Command Palette) e Consideração da Experiência do Usuário (novato vs especialista).
+- **C5. Gestão de Erros:** Proteção contra Erros, Qualidade das Mensagens de Erro (Tríade: *O que* + *Por que* + *Como resolver*) e Correção Rápida (foco automático no primeiro campo inválido).
+- **C6. Homogeneidade / Coerência:** Design Tokens W3C DTCG semânticos garantindo identidade visual e comportamental unificada.
+- **C7. Significado dos Códigos e Denominações:** Rótulos orientados a verbo de ação ("Transferir R$ 250,00" em vez de "OK") e ícones universais acompanhados de texto/label.
+- **C8. Compatibilidade:** Alinhamento com o contexto físico, cultural e operacional do usuário (locale `pt-BR`, formatos Pix/CPF/CNPJ, acessibilidade LBI).
+
+---
+
+## 4. Checklist de Auditoria Heurística e Ergonômica para PRs de Frontend
 
 Antes de submeter qualquer PR ou declarar uma tela pronta no review:
 
-- [ ] **Feedback Imediato:** Cada clique em botão, tab ou toggle produz resposta visual (<100ms)?
-- [ ] **Alvos Adequados (Fitts):** Todos os controles têm área de clique $\ge 44\times 44\text{px}$ no mobile e $\ge 24\times 24\text{px}$ no desktop?
-- [ ] **Redução de Carga (Hick):** Formulários longos estão divididos em etapas lógicas com indicador de progresso?
-- [ ] **Prevenção de Erros:** Há proteção contra cliques duplos em botões de ação? Os inputs possuem máscaras amigáveis?
-- [ ] **Saída de Emergência:** Modais e drawers fecham com a tecla `Escape` e clique no backdrop?
-- [ ] **Mensagens Construtivas:** Mensagens de erro explicam o que houve e como o usuário pode resolver?
-- [ ] **Chunking de Dados:** Dados densos (documentos, moedas, telefones) estão formatados em blocos legíveis?
-- [ ] **Consistência:** O vocabulário e os componentes visuais são idênticos aos do restante da aplicação?
+- [ ] **Feedback Imediato & Doherty (`< 100ms` / `INP <= 200ms`):** Cada clique em botão, tab ou toggle produz resposta visual imediata sem bloquear a main thread?
+- [ ] **Alvos Adequados (Fitts & Hit Target Expansion):** Todos os controles têm área de toque real $\ge 44\times 44\text{px}$ no mobile e $\ge 24\times 24\text{px}$ no desktop (usando `::after` se o ícone visual for menor)?
+- [ ] **Economia Motora (KLM-GOMS & Roving Tabindex):** O fluxo principal pode ser concluído 100% pelo teclado sem alternância forçada teclado $\leftrightarrow$ mouse?
+- [ ] **Redução de Carga (Hick & Tesler):** A complexidade foi absorvida pelo sistema (auto-preenchimento, cálculos reativos, progressive disclosure)?
+- [ ] **Fricção Zero em Formulários (Vercel Guidelines):** Botão de submit não está pré-desabilitado sem motivo; foco vai para o 1º erro; colagem (`paste`) permitida; `font-size >= 16px` no mobile?
+- [ ] **URL as State & Controlabilidade (ISO 9241-110):** Filtros, abas, busca e paginação sobrevivem ao `F5` e ao botão Voltar? Modais fecham com `Escape`?
+- [ ] **Mensagens Construtivas & Chunking:** Erros seguem a tríade (*O que + Por que + Como resolver*) e dados densos estão formatados em blocos legíveis?
+- [ ] **Contraste Duplo (WCAG 2.2 AA + APCA $L_c$):** Texto normal atinge $\ge 4.5:1$ e $|L_c| \ge 60$ (ou $\ge 75$ para leitura fluida)?

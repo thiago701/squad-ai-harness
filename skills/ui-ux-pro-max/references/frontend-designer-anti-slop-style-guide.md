@@ -1,7 +1,7 @@
 # Direção Estética Frontend Designer, Mandato Anti-"AI Slop" e Contrato de Style Guide
 
 > **Quando ler:** ao definir direção visual de páginas web, dashboards, SaaS, landing pages ou sistemas corporativos no `ui-ux-pro-max`, ou ao preparar o handoff de `MASTER.md` / tokens W3C DTCG para implementação no `especialista-frontend`.
-> **Procedência:** padrões sintetizados e reescritos em PT-BR a partir de `anthropics/skills/frontend-design`, especificação W3C DTCG 2025/2026 (OKLCH) e boas práticas de Design Systems.
+> **Procedência:** padrões sintetizados e reescritos em PT-BR a partir de `anthropics/skills/frontend-design`, `vercel-labs/web-interface-guidelines`, `emilkowalski/skills`, `Dammyjay93/interface-design`, especificação W3C DTCG 2025/2026 (OKLCH) e APCA 0.98G (WCAG 3.0 Draft).
 
 ---
 
@@ -29,22 +29,25 @@ Ao iniciar um projeto (`Step 1` e `Step 2`), comprometa-se com um arquétipo cla
 
 ---
 
-## 2. Arquitetura Perceptual de Cores: Regra 60-30-10 em `OKLCH`
+## 2. Arquitetura Perceptual de Cores: Regra 60-30-10 em `OKLCH` e Contraste APCA (`Lc`)
 
-Nunca distribua cores em proporções iguais. Estruture a paleta do Design System usando a proporção **60-30-10** ancorada em **luminância perceptual (`OKLCH`)**:
+Nunca distribua cores em proporções iguais. Estruture a paleta do Design System usando a proporção **60-30-10** ancorada em **luminância perceptual (`OKLCH`)** e validada simultaneamente por **WCAG 2.2** e **APCA 0.98G ($L_c$)**:
 
-1. **60% — Superfície Dominante (Canvas & Background):** define a atmosfera luminosa (`--color-surface-base`). No modo escuro, nunca use preto puro (`#000000`) como superfície única — use tons de ardósia/obsidiana (`oklch(0.13 0.02 260)`) e diferencie elevação subindo `L` (`0.17`, `0.21`) em vez de sombras pretas invisíveis.
+1. **60% — Superfície Dominante (Canvas & Background):** define a atmosfera luminosa (`--color-surface-base`). No modo escuro, nunca use preto puro (`#000000`) como superfície única — use tons de ardósia/obsidiana (`oklch(0.13 0.02 260)`) e aplique **Elevação Silenciosa (*Whisper-Quiet Elevation* — `Dammyjay93/interface-design`)** subindo `L` em passos sutis ($\Delta L = 0.02\text{ a }0.04$: `0.17`, `0.21`) com bordas hairline de `1px solid` via `color-mix()` em vez de sombras pretas pesadas.
 2. **30% — Estrutura Secundária (Cards, Navegação, Bordas, Texto Secundário):** cria agrupamento Gestalt (`--color-surface-card`, `--color-border-subtle`, `--color-text-secondary`).
 3. **10% — Acento Semântico & CTA Primário:** reservado exclusivamente para a ação principal da tela (`--color-interactive-primary-default`) e indicadores de estado (`success`, `warning`, `error`). Se tudo destaca, nada destaca.
+4. **Limiares Perceptuais APCA ($L_c$):** texto fluente longo exige **$|L_c| \ge 75$**; texto de corpo padrão exige **$|L_c| \ge 60$** (além de WCAG 2.2 AA $\ge 4.5:1$); títulos grandes exigem **$|L_c| \ge 45$**; bordas de controles e ícones essenciais exigem **$|L_c| \ge 30$**.
 
 ---
 
-## 3. Coreografia de Movimento e Ritmo Espacial
+## 3. Coreografia de Movimento e Física de Microinterações (`emilkowalski/skills`)
 
 Movimento em UI profissional **explica relações espaciais** (de onde o elemento veio e para onde foi), nunca enfeita por vaidade:
 
-- **Saída mais rápida que entrada:** transições de entrada usam `200ms–260ms` com curva de desaceleração (`cubic-bezier(0.22, 1, 0.36, 1)`); transições de fechamento/saída usam `140ms–180ms` para não travar o fluxo do usuário.
-- **Zero Layout Shift (CLS = 0):** jamais anime `width`, `height`, `top`, `left` ou `margin`. Anime exclusivamente propriedades compostas na GPU (`transform`, `opacity`) ou use a **View Transitions API** nativa.
+- **Orçamento Temporal e Saída Rápida:** controles respondem em `120ms–200ms`; transições de entrada de modais/popovers usam `200ms–260ms` com curva de desaceleração (`cubic-bezier(0.22, 1, 0.36, 1)`); transições de fechamento/saída usam `140ms–180ms`.
+- **Proibição de `ease-in` e de `scale(0)`:** nunca use `ease-in` em respostas de UI; nunca anime entradas a partir de `scale(0)` — inicie sempre em `scale(0.95–0.97)` + `opacity: 0`.
+- **Física de Molas e Interrompibilidade:** priorize molas criticamente amortecidas (`bounce: 0.15`) e transições CSS interrompíveis que revertem suavemente se o usuário clicar no meio do trajeto.
+- **Zero Layout Shift (CLS = 0):** jamais anime `width`, `height`, `top`, `left` ou `margin`. Anime exclusivamente propriedades compostas na GPU (`transform`, `opacity`, `filter`, `clip-path`) ou use a **View Transitions API** nativa.
 - **Acessibilidade Vestibular:** toda coreografia (CSS ou GSAP) deve desativar deslocamentos espaciais sob `@media (prefers-reduced-motion: reduce)`, preservando apenas cross-fades suaves de opacidade.
 
 ---
@@ -54,5 +57,5 @@ Movimento em UI profissional **explica relações espaciais** (de onde o element
 Quando o `ui-ux-pro-max` atua em conjunto com a Squad AI, a passagem de bastão segue 3 artefatos verificáveis:
 
 1. **Direção Visual (`design-system/<slug>/MASTER.md`):** gerada pelo `ui-ux-pro-max` com arquétipo, paleta, par tipográfico, dials (`--variance`, `--motion`, `--density`) e anti-padrões bloqueados.
-2. **Materialização e Auditoria Estática (`especialista-frontend`):** converte os tokens para variáveis CSS semânticas (`OKLCH` + `light-dark()`) e JSON W3C DTCG, validados por `skills/especialista-frontend/scripts/auditor_style_guide_tokens.py` (contraste WCAG 2.2, zero cores mágicas, 7 estados interativos).
-3. **Prova de Runtime no DOM (`validador-navegador`):** inspeciona a aplicação rodando via `preview_inspect` e `skills/validador-navegador/scripts/verificador_ui_dom.py` (alvos $\ge 24\times 24\text{px}$, foco não obscurecido por sticky headers, alinhamento de cards e zero scroll horizontal).
+2. **Materialização e Auditoria Estática (`especialista-frontend`):** converte os tokens para variáveis CSS semânticas (`OKLCH` + `light-dark()`) e JSON W3C DTCG, aplica as **Vercel Web Interface Guidelines** (`URL as State`, formulários ergonômicos, `Roving Tabindex`, `Safe Triangle`, `INP <= 200ms`) e valida via `skills/especialista-frontend/scripts/auditor_style_guide_tokens.py` (contraste WCAG 2.2 + APCA $L_c$, zero cores mágicas, zero `scale(0)`/layout-thrashing e 7 estados interativos).
+3. **Prova de Runtime no DOM (`validador-navegador`):** inspeciona a aplicação rodando via `preview_inspect` e `skills/validador-navegador/scripts/verificador_ui_dom.py` (alvos $\ge 24\times 24\text{px}$, foco não obscurecido por sticky headers, inputs mobile $\ge 16\text{px}$ sem bloqueio de `paste`, alinhamento de cards e zero scroll horizontal).

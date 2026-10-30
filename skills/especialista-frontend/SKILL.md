@@ -1,21 +1,23 @@
 ---
 name: especialista-frontend
-version: 1.3.0
+version: 1.4.0
 description: >
-  Especialista sênior em frontend Angular 22, usabilidade e UX de classe mundial — standalone
-  components, Signals e NgRx Signals, design systems profissionais (tokens W3C DTCG), microinterações,
-  ergonomia cognitiva/motora, heurísticas de Nielsen, acessibilidade universal e inclusão para PcD
-  (WCAG 2.2 AA/AAA, LBI Lei 13.146/2015, leitores de tela NVDA/VoiceOver) e performance
-  (lazy loading, OnPush, SSR/hydration, bundle budgets). Gera código frontend completo, moderno e
-  ergonômico. Use SEMPRE que o usuário mencionar: Angular, frontend, componente, UX, usabilidade,
-  heurística, Nielsen, ergonomia, design system, style guide, design tokens, acessibilidade, WCAG,
-  a11y, PcD, leitor de tela, microinterações, empty state, SSR, bundle (lista completa em gatilhos).
+  Especialista sênior em frontend Angular 22, usabilidade, ergonomia cognitiva/motora e UX de classe
+  mundial — standalone components, Signals/NgRx Signals, design systems (tokens W3C DTCG + OKLCH),
+  Vercel Web Interface Guidelines, física de microinterações (Spring Physics), ISO 9241-110,
+  critérios de Bastien & Scapin, KLM-GOMS, Steering Law (Safe Triangle), Heurísticas de Nielsen,
+  acessibilidade PcD (WCAG 2.2 AA/AAA + APCA Lc + LBI) e performance (INP <= 200ms, SSR, bundle).
+  Use SEMPRE que o usuário mencionar: Angular, frontend, componente, UX, usabilidade, ergonomia,
+  heurística, Nielsen, ISO 9241, Bastien Scapin, design system, style guide, design tokens,
+  acessibilidade, WCAG, APCA, a11y, PcD, microinterações, INP, SSR, bundle (lista completa em gatilhos).
 gatilhos_texto: >
   Use SEMPRE que o usuário mencionar: Angular, frontend, componente, signal, NgRx, microfrontend,
-  Module Federation, design system, style guide, design tokens, acessibilidade, a11y, WCAG, PcD,
-  leitor de tela, tecnologias assistivas, UX, usabilidade, heurística, ergonomia, minimalismo,
-  microcópia, microinterações, responsivo, SSR, bundle, lazy loading, RxJS, formulário reativo, ou
-  pedir para construir/revisar UI. Três prioridades imutáveis: P1-Simplicidade > P2-Performance > P3-CustoBaixo.
+  Module Federation, design system, style guide, design tokens, acessibilidade, a11y, WCAG, APCA,
+  PcD, leitor de tela, tecnologias assistivas, UX, usabilidade, heurística, Nielsen, ergonomia,
+  ISO 9241, Bastien Scapin, KLM-GOMS, Steering Law, Safe Triangle, Doherty, Tesler, minimalismo,
+  microcópia, microinterações, spring physics, web interface guidelines, roving tabindex, URL as
+  state, INP, responsivo, SSR, bundle, lazy loading, RxJS, formulário reativo, ou pedir para
+  construir/revisar UI. Três prioridades imutáveis: P1-Simplicidade > P2-Performance > P3-CustoBaixo.
 origin: squad-ai
 status: ativa
 owner: especialista-frontend
@@ -26,7 +28,7 @@ riscos:
   - "Bundle/dependências novas têm custo (P3) e superfície de supply chain — justificar e auditar."
   - "Acessibilidade negligenciada é dívida invisível e risco legal — WCAG não é opcional."
 fase: BUILD
-stack: [angular-22, typescript, ngrx-signals, design-tokens, wcag-2.2]
+stack: [angular-22, typescript, ngrx-signals, design-tokens, wcag-2.2, apca, iso-9241-110]
 custo_tokens: medio
 tipo: especialista
 gatilhos:
@@ -43,6 +45,7 @@ gatilhos:
   - acessibilidade
   - a11y
   - WCAG
+  - APCA
   - PcD
   - leitor de tela
   - tecnologias assistivas
@@ -50,9 +53,21 @@ gatilhos:
   - usabilidade
   - heurística
   - ergonomia
+  - ISO 9241
+  - Bastien Scapin
+  - KLM-GOMS
+  - Steering Law
+  - Safe Triangle
+  - Doherty
+  - Tesler
   - minimalismo
   - microcópia
   - microinterações
+  - spring physics
+  - web interface guidelines
+  - roving tabindex
+  - URL as state
+  - INP
   - SSR
   - bundle
   - lazy loading
@@ -107,10 +122,10 @@ microinteração e tecnologia assistiva.
 | Framework | **Angular 22** — standalone components (sem NgModules), `inject()`, control flow `@if/@for/@switch` |
 | Estado | **Signals** nativos + **NgRx Signals** (signalStore) para estado de feature; RxJS só onde stream é essencial |
 | Microfrontends | **Module Federation** (`@angular-architects/module-federation`) — só quando há times/deploys independentes reais |
-| Formulários | Signal Forms / Reactive Forms tipados (`FormControl<T>`); validação inline assistiva e debounce |
-| Render | SSR + **hydration** (incremental/event replay) para LCP/TTI; CSR quando app interno |
+| Formulários | Signal Forms / Reactive Forms tipados (`FormControl<T>`); `inputmode`/`autocomplete`, `field-sizing: content`, foco no 1º inválido |
+| Render & INP | SSR + **hydration** (incremental/event replay) para LCP/TTI; **INP $\le 200\text{ms}$** via `scheduler.yield()` e Invoker Commands (`commandfor`/`command`) |
 | Estilo & Tokens | **Design Tokens W3C (DTCG)** em **OKLCH** + `light-dark()` + CSS Baseline 2025/2026 (`@container`, `subgrid`, Anchor Positioning, `@starting-style`, View Transitions) |
-| Acessibilidade | **WCAG 2.2 AA/AAA & LBI** — suporte a leitores de tela (NVDA/VoiceOver), teclado 100%, contraste rigoroso |
+| Acessibilidade | **WCAG 2.2 AA/AAA + Contraste Perceptual APCA ($L_c$) & LBI** — leitores de tela (NVDA/VoiceOver), `Roving Tabindex` 100% teclado |
 | Testes | **Vitest/Jest** (unit/component) + **Playwright** com `@axe-core/playwright` (E2E e a11y) |
 | Build | Angular CLI (esbuild/Vite), **bundle budgets** no `angular.json`, lazy routes |
 | Qualidade | ESLint + `@angular-eslint`, Prettier, `ng lint` no `verificacao-loop` |
@@ -154,13 +169,20 @@ microinteração e tecnologia assistiva.
 - **Empty States Orientados à Ação:** Telas vazias com ícone representativo, título e descrição explicativa, e botão primário (CTA) imediato para iniciar a jornada.
 - **Percepção de Latência com Skeletons:** Skeleton screens com efeito shimmer que reduzem a percepção de espera em 20% frente a spinners convencionais.
 
+### 6. Engenharia de Interação, Web Interface Guidelines, Física de Movimento e Ergonomia Preditiva
+- **Vercel Web Interface Guidelines:** `URL as State` (filtros, abas, busca e paginação em query params); formulários sem botão `submit` pré-desabilitado, foco no 1º campo inválido, atributos `inputmode`/`autocomplete`/`spellcheck="false"`, colagem (`paste`) sempre livre e `font-size >= 16px` no mobile; `Roving Tabindex` em grupos compostos e expansão de área de toque via `::after`.
+- **Física de Movimento (`emilkowalski/skills` & `interface-design`):** transições `< 300ms` (saída `150ms` mais rápida que entrada `220ms`), proibição de `ease-in` e de entrada `scale(0)` (iniciar em `scale(0.96)` + `opacity: 0`), animações interrompíveis apenas em propriedades compostas na GPU (`transform`, `opacity`) e elevação silenciosa em `OKLCH`.
+- **Normas ISO 9241-110:2020, Bastien & Scapin (18 subcritérios) e Modelos Preditivos:** economia motora via **KLM-GOMS** (eliminando trocas teclado $\leftrightarrow$ mouse), **Steering Law** de Accot-Zhai com **Safe Triangle** em submenus, **Limiar de Doherty (`< 400ms`)**, **Lei de Tesler** e **INP $\le 200\text{ms}$** (`scheduler.yield()`, `field-sizing: content`, Invoker Commands `commandfor`/`command`).
+- **Contraste Perceptual Duplo (WCAG 2.2 AA/AAA + APCA $L_c$):** validação simultânea de luminância relativa ($\ge 4.5:1$) e contraste perceptual direcional **APCA 0.98G** ($|L_c| \ge 75$ leitura fluida, $|L_c| \ge 60$ corpo, $|L_c| \ge 45$ títulos).
+
 ## Mapa de Aprofundamento (references/)
 
 | Guia Especializado | Conteúdo Detalhado |
 |---|---|
 | **`references/angular-22.md`** | Versões estáveis, Signal Forms, Zoneless, selectorless components e hydration. |
-| **`references/usabilidade-heuristicas-ergonomia.md`** | As 10 Heurísticas de Nielsen, Leis de UX (Fitts, Hick, Miller, Jakob, Pico-Fim) e checklist de PR. |
-| **`references/ergonomia-minimalismo-ux.md`** | Carga cognitiva de Sweller, Gestalt em UI, Thumb Zone física e os 10 princípios de Dieter Rams. |
+| **`references/usabilidade-heuristicas-ergonomia.md`** | As 10 Heurísticas de Nielsen, ISO 9241-110:2020, 8 Critérios de Bastien & Scapin, Leis de UX (Fitts, Steering Law, Hick, Miller, Doherty, Tesler, Jakob, Pico-Fim) e checklist de PR. |
+| **`references/ergonomia-minimalismo-ux.md`** | Carga cognitiva de Sweller, Gestalt em UI, Thumb Zone física, 10 princípios de Dieter Rams e Craft-First Interface Design (`OKLCH` whisper-quiet elevation). |
+| **`references/engenharia-interacao-web-guidelines.md`** | Vercel Web Interface Guidelines (`URL as State`, formulários, `Roving Tabindex`, hit-target expansion), física de movimento (`emilkowalski/skills`), `KLM-GOMS`, `Safe Triangle`, `INP <= 200ms` (`scheduler.yield()`, `commandfor`, `field-sizing: content`) e contraste perceptual **APCA ($L_c$)**. |
 | **`references/style-guide-design-system.md`** | Tokens W3C DTCG, paleta perceptual OKLCH + `light-dark()`, 7 estados canônicos, CSS Baseline 2025/2026 (`subgrid`, Anchor Positioning, `@starting-style`), doutrina Anti-"AI Slop" e auditor `scripts/auditor_style_guide_tokens.py`. |
 | **`references/acessibilidade-wcag22-a11y.md`** | Requisitos novos do WCAG 2.2 (Focus Appearance, Target Size), focus trap e testes com `@axe-core/playwright`. |
 | **`references/acessibilidade-pcd-tecnologias-assistivas.md`** | Inclusão PcD, leitores de tela, switches, zoom 400%, LBI Lei 13.146/2015, neurodiversidade e eMAG. |

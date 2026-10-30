@@ -31,7 +31,7 @@ Skip it for pure backend logic, API/database design, non-visual performance work
 | 9 | Navigation Patterns | HIGH | `ux` | Predictable back, Bottom nav ≤5, Deep linking | Overloaded nav, Broken back behavior, No deep links |
 | 10 | Charts & Data | LOW | `chart` | Legends, Tooltips, Accessible colors | Relying on color alone to convey meaning |
 
-For the full rule list per category (all 119 UX guidelines with rationale), read `references/quick-reference.md`. For app-specific polish rules (icons, touch feedback, dark mode contrast, safe areas) and the canonical pre-delivery checklist, read `references/pro-rules.md`. For **Frontend Designer aesthetic direction, the Anti-"AI Slop" mandate, OKLCH 60-30-10 color systems, and the W3C DTCG Style Guide handoff contract** to `especialista-frontend` and `validador-navegador`, read `references/frontend-designer-anti-slop-style-guide.md`.
+For the full rule list per category (all 119 UX guidelines with rationale), read `references/quick-reference.md`. For app-specific polish rules (icons, touch feedback, dark mode contrast, safe areas) and the canonical pre-delivery checklist, read `references/pro-rules.md`. For **Frontend Designer aesthetic direction, the Anti-"AI Slop" mandate, Craft-First Interface Design (`Dammyjay93/interface-design`), Emil Kowalski Motion Physics (`emilkowalski/skills`), OKLCH 60-30-10 + APCA (`Lc`) color systems, and the W3C DTCG Style Guide handoff contract** to `especialista-frontend` and `validador-navegador`, read `references/frontend-designer-anti-slop-style-guide.md`.
 
 ---
 

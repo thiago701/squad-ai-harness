@@ -98,3 +98,19 @@ Dieter Rams definiu os mandamentos universais do design funcional ("Weniger, abe
 8. **O bom design é minucioso até o último detalhe:** Alinhamentos pixel-perfect, estados de foco impecáveis, microinterações calibradas e zero quebra em qualquer resolução.
 9. **O bom design é sustentável e respeitoso:** Respeite o consumo de bateria, memória do dispositivo do usuário e uso de dados com bundles enxutos e renders eficientes.
 10. **O bom design é o mínimo de design possível:** Concentre-se nos aspectos essenciais. Elimine tudo que for supérfluo. Volte à pureza e simplicidade funcional.
+
+---
+
+## 5. Craft-First Interface Design para SaaS Denso e Dashboards (`Dammyjay93/interface-design`)
+
+Interfaces de ferramentas profissionais, painéis operacionais e plataformas financeiras exigem alta densidade informacional sem fadiga ocular:
+
+1. **Elevação Silenciosa (*Whisper-Quiet Elevation*):**
+   - Em vez de sombras pesadas (`box-shadow` difuso) ou bordas grossas, separe planos hierárquicos por **saltos sutis de luminância perceptual em `OKLCH`** ($\Delta L = 0.02\text{ a }0.04$) combinados com bordas *hairline* de `1px solid` derivadas via `color-mix(in oklch, var(--color-text-primary) 10%, transparent)`.
+2. **Alinhamento Óptico vs. Alinhamento Matemático:**
+   - Um ícone triangular ("Play") ou seta dentro de um botão circular parece deslocado se centralizado apenas pela bounding box geométrica; aplique compensação óptica (`padding-inline-start: 2px`).
+   - Em botões com ícone + texto, reduza o `padding` do lado do ícone em `2px–4px` para equilibrar o peso visual.
+3. **Orçamento de Densidade e Ritmo Espacial (4px / 8px Grid):**
+   - **Marketing / Onboarding (`--density 2–4`):** respiro amplo (`24px–64px`), foco em narrativa única por dobra.
+   - **Aplicação SaaS / CRUD (`--density 5–7`):** equilíbrio padrão (`16px–32px`), agrupamento claro por região comum.
+   - **Console Operacional / Trading / Observabilidade (`--density 8–9`):** compacto (`8px–16px`), `tabular-nums` obrigatório, navegação por teclado (`Roving Tabindex` + `Ctrl+K`) e contraste perceptual **APCA $|L_c| \ge 75$**.

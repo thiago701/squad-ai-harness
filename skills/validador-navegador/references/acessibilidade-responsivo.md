@@ -130,7 +130,7 @@ Para julgar automaticamente as caixas coletadas por `preview_inspect` / `preview
 ```bash
 python skills/validador-navegador/scripts/verificador_ui_dom.py --snapshot dom_snapshot.json
 ```
-O script calcula interseção 2D de foco contra overlays sticky (WCAG 2.4.11), valida tamanho de alvos (WCAG 2.5.8), detecta overflow horizontal, verifica alinhamento de cards na mesma linha e emite veredito estruturado `PRONTO` ou `NAO_PRONTO`.
+O script calcula interseção 2D de foco contra overlays sticky (WCAG 2.4.11), valida tamanho de alvos (WCAG 2.5.8), detecta overflow horizontal, verifica bloqueio proibido de colagem (`paste` — WCAG 3.3.8), alerta sobre inputs mobile com `font-size < 16px` (auto-zoom no iOS Safari), verifica alinhamento de cards na mesma linha e emite veredito estruturado `PRONTO` ou `NAO_PRONTO`.
 
 > `preview_eval`/`javascript_tool` aqui são **inspeção** (leem o DOM), não correção. Nunca "conserte" a a11y por eval — corrija o **componente-fonte** (o `especialista-frontend` é o dono da correção) e re-valide.
 

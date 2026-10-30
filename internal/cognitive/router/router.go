@@ -56,6 +56,9 @@ var ptEnSynonyms = map[string][]string{
 	"arquitetura": {"architecture", "ddd", "clean", "solid", "minimalista"},
 	"erro":        {"error", "bug", "exception", "stacktrace", "falha"},
 	"nuvem":       {"cloud", "aws", "lambda", "step", "serverless"},
+	"usabilidade": {"ux", "ergonomia", "heuristica", "nielsen", "wcag", "acessibilidade", "a11y", "frontend"},
+	"ergonomia":   {"usabilidade", "ux", "cognitiva", "fitts", "klm", "iso", "bastien", "scapin", "wcag", "frontend"},
+	"frontend":    {"angular", "ui", "ux", "usabilidade", "ergonomia", "design", "tokens", "css", "web"},
 }
 
 // NewHybridRouter indexes a loaded Catalog in < 3ms using Go 1.24 unique.Handle interning.
@@ -68,6 +71,9 @@ func NewHybridRouter(cat *catalog.Catalog) *HybridRouter {
 
 	for _, sk := range cat.Skills {
 		prose, triggers := splitDescriptionAndTriggers(sk.Description)
+		if extraTrig := sk.Frontmatter["gatilhos_texto"]; extraTrig != "" {
+			triggers += " " + extraTrig
+		}
 		nameToks := tokenize(strings.ReplaceAll(sk.Name, "-", " "))
 		trigToks := tokenize(triggers)
 		proseToks := tokenize(prose)
