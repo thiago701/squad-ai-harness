@@ -58,9 +58,9 @@ func TestQuantumIDAndExecutiveASCIIReport(t *testing.T) {
 	if rep.TotalWorkedHours <= 0 || rep.TotalSavedHours <= 0 {
 		t.Fatalf("expected positive worked and saved hours: worked=%.2f saved=%.2f", rep.TotalWorkedHours, rep.TotalSavedHours)
 	}
-	if rep.TotalTokensSaved <= 0 || rep.TotalSavingsUSD <= 0 || rep.TotalSavingsBRL <= 0 {
-		t.Fatalf("expected positive token savings in USD and BRL: tokens=%d usd=%.2f brl=%.2f",
-			rep.TotalTokensSaved, rep.TotalSavingsUSD, rep.TotalSavingsBRL)
+	if rep.TotalTokensSaved <= 0 || rep.TotalSavingsUSD <= 0 {
+		t.Fatalf("expected positive token savings in USD: tokens=%d usd=%.2f",
+			rep.TotalTokensSaved, rep.TotalSavingsUSD)
 	}
 	if len(rep.Monthly) < 3 {
 		t.Fatalf("expected at least 3 monthly buckets, got %d", len(rep.Monthly))
@@ -68,8 +68,8 @@ func TestQuantumIDAndExecutiveASCIIReport(t *testing.T) {
 	if len(rep.Daily) == 0 {
 		t.Fatalf("expected daily buckets in 3-month report")
 	}
-	if !strings.Contains(rep.ASCII, id1.QUID) || !strings.Contains(rep.ASCII, "US$") || !strings.Contains(rep.ASCII, "R$") {
-		t.Fatalf("ASCII report missing expected sections:\n%s", rep.ASCII)
+	if !strings.Contains(rep.ASCII, id1.QUID) || !strings.Contains(rep.ASCII, "$") || strings.Contains(rep.ASCII, "R$") {
+		t.Fatalf("ASCII report missing expected USD or still contains BRL:\n%s", rep.ASCII)
 	}
 	if !strings.Contains(rep.ASCII, "RODAPÉ CONSOLIDADOR EM DESTAQUE") ||
 		!strings.Contains(rep.ASCII, "HORAS USANDO IA (MÊS X TOTAL)") ||

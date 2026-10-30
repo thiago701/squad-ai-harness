@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,9 +18,6 @@ const (
 	// DefaultTokenCostPerMillionUSD represents the enterprise blended LLM token rate
 	// (Claude Opus / Frontier reasoning tier) avoided by Layer 0 C0 + JEV + SEKG compression.
 	DefaultTokenCostPerMillionUSD = 15.00
-
-	// DefaultUSDBRLExchangeRate is the reference USD -> BRL conversion rate (override via SQUAD_USD_BRL_RATE).
-	DefaultUSDBRLExchangeRate = 5.75
 )
 
 // UsageEvent represents a single atomic execution event in .squad-harness/telemetry/ledger.jsonl.
@@ -47,7 +43,6 @@ type MonthlyBucket struct {
 	SavedHours   float64 `json:"saved_hours"`
 	TokensSaved  int64   `json:"tokens_saved"`
 	SavingsUSD   float64 `json:"savings_usd"`
-	SavingsBRL   float64 `json:"savings_brl"`
 	VelocityMult float64 `json:"velocity_multiplier"`
 }
 
@@ -60,7 +55,6 @@ type DailyBucket struct {
 	SavedHours  float64 `json:"saved_hours"`
 	TokensSaved int64   `json:"tokens_saved"`
 	SavingsUSD  float64 `json:"savings_usd"`
-	SavingsBRL  float64 `json:"savings_brl"`
 	TopOps      string  `json:"top_ops"`
 }
 
@@ -78,9 +72,7 @@ type Report struct {
 	ProductivityMultiplier float64         `json:"productivity_multiplier"`
 	TotalTokensSaved       int64           `json:"total_tokens_saved"`
 	TokenRatePerMillionUSD float64         `json:"token_rate_per_million_usd"`
-	ExchangeRateUSDBRL     float64         `json:"exchange_rate_usd_brl"`
 	TotalSavingsUSD        float64         `json:"total_savings_usd"`
-	TotalSavingsBRL        float64         `json:"total_savings_brl"`
 	AvgTelemetryOverheadUs int64           `json:"avg_telemetry_overhead_us"`
 	Monthly                []MonthlyBucket `json:"monthly"`
 	Daily                  []DailyBucket   `json:"daily"`
@@ -318,17 +310,8 @@ func ReadLedgerEvents(rootDir string) []UsageEvent {
 	return events
 }
 
-func currentUSDBRLRate() float64 {
-	if raw := strings.TrimSpace(os.Getenv("SQUAD_USD_BRL_RATE")); raw != "" {
-		if val, err := strconv.ParseFloat(raw, 64); err == nil && val > 0 {
-			return val
-		}
-	}
-	return DefaultUSDBRLExchangeRate
-}
-
 // GenerateReport consolidates the last `monthsWindow` months (default 3) grouped by
-// month (YYYY-MM) and by day (YYYY-MM-DD), calculates USD ($) and BRL (R$) savings,
+// month (YYYY-MM) and by day (YYYY-MM-DD), calculates USD ($) savings,
 // signs the ASCII report with the repository's Quantum Universal ID (QUID), and publishes
 // it to the offline local registry.
 func GenerateReport(rootDir string, monthsWindow int) Report {
@@ -344,7 +327,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 	cutoffDate := startMonthTime.Format("2006-01-02")
 
 	usdRate := DefaultTokenCostPerMillionUSD
-	brlExchange := currentUSDBRLRate()
 
 	type monthAgg struct {
 		month       string
@@ -428,7 +410,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 		wHrs := round2(mAgg.workedSec / 3600.0)
 		sHrs := round2(mAgg.savedSec / 3600.0)
 		usd := round2((float64(mAgg.tokensSaved) / 1_000_000.0) * usdRate)
-		brl := round2(usd * brlExchange)
 		mult := 1.0
 		if wHrs > 0 {
 			mult = round2((wHrs + sHrs) / wHrs)
@@ -442,7 +423,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 			SavedHours:   sHrs,
 			TokensSaved:  mAgg.tokensSaved,
 			SavingsUSD:   usd,
-			SavingsBRL:   brl,
 			VelocityMult: mult,
 		})
 	}
@@ -456,7 +436,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 		wHrs := round2(dAgg.workedSec / 3600.0)
 		sHrs := round2(dAgg.savedSec / 3600.0)
 		usd := round2((float64(dAgg.tokensSaved) / 1_000_000.0) * usdRate)
-		brl := round2(usd * brlExchange)
 		daily = append(daily, DailyBucket{
 			Date:        dAgg.date,
 			DateBR:      formatDateBR(dAgg.date),
@@ -465,7 +444,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 			SavedHours:  sHrs,
 			TokensSaved: dAgg.tokensSaved,
 			SavingsUSD:  usd,
-			SavingsBRL:  brl,
 			TopOps:      summarizeTopOps(dAgg.opCounts),
 		})
 	}
@@ -476,7 +454,6 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 	totalWorkedHrs := round2(totalWorkedSec / 3600.0)
 	totalSavedHrs := round2(totalSavedSec / 3600.0)
 	totalUSD := round2((float64(totalTokens) / 1_000_000.0) * usdRate)
-	totalBRL := round2(totalUSD * brlExchange)
 
 	prodMult := 1.0
 	if totalWorkedHrs > 0 {
@@ -500,9 +477,7 @@ func GenerateReport(rootDir string, monthsWindow int) Report {
 		ProductivityMultiplier: prodMult,
 		TotalTokensSaved:       totalTokens,
 		TokenRatePerMillionUSD: usdRate,
-		ExchangeRateUSDBRL:     brlExchange,
 		TotalSavingsUSD:        totalUSD,
-		TotalSavingsBRL:        totalBRL,
 		AvgTelemetryOverheadUs: avgOverhead,
 		Monthly:                monthly,
 		Daily:                  daily,

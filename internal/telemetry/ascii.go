@@ -109,8 +109,8 @@ func renderASCIICore(rep Report, signature string) string {
 		rep.TotalSavedHours, formatHoursMinutes(rep.TotalSavedHours), rep.ProductivityMultiplier))
 	line(fmt.Sprintf("  • Total de Economia de Tokens (Camada 0): %s tokens poupados (C0 + JEV + SEKG)",
 		formatIntBR(rep.TotalTokensSaved)))
-	line(fmt.Sprintf("  • Economia Financeira Direta (US$ / R$) : US$ %8.2f  |  R$ %9.2f (Câmbio R$ %.2f)",
-		rep.TotalSavingsUSD, rep.TotalSavingsBRL, rep.ExchangeRateUSDBRL))
+	line(fmt.Sprintf("  • Economia Financeira Direta (USD $)    : $ %.2f (Tarifa ref. $ %.2f / 1M tokens)",
+		rep.TotalSavingsUSD, rep.TokenRatePerMillionUSD))
 	line(fmt.Sprintf("  • Impacto de Latência da Telemetria Go  : %d µs/op (0.0%% overhead · Zero impacto em qualidade)",
 		rep.AvgTelemetryOverheadUs))
 	b.WriteString(hrMid)
@@ -118,8 +118,8 @@ func renderASCIICore(rep Report, signature string) string {
 	// SECTION 2: MONTHLY BREAKDOWN (LAST 3 MONTHS)
 	line("[2] AGRUPAMENTO MENSAL (ÚLTIMOS 3 MESES — HORAS DE USO X HORAS ECONOMIZADAS X TOKENS)")
 	b.WriteString(hrSep)
-	line("  MÊS       | DIAS |  OPS | HRS USO | HRS ECON. | TOKENS POUPADOS |   US$   |    R$    | GANHO")
-	line("  ----------+------+------+---------+-----------+-----------------+---------+----------+---------")
+	line("  MÊS       | DIAS |  OPS | HRS USO  | HRS ECON. | TOKENS POUPADOS   |  ECON. ($)  | GANHO")
+	line("  ----------+------+------+----------+-----------+-------------------+-------------+-----------")
 
 	maxSavedMonth := 1.0
 	for _, m := range rep.Monthly {
@@ -129,8 +129,8 @@ func renderASCIICore(rep Report, signature string) string {
 	}
 
 	for _, m := range rep.Monthly {
-		bar := renderBar(m.SavedHours, maxSavedMonth, 7)
-		line(fmt.Sprintf("  %-9s |  %2d  | %4d | %6.2fh |  %7.2fh | %15s | %7.2f | %8.2f | %s",
+		bar := renderBar(m.SavedHours, maxSavedMonth, 9)
+		line(fmt.Sprintf("  %-9s |  %2d  | %4d |  %6.2fh |   %6.2fh | %17s | $ %9.2f | %s",
 			m.MonthLabel,
 			m.ActiveDays,
 			m.Operations,
@@ -138,12 +138,11 @@ func renderASCIICore(rep Report, signature string) string {
 			m.SavedHours,
 			formatIntBR(m.TokensSaved),
 			m.SavingsUSD,
-			m.SavingsBRL,
 			bar,
 		))
 	}
-	line("  ----------+------+------+---------+-----------+-----------------+---------+----------+---------")
-	line(fmt.Sprintf("  %-9s |  %2d  | %4d | %6.2fh |  %7.2fh | %15s | %7.2f | %8.2f | %.1fx",
+	line("  ----------+------+------+----------+-----------+-------------------+-------------+-----------")
+	line(fmt.Sprintf("  %-9s |  %2d  | %4d |  %6.2fh |   %6.2fh | %17s | $ %9.2f | %.1fx",
 		"TOTAL 3M",
 		rep.ActiveDaysCount,
 		rep.TotalOperations,
@@ -151,7 +150,6 @@ func renderASCIICore(rep Report, signature string) string {
 		rep.TotalSavedHours,
 		formatIntBR(rep.TotalTokensSaved),
 		rep.TotalSavingsUSD,
-		rep.TotalSavingsBRL,
 		rep.ProductivityMultiplier,
 	))
 	b.WriteString(hrMid)
@@ -159,34 +157,32 @@ func renderASCIICore(rep Report, signature string) string {
 	// SECTION 3: DAILY BREAKDOWN (AGRUPADO POR DIA)
 	line("[3] AGRUPAMENTO DIÁRIO (HISTÓRICO DE USO POR DIA — ÚLTIMOS 3 MESES)")
 	b.WriteString(hrSep)
-	line("  DATA       |  OPS | HRS USO | HRS ECON. | TOKENS POUPADOS |  ECON. US$ |  ECON. R$  | FLUXOS")
-	line("  -----------+------+---------+-----------+-----------------+------------+------------+----------")
+	line("  DATA       |  OPS | HRS USO  | HRS ECON. | TOKENS POUPADOS   |  ECON. ($)  | FLUXOS PRINCIPAIS")
+	line("  -----------+------+----------+-----------+-------------------+-------------+------------------")
 
 	startIdx := 0
 	if len(rep.Daily) > 16 {
 		startIdx = len(rep.Daily) - 16
 	}
 	for _, d := range rep.Daily[startIdx:] {
-		line(fmt.Sprintf("  %-10s | %4d | %6.2fh |  %7.2fh | %15s | US$ %6.2f | R$ %7.2f | %-8s",
+		line(fmt.Sprintf("  %-10s | %4d |  %6.2fh |   %6.2fh | %17s | $ %9.2f | %-16s",
 			d.DateBR,
 			d.Operations,
 			d.WorkedHours,
 			d.SavedHours,
 			formatIntBR(d.TokensSaved),
 			d.SavingsUSD,
-			d.SavingsBRL,
-			truncateStr(d.TopOps, 8),
+			truncateStr(d.TopOps, 16),
 		))
 	}
-	line("  -----------+------+---------+-----------+-----------------+------------+------------+----------")
-	line(fmt.Sprintf("  %-10s | %4d | %6.2fh |  %7.2fh | %15s | US$ %6.2f | R$ %7.2f | %d dias",
+	line("  -----------+------+----------+-----------+-------------------+-------------+------------------")
+	line(fmt.Sprintf("  %-10s | %4d |  %6.2fh |   %6.2fh | %17s | $ %9.2f | %d dias ativos",
 		"TOTAL 3M",
 		rep.TotalOperations,
 		rep.TotalWorkedHours,
 		rep.TotalSavedHours,
 		formatIntBR(rep.TotalTokensSaved),
 		rep.TotalSavingsUSD,
-		rep.TotalSavingsBRL,
 		rep.ActiveDaysCount,
 	))
 	b.WriteString(hrMid)
@@ -244,8 +240,8 @@ func renderASCIICore(rep Report, signature string) string {
 		rep.TotalSavedHours, formatHoursMinutes(rep.TotalSavedHours), rep.ProductivityMultiplier))
 	boxRow(fmt.Sprintf("★ TOKENS ECONOMIZADOS (MÊS X TOTAL): %s tok mês x %s tok total (%.1f%%)",
 		formatIntBR(curMonth.TokensSaved), formatIntBR(rep.TotalTokensSaved), pctTokens))
-	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL): US$ %.2f / R$ %.2f mês x US$ %.2f / R$ %.2f total",
-		curMonth.SavingsUSD, curMonth.SavingsBRL, rep.TotalSavingsUSD, rep.TotalSavingsBRL))
+	boxRow(fmt.Sprintf("★ ECONOMIA EM DÓLAR $ (MÊS X TOTAL): $ %.2f no mês x $ %.2f total acumulado (%.1f%%)",
+		curMonth.SavingsUSD, rep.TotalSavingsUSD, pctTokens))
 	line(boxBorderBot)
 	b.WriteString(hrBot)
 

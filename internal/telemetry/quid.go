@@ -50,7 +50,6 @@ type QUIDRegistryEntry struct {
 	TotalSavedHrs   float64 `json:"total_saved_hours"`
 	TotalTokensSave int64   `json:"total_tokens_saved"`
 	SavingsUSD      float64 `json:"savings_usd"`
-	SavingsBRL      float64 `json:"savings_brl"`
 	Signature       string  `json:"signature"`
 	ASCIIReport     string  `json:"ascii_report"`
 }
@@ -209,7 +208,6 @@ func PublishToOfflineRegistry(rootDir string, rep Report, ascii string) {
 		TotalSavedHrs:   rep.TotalSavedHours,
 		TotalTokensSave: rep.TotalTokensSaved,
 		SavingsUSD:      rep.TotalSavingsUSD,
-		SavingsBRL:      rep.TotalSavingsBRL,
 		Signature:       rep.Signature,
 		ASCIIReport:     ascii,
 	}
@@ -241,7 +239,6 @@ func ResolveByQUID(quidQuery string, fallbackRootDir string) (QUIDRegistryEntry,
 					TotalSavedHrs:   rep.TotalSavedHours,
 					TotalTokensSave: rep.TotalTokensSaved,
 					SavingsUSD:      rep.TotalSavingsUSD,
-					SavingsBRL:      rep.TotalSavingsBRL,
 					Signature:       rep.Signature,
 					ASCIIReport:     rep.ASCII,
 				}, true

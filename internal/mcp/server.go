@@ -79,7 +79,7 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 					{
 						"uri":         "squad://telemetry/ascii",
 						"name":        "Relatório Executivo ASCII SquadAI (" + id.QUID + ")",
-						"description": "Relatório público offline em ASCII consolidando horas trabalhadas, horas economizadas e economia de tokens (US$ / R$) dos últimos 3 meses.",
+						"description": "Relatório público offline em ASCII consolidando horas trabalhadas, horas economizadas e economia de tokens em dólar ($) dos últimos 3 meses.",
 						"mimeType":    "text/plain",
 					},
 					{
@@ -183,7 +183,7 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 					},
 					{
 						"name":        "squad_usage_report",
-						"description": "Gera o relatório executivo em ASCII e JSON consolidando ganhos x tempo de uso (últimos 3 meses agrupados por dia/mês, horas trabalhadas, horas economizadas, economia de tokens em US$ e R$) e ID Quântico Universal (QUID)",
+						"description": "Gera o relatório executivo em ASCII e JSON consolidando ganhos x tempo de uso (últimos 3 meses agrupados por dia/mês, horas trabalhadas, horas economizadas, economia de tokens em $) e ID Quântico Universal (QUID)",
 						"inputSchema": map[string]any{
 							"type": "object",
 							"properties": map[string]any{
