@@ -203,7 +203,7 @@ func renderASCIICore(rep Report, signature string) string {
 	b.WriteString(hrMid)
 
 	// SECTION 5: EXECUTIVE FOOTER CONSOLIDATOR (CURRENT MONTH VS TOTAL ACCUMULATED)
-	var curMonth MonthSummary
+	var curMonth MonthlyBucket
 	curMonth.MonthLabel = "Mês Atual"
 	if len(rep.Monthly) > 0 {
 		curMonth = rep.Monthly[len(rep.Monthly)-1]
