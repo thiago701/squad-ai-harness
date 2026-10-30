@@ -1,8 +1,7 @@
 // Package installer implements the native Go 1.24.3 multi-target skill installer
-// and synchronizer (`squad-harness install`), replacing the legacy Python
-// `install-squad-ai.py` script with concurrent, fail-closed, SHA-256-verified
-// synchronization across all detected agentic environments (~/.claude,
-// ~/.gemini/config, ~/.dsh, ~/.resolveai).
+// and synchronizer (`squad-harness install`), supporting 12 agentic coding tools
+// across diverse developers and enterprises without polluting workstations with
+// unused agent directories.
 package installer
 
 import (
@@ -23,40 +22,68 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/security/secretscan"
 )
 
-// TargetDef describes a detected agentic tool environment on the host machine.
+// ToolAdoptionStatus classifies how an agentic tool relates to the current workstation.
+type ToolAdoptionStatus string
+
+const (
+	// StatusActiveSynced means the tool is used on this machine and all 106 skills are up to date.
+	StatusActiveSynced ToolAdoptionStatus = "ACTIVE_SYNCED"
+	// StatusActiveOutdated means the tool is used on this machine and has missing/outdated skills.
+	StatusActiveOutdated ToolAdoptionStatus = "ACTIVE_OUTDATED"
+	// StatusDetectedOptIn means the tool's base folder exists on the host, available for 1-click activation.
+	StatusDetectedOptIn ToolAdoptionStatus = "DETECTED_OPT_IN"
+	// StatusNotInstalled means the tool is not used on this workstation (silently ignored).
+	StatusNotInstalled ToolAdoptionStatus = "NOT_INSTALLED"
+)
+
+// TargetDef describes a supported agentic tool environment in the enterprise/developer catalog.
 type TargetDef struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	RootDir   string `json:"root_dir"`
-	SkillsDir string `json:"skills_dir"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Vendor      string `json:"vendor"`
+	DisplayPath string `json:"display_path"`
+	RootDir     string `json:"root_dir"`
+	SkillsDir   string `json:"skills_dir"`
+	PrimaryAuto bool   `json:"primary_auto"` // Auto-targeted when RootDir exists
+	HostPresent bool   `json:"host_present"` // Whether RootDir exists on this workstation
+	ActiveSync  bool   `json:"active_sync"`  // Whether this target participates in active sync/validation
 }
 
 // TargetSyncReport reports the live synchronization status of one agentic environment.
 type TargetSyncReport struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	SkillsDir     string `json:"skills_dir"`
-	TotalSkills   int    `json:"total_skills"`
-	SyncedCount   int    `json:"synced_count"`
-	MissingCount  int    `json:"missing_count"`
-	OutdatedCount int    `json:"outdated_count"`
-	IsSynced      bool   `json:"is_synced"`
+	ID            string             `json:"id"`
+	Name          string             `json:"name"`
+	Vendor        string             `json:"vendor"`
+	DisplayPath   string             `json:"display_path"`
+	SkillsDir     string             `json:"skills_dir"`
+	Status        ToolAdoptionStatus `json:"status"`
+	HostPresent   bool               `json:"host_present"`
+	ActiveSync    bool               `json:"active_sync"`
+	TotalSkills   int                `json:"total_skills"`
+	SyncedCount   int                `json:"synced_count"`
+	MissingCount  int                `json:"missing_count"`
+	OutdatedCount int                `json:"outdated_count"`
+	IsSynced      bool               `json:"is_synced"`
 }
 
-// SyncReport aggregates synchronization status across all detected targets.
+// SyncReport aggregates synchronization status across active targets and lists all supported tools.
 type SyncReport struct {
-	AllSynced       bool               `json:"all_synced"`
-	TargetsDetected int                `json:"targets_detected"`
-	TotalMissing    int                `json:"total_missing"`
-	TotalOutdated   int                `json:"total_outdated"`
-	Targets         []TargetSyncReport `json:"targets"`
-	SkillSynced     map[string]bool    `json:"skill_synced"`
+	AllSynced         bool               `json:"all_synced"`
+	TargetsDetected   int                `json:"targets_detected"`   // Active sync targets count
+	HostToolsDetected int                `json:"host_tools_detected"` // Total agentic tools found on host
+	CatalogToolsCount int                `json:"catalog_tools_count"` // Total supported tools in catalog (12)
+	TotalMissing      int                `json:"total_missing"`
+	TotalOutdated     int                `json:"total_outdated"`
+	Targets           []TargetSyncReport `json:"targets"`      // Active targets participating in validation
+	AllCatalog        []TargetSyncReport `json:"all_catalog"`  // Full 12-tool enterprise catalog with adoption status
+	SkillSynced       map[string]bool    `json:"skill_synced"` // Per-skill sync flag across active targets
 }
 
 // TargetInstallResult summarizes files synchronized for a single target environment.
 type TargetInstallResult struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
+	DisplayPath    string `json:"display_path"`
 	SkillsDir      string `json:"skills_dir"`
 	SkillsSynced   int    `json:"skills_synced"`
 	FilesInstalled int    `json:"files_installed"`
@@ -86,59 +113,195 @@ var excludedDirNames = map[string]bool{
 	"venv":          true,
 }
 
-// DetectTargets probes the host filesystem for known agentic environments.
-func DetectTargets() []TargetDef {
+// SupportedCatalog returns the 12 supported enterprise/developer agentic tools
+// and probes the host filesystem non-destructively to determine which ones are present
+// and which ones are actively managing skills.
+func SupportedCatalog() []TargetDef {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		return nil
 	}
 
-	candidates := []TargetDef{
-		{
-			ID:        "claude",
-			Name:      "Claude Code (~/.claude)",
-			RootDir:   filepath.Join(home, ".claude"),
-			SkillsDir: filepath.Join(home, ".claude", "skills"),
-		},
-		{
-			ID:        "antigravity",
-			Name:      "Google Antigravity (~/.gemini/config)",
-			RootDir:   filepath.Join(home, ".gemini", "config"),
-			SkillsDir: filepath.Join(home, ".gemini", "config", "skills"),
-		},
-		{
-			ID:        "dsh",
-			Name:      "DeepSeek Harness (~/.dsh)",
-			RootDir:   filepath.Join(home, ".dsh"),
-			SkillsDir: filepath.Join(home, ".dsh", "skills"),
-		},
-	}
-
+	raiRoot := filepath.Join(home, ".resolveai")
+	raiDisplay := "~/.resolveai/skills"
 	if localApp := os.Getenv("LOCALAPPDATA"); localApp != "" {
-		raiDir := filepath.Join(localApp, "RAI", "CLI")
-		candidates = append(candidates, TargetDef{
-			ID:        "resolveai",
-			Name:      "Resolve AI (%LOCALAPPDATA%/RAI/CLI)",
-			RootDir:   raiDir,
-			SkillsDir: filepath.Join(raiDir, "skills"),
-		})
-	} else {
-		raiDir := filepath.Join(home, ".resolveai")
-		candidates = append(candidates, TargetDef{
-			ID:        "resolveai",
-			Name:      "Resolve AI (~/.resolveai)",
-			RootDir:   raiDir,
-			SkillsDir: filepath.Join(raiDir, "skills"),
-		})
-	}
-
-	var detected []TargetDef
-	for _, c := range candidates {
-		if st, err := os.Stat(c.RootDir); err == nil && st.IsDir() {
-			detected = append(detected, c)
+		cand := filepath.Join(localApp, "RAI", "CLI")
+		if st, err := os.Stat(cand); err == nil && st.IsDir() {
+			raiRoot = cand
+			raiDisplay = "%LOCALAPPDATA%/RAI/CLI/skills"
 		}
 	}
-	return detected
+
+	defs := []TargetDef{
+		{
+			ID:          "claude",
+			Name:        "Claude Code / Cowork",
+			Vendor:      "Anthropic",
+			DisplayPath: "~/.claude/skills",
+			RootDir:     filepath.Join(home, ".claude"),
+			SkillsDir:   filepath.Join(home, ".claude", "skills"),
+			PrimaryAuto: true,
+		},
+		{
+			ID:          "antigravity",
+			Name:        "Google Antigravity",
+			Vendor:      "Google DeepMind",
+			DisplayPath: "~/.gemini/config/skills",
+			RootDir:     filepath.Join(home, ".gemini", "config"),
+			SkillsDir:   filepath.Join(home, ".gemini", "config", "skills"),
+			PrimaryAuto: true,
+		},
+		{
+			ID:          "cursor",
+			Name:        "Cursor IDE",
+			Vendor:      "Anysphere",
+			DisplayPath: "~/.cursor/skills",
+			RootDir:     filepath.Join(home, ".cursor"),
+			SkillsDir:   filepath.Join(home, ".cursor", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "copilot",
+			Name:        "GitHub Copilot Agent",
+			Vendor:      "GitHub / Microsoft",
+			DisplayPath: "~/.copilot/skills",
+			RootDir:     filepath.Join(home, ".copilot"),
+			SkillsDir:   filepath.Join(home, ".copilot", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "codex",
+			Name:        "OpenAI Codex CLI",
+			Vendor:      "OpenAI",
+			DisplayPath: "~/.codex/skills",
+			RootDir:     filepath.Join(home, ".codex"),
+			SkillsDir:   filepath.Join(home, ".codex", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "windsurf",
+			Name:        "Windsurf IDE",
+			Vendor:      "Codeium",
+			DisplayPath: "~/.codeium/windsurf/skills",
+			RootDir:     filepath.Join(home, ".codeium", "windsurf"),
+			SkillsDir:   filepath.Join(home, ".codeium", "windsurf", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "gemini",
+			Name:        "Gemini CLI",
+			Vendor:      "Google",
+			DisplayPath: "~/.gemini/skills",
+			RootDir:     filepath.Join(home, ".gemini"),
+			SkillsDir:   filepath.Join(home, ".gemini", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "cline",
+			Name:        "Cline / Roo Code",
+			Vendor:      "Cline",
+			DisplayPath: "~/.cline/skills",
+			RootDir:     filepath.Join(home, ".cline"),
+			SkillsDir:   filepath.Join(home, ".cline", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "opencode",
+			Name:        "OpenCode CLI",
+			Vendor:      "OpenCode",
+			DisplayPath: "~/.opencode/skills",
+			RootDir:     filepath.Join(home, ".opencode"),
+			SkillsDir:   filepath.Join(home, ".opencode", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "qwen",
+			Name:        "Qwen Code CLI",
+			Vendor:      "Alibaba Cloud",
+			DisplayPath: "~/.qwen/skills",
+			RootDir:     filepath.Join(home, ".qwen"),
+			SkillsDir:   filepath.Join(home, ".qwen", "skills"),
+			PrimaryAuto: false,
+		},
+		{
+			ID:          "dsh",
+			Name:        "DeepSeek Harness",
+			Vendor:      "DeepSeek",
+			DisplayPath: "~/.dsh/skills",
+			RootDir:     filepath.Join(home, ".dsh"),
+			SkillsDir:   filepath.Join(home, ".dsh", "skills"),
+			PrimaryAuto: true,
+		},
+		{
+			ID:          "resolveai",
+			Name:        "Resolve AI CLI",
+			Vendor:      "Resolve AI",
+			DisplayPath: raiDisplay,
+			RootDir:     raiRoot,
+			SkillsDir:   filepath.Join(raiRoot, "skills"),
+			PrimaryAuto: true,
+		},
+	}
+
+	for i := range defs {
+		if st, err := os.Stat(defs[i].RootDir); err == nil && st.IsDir() {
+			defs[i].HostPresent = true
+		}
+		manifestPath := filepath.Join(defs[i].RootDir, ".squad-ai-manifest.json")
+		_, hasManifest := os.Stat(manifestPath)
+		stSkills, errSkills := os.Stat(defs[i].SkillsDir)
+		hasSkillsDir := errSkills == nil && stSkills.IsDir()
+
+		// A tool is an active sync target if:
+		// 1) It is present on host AND is a primary auto-target, OR
+		// 2) The developer/company already opted in (has `.squad-ai-manifest.json` or `<tool>/skills/` directory).
+		if defs[i].HostPresent && (defs[i].PrimaryAuto || hasManifest == nil || hasSkillsDir) {
+			defs[i].ActiveSync = true
+		}
+	}
+	return defs
+}
+
+// DetectTargets returns the active agentic environments on this workstation.
+func DetectTargets() []TargetDef {
+	all := SupportedCatalog()
+	var active []TargetDef
+	for _, d := range all {
+		if d.ActiveSync {
+			active = append(active, d)
+		}
+	}
+	return active
+}
+
+// ResolveTargetsByIDs resolves specific tool IDs (e.g. ["cursor", "claude"]) from the supported catalog,
+// allowing developers or enterprises to activate any tool on demand via `--target <id>`.
+func ResolveTargetsByIDs(ids []string) ([]TargetDef, error) {
+	all := SupportedCatalog()
+	byID := make(map[string]TargetDef, len(all))
+	for _, d := range all {
+		byID[strings.ToLower(d.ID)] = d
+	}
+
+	var resolved []TargetDef
+	seen := make(map[string]bool)
+	for _, raw := range ids {
+		for _, part := range strings.Split(raw, ",") {
+			id := strings.ToLower(strings.TrimSpace(part))
+			if id == "" || seen[id] {
+				continue
+			}
+			d, ok := byID[id]
+			if !ok {
+				return nil, fmt.Errorf("ferramenta agêntica desconhecida %q (suportadas: claude, antigravity, cursor, copilot, codex, windsurf, gemini, cline, opencode, qwen, dsh, resolveai)", id)
+			}
+			d.HostPresent = true
+			d.ActiveSync = true
+			resolved = append(resolved, d)
+			seen[id] = true
+		}
+	}
+	return resolved, nil
 }
 
 func normalizeLF(b []byte) []byte {
@@ -150,28 +313,11 @@ func sha256Hex(b []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// Verify compares all canonical skills in cat against the given targets (or DetectTargets() if nil).
-func Verify(cat *catalog.Catalog, targets []TargetDef) SyncReport {
-	if targets == nil {
-		targets = DetectTargets()
-	}
+// Verify compares all canonical skills in cat against the given targets (or DetectTargets() if nil),
+// and also populates AllCatalog for the 12 supported enterprise/developer tools.
+func Verify(cat *catalog.Catalog, customTargets []TargetDef) SyncReport {
 	totalSkills := len(cat.Skills)
 	skillSynced := make(map[string]bool, totalSkills)
-
-	if len(targets) == 0 {
-		return SyncReport{
-			AllSynced:       false,
-			TargetsDetected: 0,
-			TotalMissing:    totalSkills,
-			TotalOutdated:   0,
-			Targets:         []TargetSyncReport{},
-			SkillSynced:     skillSynced,
-		}
-	}
-
-	for _, sk := range cat.Skills {
-		skillSynced[sk.Name] = true
-	}
 
 	canonBytes := make(map[string][]byte, totalSkills)
 	for _, sk := range cat.Skills {
@@ -181,18 +327,57 @@ func Verify(cat *catalog.Catalog, targets []TargetDef) SyncReport {
 		}
 	}
 
-	reports := make([]TargetSyncReport, 0, len(targets))
+	var catalogDefs []TargetDef
+	if customTargets != nil {
+		catalogDefs = make([]TargetDef, len(customTargets))
+		for i, t := range customTargets {
+			t.HostPresent = true
+			t.ActiveSync = true
+			if t.DisplayPath == "" {
+				t.DisplayPath = filepath.ToSlash(t.SkillsDir)
+			}
+			catalogDefs[i] = t
+		}
+	} else {
+		catalogDefs = SupportedCatalog()
+	}
+
+	activeReports := make([]TargetSyncReport, 0, len(catalogDefs))
+	allCatalogReports := make([]TargetSyncReport, 0, len(catalogDefs))
 	totalMissing := 0
 	totalOutdated := 0
+	hostToolsCount := 0
 	allSynced := true
 
-	for _, td := range targets {
+	for _, sk := range cat.Skills {
+		skillSynced[sk.Name] = true
+	}
+
+	for _, td := range catalogDefs {
+		if td.HostPresent {
+			hostToolsCount++
+		}
 		rep := TargetSyncReport{
 			ID:          td.ID,
 			Name:        td.Name,
+			Vendor:      td.Vendor,
+			DisplayPath: td.DisplayPath,
 			SkillsDir:   filepath.ToSlash(td.SkillsDir),
+			HostPresent: td.HostPresent,
+			ActiveSync:  td.ActiveSync,
 			TotalSkills: totalSkills,
 		}
+
+		if !td.ActiveSync {
+			if td.HostPresent {
+				rep.Status = StatusDetectedOptIn
+			} else {
+				rep.Status = StatusNotInstalled
+			}
+			allCatalogReports = append(allCatalogReports, rep)
+			continue
+		}
+
 		for _, sk := range cat.Skills {
 			dstFile := filepath.Join(td.SkillsDir, sk.Name, "SKILL.md")
 			dstRaw, err := os.ReadFile(dstFile)
@@ -208,22 +393,38 @@ func Verify(cat *catalog.Catalog, targets []TargetDef) SyncReport {
 			}
 			rep.SyncedCount++
 		}
+
 		rep.IsSynced = rep.MissingCount == 0 && rep.OutdatedCount == 0 && rep.SyncedCount == totalSkills
-		if !rep.IsSynced {
+		if rep.IsSynced {
+			rep.Status = StatusActiveSynced
+		} else {
+			rep.Status = StatusActiveOutdated
 			allSynced = false
 		}
+
 		totalMissing += rep.MissingCount
 		totalOutdated += rep.OutdatedCount
-		reports = append(reports, rep)
+		activeReports = append(activeReports, rep)
+		allCatalogReports = append(allCatalogReports, rep)
+	}
+
+	if len(activeReports) == 0 {
+		allSynced = false
+		for _, sk := range cat.Skills {
+			skillSynced[sk.Name] = false
+		}
 	}
 
 	return SyncReport{
-		AllSynced:       allSynced,
-		TargetsDetected: len(reports),
-		TotalMissing:    totalMissing,
-		TotalOutdated:   totalOutdated,
-		Targets:         reports,
-		SkillSynced:     skillSynced,
+		AllSynced:         allSynced,
+		TargetsDetected:   len(activeReports),
+		HostToolsDetected: hostToolsCount,
+		CatalogToolsCount: len(allCatalogReports),
+		TotalMissing:      totalMissing,
+		TotalOutdated:     totalOutdated,
+		Targets:           activeReports,
+		AllCatalog:        allCatalogReports,
+		SkillSynced:       skillSynced,
 	}
 }
 
@@ -290,7 +491,6 @@ func collectSkillAssets(cat *catalog.Catalog, blocked map[string][]string) ([]sk
 			if err != nil {
 				return err
 			}
-			// Normalize SKILL.md and .md files to LF so cross-target comparisons are 100% deterministic
 			ext := strings.ToLower(filepath.Ext(path))
 			if ext == ".md" || ext == ".txt" || ext == ".yaml" || ext == ".yml" || ext == ".json" {
 				raw = normalizeLF(raw)
@@ -310,17 +510,18 @@ func collectSkillAssets(cat *catalog.Catalog, blocked map[string][]string) ([]sk
 	return assets, nil
 }
 
-// InstallAll synchronizes all audited canonical skills concurrently across all detected targets.
+// InstallAll synchronizes all audited canonical skills concurrently across all active targets.
 func InstallAll(rootDir string) (*InstallSummary, error) {
 	cat, err := catalog.Load(rootDir)
 	if err != nil {
 		return nil, err
 	}
-	return InstallToTargets(cat, DetectTargets())
+	return InstallToTargets(cat, nil)
 }
 
 // InstallToTargets synchronizes all audited canonical skills concurrently to the specified targets.
 func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummary, error) {
+	isCustom := targets != nil
 	if targets == nil {
 		targets = DetectTargets()
 	}
@@ -360,7 +561,11 @@ func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummar
 		return nil, firstErr
 	}
 
-	postSync := Verify(cat, targets)
+	var verifyTargets []TargetDef
+	if isCustom {
+		verifyTargets = targets
+	}
+	postSync := Verify(cat, verifyTargets)
 	durMs := float64(time.Since(t0).Microseconds()) / 1000.0
 
 	return &InstallSummary{
@@ -377,6 +582,7 @@ func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCoun
 	res := TargetInstallResult{
 		ID:           target.ID,
 		Name:         target.Name,
+		DisplayPath:  target.DisplayPath,
 		SkillsDir:    filepath.ToSlash(target.SkillsDir),
 		SkillsSynced: validSkillsCount,
 	}
@@ -401,7 +607,6 @@ func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCoun
 			}
 			res.FilesInstalled++
 		} else if bytes.Equal(normalizeLF(existing), normalizeLF(a.data)) {
-			// If destination had CRLF and canonical is LF, normalize on disk so SHA-256 matches
 			if !bytes.Equal(existing, a.data) {
 				_ = os.WriteFile(dstPath, a.data, 0o644)
 				res.FilesUpdated++
@@ -421,7 +626,6 @@ func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCoun
 		}
 	}
 
-	// Write deterministic .squad-ai-manifest.json
 	keys := make([]string, 0, len(manifestFiles))
 	for k := range manifestFiles {
 		keys = append(keys, k)

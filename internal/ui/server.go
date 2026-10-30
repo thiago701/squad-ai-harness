@@ -336,7 +336,22 @@ func (s *Server) handleSyncSkills(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	summary, err := installer.InstallToTargets(s.engine.Catalog(), nil)
+	var req struct {
+		Target string `json:"target"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+	var customTargets []installer.TargetDef
+	if strings.TrimSpace(req.Target) != "" {
+		resolved, err := installer.ResolveTargetsByIDs([]string{req.Target})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		customTargets = resolved
+	}
+	summary, err := installer.InstallToTargets(s.engine.Catalog(), customTargets)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

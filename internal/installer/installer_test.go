@@ -25,6 +25,15 @@ func TestNativeGoInstallerSyncAndVerify(t *testing.T) {
 		t.Fatalf("catalog.Load error: %v", err)
 	}
 
+	supported := SupportedCatalog()
+	if len(supported) != 12 {
+		t.Fatalf("expected 12 supported enterprise/dev agentic tools in catalog, got %d", len(supported))
+	}
+	resolved, err := ResolveTargetsByIDs([]string{"cursor,copilot", "windsurf"})
+	if err != nil || len(resolved) != 3 {
+		t.Fatalf("ResolveTargetsByIDs failed: got %+v err=%v", resolved, err)
+	}
+
 	tmpHome := t.TempDir()
 	targets := []TargetDef{
 		{

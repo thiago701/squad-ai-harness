@@ -16,12 +16,12 @@
       --sky-light: #7dd3fc;
       --sky-bright: #38bdf8;
       --sky-glow: rgba(56, 189, 248, 0.18);
-      --amber-light: #fcd34d;
-      --amber-bg: rgba(245, 158, 11, 0.12);
-      --amber-border: rgba(251, 191, 36, 0.42);
       --text-primary: #f0f9ff;
       --text-secondary: #9ec5e8;
       --text-muted: #6488a8;
+      --amber-warn: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.10);
+      --amber-border: rgba(251, 191, 36, 0.42);
     }
 
     * {
@@ -61,12 +61,15 @@
       background: var(--sky-bright);
     }
 
+    /* HEADER + MONITOR DE RECURSOS + COMPACT SYNC PILL */
     header {
       background: rgba(11, 19, 34, 0.92);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 22px;
+      padding: 11px 22px;
       flex-shrink: 0;
+      position: relative;
+      z-index: 30;
     }
 
     .header-inner {
@@ -76,7 +79,7 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 12px;
     }
 
     .brand-group {
@@ -86,8 +89,8 @@
     }
 
     .brand-emblem {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       background: linear-gradient(135deg, rgba(125, 211, 252, 0.22), rgba(56, 189, 248, 0.06));
       border: 1px solid var(--border-sky);
@@ -113,11 +116,18 @@
       font-weight: 500;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .resource-monitor {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
+      gap: 9px;
+      padding: 7px 13px;
       border-radius: 10px;
       background: var(--bg-elevated);
       border: 1px solid var(--border-sky);
@@ -146,7 +156,34 @@
       font-weight: 600;
     }
 
-    /* AVISO VALIDADOR DE INSTALAÇÃO / SINCRONIZAÇÃO */
+    /* COMPACT ZERO-POLLUTION SYNC PILL IN HEADER */
+    .sync-header-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: rgba(56, 189, 248, 0.10);
+      border: 1px solid var(--border-sky);
+      color: var(--sky-light);
+    }
+
+    .sync-header-pill:hover {
+      background: rgba(56, 189, 248, 0.18);
+      color: #ffffff;
+    }
+
+    .sync-header-pill.warn {
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+      color: #fde68a;
+    }
+
+    /* SLIM PROGRESSIVE-DISCLOSURE VALIDATOR BANNER (HIDDEN WHEN SYNCED) */
     .sync-banner-wrap {
       max-width: 1640px;
       width: 100%;
@@ -155,33 +192,117 @@
       flex-shrink: 0;
     }
 
+    .sync-banner-wrap.hidden {
+      display: none;
+    }
+
     .sync-banner {
-      border-radius: 10px;
-      padding: 9px 14px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      padding: 7px 14px;
+      border-radius: 10px;
       font-size: 12px;
-    }
-
-    .sync-banner.warn {
       background: var(--amber-bg);
       border: 1px solid var(--amber-border);
-      color: var(--amber-light);
+      color: #fde68a;
     }
 
-    .sync-banner.ok {
-      background: rgba(56, 189, 248, 0.08);
+    /* FLOATING DRAWER / POPOVER FOR MULTI-AGENT ECOSYSTEM & SIMULATOR */
+    .agent-popover {
+      position: fixed;
+      top: 60px;
+      right: 22px;
+      width: 560px;
+      max-width: calc(100vw - 44px);
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      background: rgba(11, 19, 34, 0.98);
+      backdrop-filter: blur(16px);
       border: 1px solid var(--border-sky);
+      border-radius: 14px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65), 0 0 25px rgba(56, 189, 248, 0.14);
+      padding: 16px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .agent-popover.open {
+      display: flex;
+    }
+
+    .sim-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    .sim-btn {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+
+    .sim-btn:hover {
+      border-color: var(--sky-light);
+      color: var(--text-primary);
+    }
+
+    .sim-btn.active {
+      background: var(--bg-active);
+      border-color: var(--sky-light);
       color: var(--sky-light);
     }
 
+    .agent-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 11px;
+      border-radius: 9px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+
+    .agent-grid-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .optin-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 7px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+
+    /* SEARCH & TECHNOLOGY FILTER BAR */
     .toolbar {
       max-width: 1640px;
       width: 100%;
-      margin: 10px auto 0 auto;
+      margin: 12px auto 0 auto;
       padding: 0 22px;
       flex-shrink: 0;
     }
@@ -267,9 +388,6 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
 
     .pill-btn:hover {
@@ -285,11 +403,11 @@
     }
 
     .btn-action-sky {
-      background: rgba(56, 189, 248, 0.18);
+      background: rgba(56, 189, 248, 0.16);
       color: var(--sky-light);
-      border: 1px solid var(--sky-bright);
+      border: 1px solid var(--sky-light);
       border-radius: 8px;
-      padding: 6px 13px;
+      padding: 5px 12px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -301,9 +419,11 @@
 
     .btn-action-sky:hover {
       background: rgba(56, 189, 248, 0.28);
+      color: #ffffff;
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
     }
 
+    /* WORKSPACE MASTER-DETAIL */
     main {
       max-width: 1640px;
       width: 100%;
@@ -336,7 +456,6 @@
       border-bottom: 1px solid var(--border-subtle);
       background: rgba(16, 28, 48, 0.55);
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
@@ -404,7 +523,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 12px;
+      font-size: 11px;
       padding: 2px 8px;
       border-radius: 6px;
       font-weight: 600;
@@ -414,12 +533,13 @@
       white-space: nowrap;
     }
 
-    .chip-warn {
-      background: var(--amber-bg);
-      color: var(--amber-light);
-      border: 1px solid var(--amber-border);
+    .chip.warn {
+      background: rgba(251, 191, 36, 0.14);
+      color: #fde68a;
+      border-color: rgba(251, 191, 36, 0.45);
     }
 
+    /* INSPECTOR RIGHT PANE */
     .inspector-body {
       flex: 1;
       overflow-y: auto;
@@ -488,7 +608,7 @@
 </head>
 <body>
 
-  <!-- TOP BAR: BRAND + MONITOR DE RECURSOS (100% DINÂMICO) -->
+  <!-- TOP BAR: BRAND + MONITOR DE RECURSOS + COMPACT SYNC PILL -->
   <header>
     <div class="header-inner">
       <div class="brand-group">
@@ -504,28 +624,86 @@
         </div>
       </div>
 
-      <div class="resource-monitor mono" role="status" aria-live="polite">
-        <span class="pulse-sky"></span>
-        <span class="monitor-label">Monitor de recursos:</span>
-        <span id="resource-monitor-text">Lendo sensores em tempo real...</span>
+      <div class="header-right">
+        <div class="resource-monitor mono" role="status" aria-live="polite">
+          <span class="pulse-sky"></span>
+          <span class="monitor-label">Monitor de recursos:</span>
+          <span id="resource-monitor-text">Lendo sensores em tempo real...</span>
+        </div>
+
+        <!-- COMPACT ZERO-POLLUTION SYNC PILL -->
+        <button class="sync-header-pill mono" id="sync-header-pill" onclick="toggleAgentPopover()" title="Validador de Sincronização Multi-Ferramentas & Simulador">
+          <span id="sync-pill-text">Verificando agentes...</span>
+          <span>▾</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- AVISO VALIDADOR DE INSTALAÇÃO / SINCRONIZAÇÃO DAS SKILLS -->
-  <section class="sync-banner-wrap" aria-label="Validador de sincronização das skills">
-    <div id="sync-validator-banner" class="sync-banner ok">
-      <span id="sync-validator-msg">Verificando sincronização das skills nos agentes locais...</span>
+  <!-- SLIM PROGRESSIVE-DISCLOSURE WARNING BAR (ONLY VISIBLE WHEN SKILLS ARE OUT OF SYNC) -->
+  <section id="sync-banner-section" class="sync-banner-wrap hidden" aria-label="Validador de sincronização das skills">
+    <div id="sync-validator-banner" class="sync-banner">
+      <span id="sync-validator-msg"></span>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        <button class="btn-action-sky" onclick="runNativeSync()" id="sync-now-btn" title="Executa o instalador nativo em Go para sincronizar todas as skills">
-          ⚡ Sincronizar Skills (Go Nativo)
+        <button class="btn-action-sky" onclick="runNativeSync('')" id="sync-now-btn">
+          ⚡ Sincronizar Agora (Go)
         </button>
-        <button class="pill-btn mono" onclick="copySyncCommand()" id="sync-cmd-btn">
-          📋 Copiar: .\squad-harness.exe install
+        <button class="pill-btn mono" onclick="toggleAgentPopover()">
+          Ferramentas &amp; Simulador ▾
         </button>
       </div>
     </div>
   </section>
+
+  <!-- FLOATING MULTI-AGENT ECOSYSTEM & SCENARIO SIMULATOR POPOVER -->
+  <aside id="agent-popover" class="agent-popover" aria-label="Central de Ferramentas Agênticas e Simulador">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <strong style="color:var(--sky-light); font-size:13px;">Validador Multi-Ferramentas Agênticas (Go Nativo)</strong>
+        <div style="font-size:11px; color:var(--text-muted);">Detecta apenas as ferramentas usadas pelo dev/empresa sem poluir a tela.</div>
+      </div>
+      <button class="pill-btn mono" onclick="toggleAgentPopover()">✕ Fechar</button>
+    </div>
+
+    <!-- SCENARIO SIMULATOR -->
+    <div>
+      <div style="font-size:11px; font-weight:700; color:var(--sky-light); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.04em;">
+        🎛️ Simular Visualização do Validador (Devs / Empresas):
+      </div>
+      <div class="sim-bar">
+        <button class="sim-btn active" id="sim-live" onclick="setSimulationMode('live')">📡 Disco Real (Ao Vivo)</button>
+        <button class="sim-btn" id="sim-synced" onclick="setSimulationMode('synced')">✅ 100% Sincronizado (Zero Ruído)</button>
+        <button class="sim-btn" id="sim-partial" onclick="setSimulationMode('partial')">⚠️ Dev Parcial (Cursor + Claude · 8 pend.)</button>
+        <button class="sim-btn" id="sim-newdev" onclick="setSimulationMode('newdev')">🏢 Novo Dev / Empresa (0 instaladas)</button>
+      </div>
+    </div>
+
+    <!-- ACTIVE TARGETS ON THIS WORKSTATION -->
+    <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:11px; font-weight:700; color:var(--text-primary); text-transform:uppercase;">
+          Ferramentas Ativas nesta Estação
+        </span>
+        <button class="btn-action-sky mono" style="padding:3px 9px; font-size:11px;" onclick="runNativeSync('')">
+          ⚡ Sincronizar Ativas
+        </button>
+      </div>
+      <div id="popover-active-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+
+    <!-- OTHER SUPPORTED TOOLS (OPT-IN / NOT INSTALLED) -->
+    <div>
+      <div style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase;">
+        Outras Ferramentas Suportadas (Opt-in sob demanda · Ignoradas no Alerta)
+      </div>
+      <div id="popover-catalog-chips" class="agent-grid-compact"></div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-subtle); padding-top:10px;">
+      <span class="mono" style="font-size:11px; color:var(--text-muted);">CLI: .\squad-harness.exe install [--target id]</span>
+      <button class="pill-btn mono" onclick="copySyncCommand()" id="sync-cmd-btn">📋 Copiar Comando CLI</button>
+    </div>
+  </aside>
 
   <!-- SEARCH & DYNAMIC TECHNOLOGY FILTER BAR -->
   <section class="toolbar" aria-label="Pesquisa e filtros por tecnologia">
@@ -619,6 +797,153 @@
     let totalCatalogCount = 0;
     let activeTech = "all";
     let selectedSkillName = "";
+    let liveSyncValidation = null;
+    let simulationMode = "live"; // "live" | "synced" | "partial" | "newdev"
+
+    function toggleAgentPopover() {
+      document.getElementById("agent-popover").classList.toggle("open");
+    }
+
+    function setSimulationMode(mode) {
+      simulationMode = mode;
+      ["live", "synced", "partial", "newdev"].forEach(m => {
+        document.getElementById("sim-" + m)?.classList.toggle("active", m === mode);
+      });
+      applySyncVisualization();
+      renderFilteredList();
+      if (selectedSkillName) {
+        updateInspectorSyncBadge(selectedSkillName);
+      }
+    }
+
+    function effectiveSyncData() {
+      const total = totalCatalogCount || (liveSyncValidation?.targets?.[0]?.total_skills) || allLoadedSkills.length;
+      if (simulationMode === "live" && liveSyncValidation) {
+        return liveSyncValidation;
+      }
+      if (simulationMode === "synced") {
+        return {
+          all_synced: true,
+          targets_detected: 3,
+          total_missing: 0,
+          total_outdated: 0,
+          targets: [
+            { id: "claude", name: "Claude Code / Cowork", display_path: "~/.claude/skills", synced_count: total, total_skills: total, missing_count: 0, outdated_count: 0, is_synced: true },
+            { id: "antigravity", name: "Google Antigravity", display_path: "~/.gemini/config/skills", synced_count: total, total_skills: total, missing_count: 0, outdated_count: 0, is_synced: true },
+            { id: "cursor", name: "Cursor IDE", display_path: "~/.cursor/skills", synced_count: total, total_skills: total, missing_count: 0, outdated_count: 0, is_synced: true }
+          ],
+          all_catalog: liveSyncValidation?.all_catalog || []
+        };
+      }
+      if (simulationMode === "partial") {
+        const syncedN = Math.max(0, total - 8);
+        return {
+          all_synced: false,
+          targets_detected: 2,
+          total_missing: 3,
+          total_outdated: 5,
+          targets: [
+            { id: "cursor", name: "Cursor IDE", display_path: "~/.cursor/skills", synced_count: syncedN, total_skills: total, missing_count: 3, outdated_count: 5, is_synced: false },
+            { id: "claude", name: "Claude Code / Cowork", display_path: "~/.claude/skills", synced_count: total, total_skills: total, missing_count: 0, outdated_count: 0, is_synced: true }
+          ],
+          all_catalog: liveSyncValidation?.all_catalog || []
+        };
+      }
+      // "newdev": 0 active synced skills (first-time clone at a company using Copilot + Windsurf)
+      return {
+        all_synced: false,
+        targets_detected: 0,
+        total_missing: total,
+        total_outdated: 0,
+        targets: [],
+        all_catalog: liveSyncValidation?.all_catalog || []
+      };
+    }
+
+    function isSkillSyncedInCurrentView(skillName, idx) {
+      if (simulationMode === "synced") return true;
+      if (simulationMode === "newdev") return false;
+      if (simulationMode === "partial") return idx >= 8;
+      const sk = allLoadedSkills.find(item => item.name === skillName);
+      return sk ? !!sk.is_synced : true;
+    }
+
+    function applySyncVisualization() {
+      const syncVal = effectiveSyncData();
+      if (!syncVal) return;
+
+      const pill = document.getElementById("sync-header-pill");
+      const pillText = document.getElementById("sync-pill-text");
+      const bannerSection = document.getElementById("sync-banner-section");
+      const msgEl = document.getElementById("sync-validator-msg");
+
+      const targets = syncVal.targets || [];
+      const simTag = simulationMode !== "live" ? " [SIMULAÇÃO]" : "";
+
+      if (syncVal.all_synced && targets.length > 0) {
+        // ZERO VISUAL POLLUTION: Hide the top banner completely; show only discrete header pill
+        pill.className = "sync-header-pill mono";
+        pillText.textContent = `✓ ${targets.length} Agentes Sincronizados${simTag}`;
+        bannerSection.classList.add("hidden");
+      } else if (targets.length === 0) {
+        pill.className = "sync-header-pill warn mono";
+        pillText.textContent = `⚠️ 0 Agentes Sincronizados${simTag}`;
+        bannerSection.classList.remove("hidden");
+        msgEl.innerHTML = `<strong>⚠️ Aviso Validador${simTag}:</strong> Nenhuma ferramenta agêntica ativa recebeu as skills ainda. Clique em <strong>Sincronizar Agora</strong> ou escolha sua IDE/CLI.`;
+      } else {
+        const pendingTargets = targets.filter(t => !t.is_synced);
+        const diffCount = (syncVal.total_missing || 0) + (syncVal.total_outdated || 0);
+        pill.className = "sync-header-pill warn mono";
+        pillText.textContent = `⚠️ ${diffCount} Pendentes (${pendingTargets.length}/${targets.length} agentes)${simTag}`;
+        bannerSection.classList.remove("hidden");
+
+        const conciseList = pendingTargets.map(t => `${t.name} (${t.synced_count}/${t.total_skills})`).join(" · ");
+        msgEl.innerHTML = `<strong>⚠️ Aviso Validador${simTag}:</strong> Skills não instaladas ou desatualizadas em: <span class="mono">${conciseList}</span>`;
+      }
+
+      renderPopoverLists(syncVal);
+    }
+
+    function renderPopoverLists(syncVal) {
+      const activeBox = document.getElementById("popover-active-list");
+      const catalogBox = document.getElementById("popover-catalog-chips");
+      const targets = syncVal.targets || [];
+      const allCat = syncVal.all_catalog || [];
+
+      if (targets.length === 0) {
+        activeBox.innerHTML = `<div class="agent-row" style="color:var(--amber-warn);">Nenhum agente ativo sincronizado nesta estação. Selecione uma ferramenta abaixo para ativar.</div>`;
+      } else {
+        activeBox.innerHTML = targets.map(t => {
+          const badge = t.is_synced
+            ? `<span class="chip mono">✓ ${t.synced_count}/${t.total_skills}</span>`
+            : `<span class="chip warn mono">⚠️ ${t.synced_count}/${t.total_skills}</span>`;
+          return `
+            <div class="agent-row">
+              <div>
+                <strong style="color:var(--text-primary);">${t.name}</strong>
+                <div class="mono" style="font-size:11px; color:var(--text-muted);">${t.display_path || t.skills_dir}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${badge}
+                <button class="pill-btn mono" style="padding:3px 8px; font-size:11px;" onclick="runNativeSync('${t.id}')">Sincronizar</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      const activeIDs = new Set(targets.map(t => t.id));
+      const others = allCat.filter(c => !activeIDs.has(c.id));
+      catalogBox.innerHTML = others.map(c => {
+        const statusDot = c.host_present ? "🟢 Detectada no PC" : "⚪ Não usada no PC";
+        return `
+          <div class="optin-chip">
+            <span><strong>${c.name}</strong> (${statusDot})</span>
+            <button class="pill-btn mono" style="padding:2px 6px; font-size:10px;" onclick="runNativeSync('${c.id}')">+ Ativar</button>
+          </div>
+        `;
+      }).join("");
+    }
 
     async function refreshResourceMonitor() {
       try {
@@ -643,70 +968,42 @@
         document.getElementById("resource-monitor-text").textContent =
           `Heap: ${heapStr} MiB / ${limitStr} · RAM Livre Host: ${data.avail_ram_mb} MB · ${data.skills_count} Skills · ${data.sekg_nodes} Nós SEKG`;
 
-        renderSyncValidatorBanner(data.sync_validation, data.skills_count);
+        liveSyncValidation = data.sync_validation;
+        applySyncVisualization();
       } catch (_) {}
-    }
-
-    function renderSyncValidatorBanner(syncVal, totalSkills) {
-      const banner = document.getElementById("sync-validator-banner");
-      const msgEl = document.getElementById("sync-validator-msg");
-      if (!syncVal) return;
-
-      const targets = syncVal.targets || [];
-      if (syncVal.targets_detected === 0) {
-        banner.className = "sync-banner warn";
-        msgEl.innerHTML = `<strong>⚠️ Validador de Sincronização:</strong> Nenhuma pasta de agente local detectada com as ${totalSkills} skills instaladas. Execute o instalador para sincronizar.`;
-        return;
-      }
-
-      const targetSummaries = targets.map(t => {
-        if (t.is_synced) {
-          return `${t.name}: ${t.synced_count}/${t.total_skills} sincronizadas`;
-        }
-        const diffs = [];
-        if (t.missing_count > 0) diffs.push(`${t.missing_count} não instaladas`);
-        if (t.outdated_count > 0) diffs.push(`${t.outdated_count} desatualizadas`);
-        return `${t.name}: ${t.synced_count}/${t.total_skills} (${diffs.join(", ")})`;
-      }).join(" · ");
-
-      if (syncVal.all_synced) {
-        banner.className = "sync-banner ok";
-        msgEl.innerHTML = `<strong>✅ Validador de Sincronização:</strong> Todas as ${totalSkills} skills estão instaladas e sincronizadas (${targetSummaries}).`;
-      } else {
-        banner.className = "sync-banner warn";
-        msgEl.innerHTML = `<strong>⚠️ Aviso Validador — Skills não instaladas/sincronizadas:</strong> Detectada divergência nos agentes locais (${targetSummaries}).`;
-      }
     }
 
     function copySyncCommand() {
       navigator.clipboard?.writeText(".\\squad-harness.exe install");
       const btn = document.getElementById("sync-cmd-btn");
       const old = btn.textContent;
-      btn.textContent = "✓ Comando copiado!";
+      btn.textContent = "✓ Copiado!";
       setTimeout(() => { btn.textContent = old; }, 1400);
     }
 
-    async function runNativeSync() {
+    async function runNativeSync(targetId) {
       const btn = document.getElementById("sync-now-btn");
-      const old = btn.textContent;
-      btn.textContent = "⏳ Sincronizando (Go)...";
+      const old = btn ? btn.textContent : "";
+      if (btn) btn.textContent = "⏳ Sincronizando...";
       try {
-        const res = await fetch("/api/skills/sync", { method: "POST" });
+        const res = await fetch("/api/skills/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: targetId || "" })
+        });
         if (res.ok) {
-          const sum = await res.json();
-          btn.textContent = `✓ Sincronizado (${Number(sum.duration_ms).toFixed(0)} ms)`;
+          simulationMode = "live";
+          ["live", "synced", "partial", "newdev"].forEach(m => {
+            document.getElementById("sim-" + m)?.classList.toggle("active", m === "live");
+          });
           await refreshResourceMonitor();
           await fetchSkills();
           if (selectedSkillName) {
             await selectSkill(selectedSkillName);
           }
-        } else {
-          btn.textContent = "Erro ao sincronizar";
         }
-      } catch (_) {
-        btn.textContent = "Erro de conexão";
-      }
-      setTimeout(() => { btn.textContent = old; }, 2200);
+      } catch (_) {}
+      if (btn) setTimeout(() => { btn.textContent = old || "⚡ Sincronizar Agora (Go)"; }, 1200);
     }
 
     function setTechFilter(tech) {
@@ -733,36 +1030,33 @@
       dynamicCategories = data.categories || [];
       totalCatalogCount = data.total_catalog || allLoadedSkills.length;
 
-      if (!dynamicCategories.some(c => c.id === activeTech)) {
-        activeTech = "all";
-      }
       renderCategoryPills();
       renderFilteredList();
     }
 
     function renderFilteredList() {
+      const q = document.getElementById("search-input").value.trim();
       const filtered = allLoadedSkills.filter(s => {
-        if (activeTech === "all") return true;
-        return Array.isArray(s.techs) && s.techs.includes(activeTech);
+        return activeTech === "all" || (s.techs && s.techs.includes(activeTech));
       });
 
       document.getElementById("skills-counter").textContent =
-        `${filtered.length} / ${totalCatalogCount} Skills`;
-      const container = document.getElementById("skills-list");
+        q === "" && activeTech === "all"
+          ? `${filtered.length} / ${totalCatalogCount}`
+          : `${filtered.length} de ${totalCatalogCount}`;
 
-      container.innerHTML = filtered.map(s => {
-        const isSel = s.name === selectedSkillName;
-        const techLabel = s.tech_label || "";
-        const scoreBadge = s.score ? `<span class="chip mono">BM25: ${Number(s.score).toFixed(1)}</span>` : "";
-        const syncWarn = s.is_synced === false ? `<span class="chip chip-warn mono" title="Skill ainda não instalada ou desatualizada em um dos agentes locais">⚠️ Não sinc.</span>` : "";
+      const listEl = document.getElementById("skills-list");
+      listEl.innerHTML = filtered.map((s, idx) => {
+        const synced = isSkillSyncedInCurrentView(s.name, idx);
+        // Zero visual pollution: only show warning badge on cards that are NOT synced
+        const warnChip = synced ? "" : `<span class="chip warn mono" title="Pendente de sincronização">⚠️</span>`;
         return `
-          <div class="skill-item ${isSel ? 'selected' : ''}" onclick="loadSkillDetail('${s.name}')">
+          <div class="skill-item ${s.name === selectedSkillName ? 'selected' : ''}" onclick="selectSkill('${s.name}')">
             <div class="skill-top">
               <span class="skill-name mono">${s.name}</span>
-              <div style="display:flex; gap:6px;">
-                ${syncWarn}
-                ${scoreBadge}
-                <span class="chip mono">${techLabel}</span>
+              <div style="display:flex; gap:4px; align-items:center;">
+                ${warnChip}
+                <span class="chip mono">${s.tech_label}</span>
               </div>
             </div>
             <div class="skill-desc">${s.description || ''}</div>
@@ -770,12 +1064,25 @@
         `;
       }).join("");
 
-      if (filtered.length > 0 && !filtered.some(s => s.name === selectedSkillName)) {
-        loadSkillDetail(filtered[0].name);
+      if (filtered.length > 0 && (!selectedSkillName || !filtered.some(s => s.name === selectedSkillName))) {
+        selectSkill(filtered[0].name);
       }
     }
 
-    async function loadSkillDetail(name) {
+    function updateInspectorSyncBadge(name) {
+      const idx = allLoadedSkills.findIndex(s => s.name === name);
+      const synced = isSkillSyncedInCurrentView(name, idx >= 0 ? idx : 0);
+      const syncBadge = document.getElementById("insp-sync-badge");
+      if (synced) {
+        syncBadge.className = "chip mono";
+        syncBadge.textContent = "✓ Sincronizada";
+      } else {
+        syncBadge.className = "chip warn mono";
+        syncBadge.textContent = "⚠️ Pendente Sync";
+      }
+    }
+
+    async function selectSkill(name) {
       selectedSkillName = name;
       document.querySelectorAll(".skill-item").forEach(el => {
         const title = el.querySelector(".skill-name")?.textContent;
@@ -784,42 +1091,27 @@
 
       const res = await fetch("/api/skills/detail?name=" + encodeURIComponent(name));
       if (!res.ok) return;
-      const data = await res.json();
+      const d = await res.json();
 
-      document.getElementById("insp-name").textContent = data.name;
-      document.getElementById("insp-filepath").textContent = data.file_path;
-      document.getElementById("insp-desc").textContent = data.description || "";
-      document.getElementById("insp-tech").textContent = data.tech_label || "";
-      document.getElementById("insp-origin").textContent =
-        `${data.origin || "local"} · model: ${data.model || "default"}`;
-      document.getElementById("insp-sekg").textContent =
-        `Grau CSR: ${data.sekg_degree} · Com L0: #${data.sekg_comm_l0} · ${data.headers_count} seções`;
-
-      const utf8Status = data.valid_utf8 ? "UTF-8 OK" : "UTF-8 INVÁLIDO";
-      const eolStatus = data.has_crlf ? "CRLF" : "LF OK";
-      const sizeKB = (Number(data.size_bytes || 0) / 1024).toFixed(1);
+      document.getElementById("insp-name").textContent = d.name;
+      document.getElementById("insp-filepath").textContent = `skills/${d.name}/SKILL.md (${(d.size_bytes / 1024).toFixed(1)} KB)`;
+      document.getElementById("insp-desc").textContent = d.description || "";
+      document.getElementById("insp-tech").textContent = d.tech_label;
+      document.getElementById("insp-origin").textContent = `${d.origin || "squad-ai"} · ${d.model || "sonnet"}`;
+      document.getElementById("insp-sekg").textContent = `Grau ${d.sekg_degree} · Com. #${d.sekg_comm_l0} · ${d.headers_count} seções`;
       document.getElementById("insp-integrity").textContent =
-        `${utf8Status} · ${eolStatus} · ${sizeKB} KB`;
-
-      const syncBadge = document.getElementById("insp-sync-badge");
-      if (data.is_synced) {
-        syncBadge.className = "chip mono";
-        syncBadge.textContent = "✓ Sincronizada";
-      } else {
-        syncBadge.className = "chip chip-warn mono";
-        syncBadge.textContent = "⚠️ Não instalada / Desatualizada";
-      }
-
+        `${d.valid_utf8 ? "UTF-8 OK" : "UTF-8 ERRO"} · ${d.has_crlf ? "CRLF" : "LF"}`;
       document.getElementById("insp-defense-badge").textContent =
-        data.has_defense ? "🛡️ Linha de Defesa Verificada" : "⚠️ Sem Linha de Defesa";
-      document.getElementById("insp-markdown").textContent = data.raw_markdown || "";
+        d.has_defense ? "🛡️ Linha de Defesa 6/6" : "⚠️ Defesa Incompleta";
+
+      updateInspectorSyncBadge(d.name);
+      document.getElementById("insp-markdown").textContent = d.raw_markdown || "";
     }
 
     async function openSkillInExplorer() {
       if (!selectedSkillName) return;
       const btn = document.getElementById("open-skill-btn");
       const oldText = btn.textContent;
-      btn.textContent = "📂 Abrindo Explorer...";
       try {
         const res = await fetch("/api/skills/open", {
           method: "POST",
@@ -827,14 +1119,14 @@
           body: JSON.stringify({ name: selectedSkillName })
         });
         if (res.ok) {
-          btn.textContent = "✓ Aberto no Explorer!";
+          btn.textContent = "📂 Pasta Aberta!";
         } else {
-          btn.textContent = "⚠️ Erro ao abrir";
+          btn.textContent = "Erro ao abrir";
         }
       } catch (_) {
-        btn.textContent = "⚠️ Erro ao abrir";
+        btn.textContent = "Erro ao abrir";
       }
-      setTimeout(() => { btn.textContent = oldText; }, 1500);
+      setTimeout(() => { btn.textContent = oldText; }, 1400);
     }
 
     function copySkillName() {

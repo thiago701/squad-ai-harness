@@ -229,8 +229,24 @@ func runCLI(args []string) int {
 
 	case "install":
 		sub := "all"
-		if len(args) > 1 {
-			sub = strings.ToLower(strings.TrimSpace(args[1]))
+		var targetIDs []string
+		for i := 1; i < len(args); i++ {
+			a := strings.ToLower(strings.TrimSpace(args[i]))
+			switch a {
+			case "detect", "detectar", "verify", "verificar", "all", "instalar-todos", "sync":
+				sub = a
+			case "--target", "-t":
+				if i+1 < len(args) {
+					targetIDs = append(targetIDs, args[i+1])
+					i++
+				}
+			default:
+				if strings.HasPrefix(a, "--target=") {
+					targetIDs = append(targetIDs, strings.TrimPrefix(a, "--target="))
+				} else {
+					targetIDs = append(targetIDs, a)
+				}
+			}
 		}
 		cat, err := catalog.Load(rootDir)
 		if err != nil {
@@ -239,10 +255,13 @@ func runCLI(args []string) int {
 		}
 		switch sub {
 		case "detect", "detectar":
-			targets := installer.DetectTargets()
+			active := installer.DetectTargets()
+			allCat := installer.SupportedCatalog()
 			printJSON(map[string]any{
-				"targets_detected": len(targets),
-				"targets":          targets,
+				"active_targets_count":    len(active),
+				"supported_catalog_count": len(allCat),
+				"active_targets":          active,
+				"supported_catalog":       allCat,
 			})
 			return 0
 		case "verify", "verificar":
@@ -253,7 +272,16 @@ func runCLI(args []string) int {
 			}
 			return 0
 		case "all", "instalar-todos", "sync":
-			sum, err := installer.InstallToTargets(cat, nil)
+			var customTargets []installer.TargetDef
+			if len(targetIDs) > 0 {
+				resolved, err := installer.ResolveTargetsByIDs(targetIDs)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "erro: %v\n", err)
+					return 2
+				}
+				customTargets = resolved
+			}
+			sum, err := installer.InstallToTargets(cat, customTargets)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "erro ao instalar skills: %v\n", err)
 				return 1
@@ -264,7 +292,7 @@ func runCLI(args []string) int {
 			}
 			return 0
 		default:
-			fmt.Fprintf(os.Stderr, "uso: squad-harness install [all|detect|verify]\n")
+			fmt.Fprintf(os.Stderr, "uso: squad-harness install [all|detect|verify] [--target claude,cursor,copilot...]\n")
 			return 2
 		}
 
