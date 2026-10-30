@@ -26,6 +26,9 @@ import (
 //go:embed static/index.html
 var indexHTML []byte
 
+//go:embed static/logo.png
+var logoPNG []byte
+
 // Server serves the embedded Interactive Skills Catalog and live Resource Monitor API.
 type Server struct {
 	rootDir string
@@ -58,12 +61,20 @@ func (s *Server) SEKGNodesCount() int {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
+	mux.HandleFunc("/assets/logo.png", s.handleLogo)
 	mux.HandleFunc("/api/overview", s.handleOverview)
 	mux.HandleFunc("/api/skills", s.handleSkills)
 	mux.HandleFunc("/api/skills/detail", s.handleSkillDetail)
 	mux.HandleFunc("/api/skills/open", s.handleOpenSkill)
 	mux.HandleFunc("/api/skills/sync", s.handleSyncSkills)
 	return mux
+}
+
+func (s *Server) handleLogo(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write(logoPNG)
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {

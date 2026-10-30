@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
   <title id="doc-title">SquadAI Harness — Catálogo Interativo de Skills</title>
   <style>
     :root {
@@ -61,12 +62,19 @@
       background: var(--sky-bright);
     }
 
-    /* HEADER + MONITOR DE RECURSOS + COMPACT SYNC PILL */
+    /* HEADER + README LOGO LOCKUP + MONITOR DE RECURSOS + COMPACT SYNC PILL */
     header {
-      background: rgba(11, 19, 34, 0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 11px 22px;
+      background-color: #060b16;
+      background-image:
+        radial-gradient(circle at 12% 50%, rgba(56, 189, 248, 0.16), transparent 36%),
+        radial-gradient(circle at 88% 50%, rgba(125, 211, 252, 0.08), transparent 40%),
+        linear-gradient(rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.045) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px;
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(125, 211, 252, 0.30);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(56, 189, 248, 0.18);
+      padding: 10px 22px;
       flex-shrink: 0;
       position: relative;
       z-index: 30;
@@ -79,40 +87,87 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
     }
 
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
-    .brand-emblem {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(125, 211, 252, 0.22), rgba(56, 189, 248, 0.06));
-      border: 1px solid var(--border-sky);
-      box-shadow: 0 0 18px var(--sky-glow);
-      display: flex;
+    .brand-logo-frame {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      border-radius: 12px;
+      padding: 2px 6px;
+      background: linear-gradient(135deg, rgba(8, 15, 30, 0.96), rgba(6, 11, 22, 0.92));
+      border: 1px solid rgba(125, 211, 252, 0.34);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.18), inset 0 0 14px rgba(56, 189, 248, 0.08);
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .brand-logo-frame:hover {
+      border-color: var(--sky-light);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.30), inset 0 0 16px rgba(56, 189, 248, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .brand-logo-img {
+      height: 64px;
+      width: auto;
+      display: block;
+      border-radius: 9px;
+      object-fit: contain;
+    }
+
+    .brand-divider {
+      width: 1px;
+      height: 44px;
+      background: linear-gradient(180deg, transparent, rgba(125, 211, 252, 0.42), transparent);
+    }
+
+    @media (max-width: 768px) {
+      .brand-divider {
+        display: none;
+      }
+      .brand-logo-img {
+        height: 52px;
+      }
+    }
+
+    .brand-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--sky-light);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 3px;
     }
 
     .brand-title {
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
       letter-spacing: -0.01em;
       color: var(--text-primary);
       margin: 0;
+      text-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
     }
 
     .brand-subtitle {
       font-size: 12px;
-      color: var(--sky-light);
-      margin: 1px 0 0 0;
+      color: var(--text-secondary);
+      margin: 2px 0 0 0;
       font-weight: 500;
     }
 
@@ -608,19 +663,23 @@
 </head>
 <body>
 
-  <!-- TOP BAR: BRAND + MONITOR DE RECURSOS + COMPACT SYNC PILL -->
+  <!-- TOP BAR: README LOGO LOCKUP + CATALOG IDENTITY + MONITOR DE RECURSOS + COMPACT SYNC PILL -->
   <header>
     <div class="header-inner">
       <div class="brand-group">
-        <div class="brand-emblem">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
+        <div class="brand-logo-frame" title="SquadAI Harness — Gated Autonomous Software Engineering · Go Runtime">
+          <img
+            id="brand-logo-img"
+            class="brand-logo-img"
+            src="/assets/logo.png"
+            alt="SquadAI Harness — Gated Autonomous Software Engineering · Go Runtime"
+          />
         </div>
+        <div class="brand-divider" aria-hidden="true"></div>
         <div>
+          <div class="brand-kicker mono" id="hdr-kicker">GATED AUTONOMOUS SOFTWARE ENGINEERING · GO EXCLUSIVE</div>
           <h1 class="brand-title" id="hdr-title">Catálogo Interativo de Skills</h1>
-          <p class="brand-subtitle" id="hdr-identity">Lendo telemetria do runtime...</p>
+          <p class="brand-subtitle mono" id="hdr-identity">Lendo telemetria do runtime...</p>
         </div>
       </div>
 
