@@ -150,6 +150,207 @@ Para facilitar o entendimento técnico e executivo, cada bloco numerado no diagr
 
 ---
 
+## 🔄 Pipeline Gated End-to-End (`GATE 1` / `GATE 2`), Blast Radius e Níveis de Autonomia (`N0–N3`)
+
+O princípio central da Squad é **"Gated, Not Autonomous"** (*autônoma na execução, gated na decisão*). A cerimônia de engenharia se adapta automaticamente ao **raio de impacto (*Blast Radius*)** da mudança, exigindo aprovação humana explícita apenas nos marcos irreversíveis:
+
+```mermaid
+flowchart LR
+    subgraph FASE_N0_N1["Fase N0 / N1 — Leitura, Pesquisa e Planejamento (Zero Escrita em Producao)"]
+        S0["0. Intake & Blast Radius — Classifica: trivial | small | standard | large"]
+        S1["1. Research & SEKG — Mapeia acoplamentos, contratos e reuso no grafo"]
+        S2["2. Plan — Gera .prd.md + .plan.md + ADRs"]
+        S0 --> S1
+        S1 --> S2
+    end
+
+    G1{"GATE 1 — Humano Aprova o Plano?"}
+
+    subgraph FASE_N2["Fase N2 — Execucao Autonoma Reversivel (TDD + Especialistas)"]
+        S3["3. Scaffold & Contratos — OpenAPI, DBML, ASL e Interfaces"]
+        S4["4. Ciclo TDD — Red -> Green -> Refactor com Oraculos Executaveis"]
+        S5["5. Review & Tribunal JEV — 25 Especialistas + Tech Lead + Seguranca"]
+        S3 --> S4
+        S4 --> S5
+    end
+
+    G2{"GATE 2 — Diff Aprovado + Gates PASS?"}
+
+    subgraph FASE_N3["Fase N3 — Entrega Auditada & Memoria"]
+        S6["6. Commit & Remember — Conventional Commit PT-BR + Atualizacao SEKG + QUID"]
+    end
+
+    S2 --> G1
+    G1 -->|"Aprovado"| S3
+    G1 -->|"Ajustar"| S2
+    S5 --> G2
+    G2 -->|"PASS + Zero Critico"| S6
+    G2 -->|"Bloqueado / Corrigir"| S4
+```
+
+### 1. Matriz de Dimensionamento por *Blast Radius* (Anti-"Agent Soup")
+
+Para evitar o desperdício de acionar dezenas de agentes em tarefas simples (*anti-padrão "agent soup"*), o `SEKG Impact Analyzer` classifica cada pedido no **Passo 0**:
+
+| Tamanho (*Size Class*) | Sinal Detectado pelo `SEKG` | Resposta da Squad | Orçamento de Contexto |
+| :--- | :--- | :--- | :---: |
+| **`trivial`** | 1 arquivo, sem nova dependência, sem ambiguidade | **1 especialista direto**; sem burocracia de pipeline completo. | `CTX-1` (`2.000 tokens`) |
+| **`small`** | Poucos arquivos em um único pacote, escopo claro | **1 a 2 especialistas**; pipeline enxuto com validação de testes. | `CTX-2` (`6.000 tokens`) |
+| **`standard`** | Múltiplos pacotes/contratos, decisão de design local | **Pipeline completo** com `GATE 1` (plano) e `GATE 2` (diff). | `CTX-3` (`12.000 tokens`) |
+| **`large`** | Nova capacidade, novas dependências, mudança de schema/arquitetura | **Comissão de Arquitetos + Spec aprovada obrigatória** antes de codar; squad completa. | `CTX-3` (`12.000 tokens`) |
+
+### 2. Os 4 Níveis de Autonomia (`N0` a `N3` — [`governance/autonomy-policy.md`](governance/autonomy-policy.md))
+
+| Nível | Nome | O que o Agente Pode Fazer Sozinho | Onde Precisa de Humano |
+| :---: | :--- | :--- | :--- |
+| **`N0`** | **Observação Pura** | Ler arquivos, consultar o grafo `SEKG`, rodar diagnósticos *read-only* e produzir relatórios. | Nenhuma permissão necessária (100% seguro). |
+| **`N1`** | **Proposta & Planejamento** | Escrever artefatos de especificação (`.prd.md`, `.plan.md`, ADRs) em área de rascunho. | Não pode tocar em código de produção até a aprovação do **`GATE 1`**. |
+| **`N2`** | **Execução Reversível** | Criar/editar código e testes dentro do workspace, rodar compilador, linter e suíte de testes locais. | Barrado automaticamente por `hooks` se tentar tocar segredos ou violar a trava `Go-Exclusive`. |
+| **`N3`** | **Operação Irreversível / Externa** | `git commit`, `git push`, migração destrutiva de banco, `terraform apply` ou alteração de segurança. | Exige **`GATE 2` aprovado (`PASS`)** + confirmação explícita do desenvolvedor. |
+
+---
+
+## ⚖️ Core de Decisão: Tribunal JEV (25 Especialistas), Função `DecidirEntrega` e Arbitragem `P1 > P2 > P3`
+
+Em vez de depender de opiniões subjetivas de um LLM a cada revisão de código, o core do `squad-ai-harness` possui um **motor jurídico-técnico determinístico** em Go ([`internal/jev/`](internal/jev/) e [`internal/gates/`](internal/gates/)) que roda em **`~518 µs`**:
+
+```mermaid
+flowchart TB
+    DIFF["Alteracao de Codigo / Contrato / Infra (Git Diff + AST)"]
+
+    subgraph TRIBUNAL["Tribunal Deterministico JEV (25 Especialistas em Goroutines · US$ 0)"]
+        DOM_SEC["Esquadrao Seguranca — SecretScan (14 classes), Auth/JWT, OWASP, Prompt Defense"]
+        DOM_ARC["Esquadrao Arquitetura — Clean Arch, Acoplamento, Go-Exclusive Lock, Drift Spec x Codigo"]
+        DOM_DB["Esquadrao Dados & Cloud — Schema DBML, Migracoes Expand-Contract, ASL Step Functions, VTL"]
+        DOM_QA["Esquadrao Qualidade & Performance — Sonar-First (Complexidade Cognitiva), Oraculos TDD, Memoria"]
+    end
+
+    JUDGE["Critic / Judge — Funcao de Arbitragem Imutavel: Seguranca >> P1 Simplicidade > P2 Performance > P3 Custo"]
+
+    subgraph GATES4["Funcao Canonica DecidirEntrega (4 Gates de Entrega)"]
+        G_ENV["1. environment-infrastructure-gate (Runtime, Limites, IaC, Config)"]
+        G_DB["2. database-schema-gate (Compatibilidade de Schema e Migracoes)"]
+        G_CFG["3. config-compatibility-gate (Manifestos, Contratos e Flags)"]
+        G_INT["4. interop-contract-gate (OpenAPI, MCP, Eventos e Consumidores)"]
+    end
+
+    VERDICT{"Veredito Unico Auditavel"}
+    PASS["PASS — Pronto para o GATE 2 / Commit"]
+    BLOCKED["BLOCKED — Bloqueio Imediato (Exit Code 2)"]
+    INCONC["INCONCLUSIVE / STALE — Exige Evidencia Adicional"]
+
+    DIFF --> DOM_SEC
+    DIFF --> DOM_ARC
+    DIFF --> DOM_DB
+    DIFF --> DOM_QA
+    DOM_SEC --> JUDGE
+    DOM_ARC --> JUDGE
+    DOM_DB --> JUDGE
+    DOM_QA --> JUDGE
+    JUDGE --> G_ENV
+    JUDGE --> G_DB
+    JUDGE --> G_CFG
+    JUDGE --> G_INT
+    G_ENV --> VERDICT
+    G_DB --> VERDICT
+    G_CFG --> VERDICT
+    G_INT --> VERDICT
+    VERDICT -->|"100% Conforme"| PASS
+    VERDICT -->|"Violacao P1/Seguranca"| BLOCKED
+    VERDICT -->|"Sem Oraculo Fresco"| INCONC
+```
+
+### Como o Core Resolve Conflitos Técnicos (Regra de Desempate)
+
+Quando dois especialistas apontam direções opostas (por exemplo, `arquiteto-minimalista` sugere monólito modular com SQLite/Postgres enquanto outro caminho sugere microsserviços com Kafka), o **Juiz JEV (`Critic/Judge`)** aplica a cláusula pétrea da Squad:
+
+1. **Segurança é Inegociável (`🔴 BLOQUEANTE`)**: qualquer achado crítico de segurança (segredo exposto, injeção, quebra de autenticação, ausência da Linha de Defesa de Prompt) veta imediatamente a entrega, prevalecendo sobre qualquer ganho de simplicidade, performance ou custo.
+2. **`P1 Simplicidade` vence `P2 Performance`**: soluções mais simples e fáceis de manter vencem otimizações prematuras — a menos que exista um **SLA/SLO explícito** documentado pelo `arquiteto-performance` exigindo o contrário.
+3. **`P2 Performance` vence `P3 Custo Baixo`**: dentro dos limites de simplicidade, a arquitetura prioriza baixa latência e eficiência de memória antes de micro-otimizações de custo.
+
+---
+
+## ⚡ Compute Router Multi-Estação (`C0` / `C1` / `C2`) & Resiliência em 3 Camadas
+
+O `squad-ai-harness` foi projetado para rodar com desempenho máximo em **qualquer máquina** — desde um notebook corporativo bloqueado (somente CPU) até uma workstation com NPU dedicada ou servidor com GPU NVIDIA RTX — combinando roteamento adaptativo ([`internal/compute/`](internal/compute/)) e isolamento de falhas em 3 camadas:
+
+```mermaid
+flowchart LR
+    subgraph HW["1. Sensor de Hardware da Estacao (squad-harness compute)"]
+        PROBE["Probe Nativo (CPU Cores, AVX2, RAM Livre, iGPU, NPU AI Boost, dGPU CUDA)"]
+    end
+
+    subgraph ROUTER["2. Cognitive Compute Router (Menor Custo que Cumpre a Missao)"]
+        R_C0["Camada C0 — Go Nativo (CPU Pura) · 100% Deterministico · < 10 ms · US$ 0"]
+        R_C1["Camada C1 — Neural Assist Local (ONNX / NPU / iGPU / dGPU) · Embeddings e Rerank · US$ 0"]
+        R_C2["Camada C2 — LLM Cloud Roteado por Complexidade (Haiku -> Sonnet -> Opus)"]
+    end
+
+    subgraph RESIL["3. Resiliencia em 3 Camadas (Circuit Breaker Anti-Travamento)"]
+        CB1["Camada 1 — Disjuntor por Especialista (Isola skill com falha repetida)"]
+        CB2["Camada 2 — Cooldown por Tentativa (Backoff Exponencial + Jitter)"]
+        CB3["Camada 3 — Lockout e Fallback de Modelo (429 / Timeout: Opus -> Sonnet -> Haiku -> C0)"]
+        CB1 --> CB2
+        CB2 --> CB3
+    end
+
+    PROBE --> R_C0
+    PROBE --> R_C1
+    PROBE --> R_C2
+    R_C2 --> CB1
+```
+
+| Camada Computacional | Onde Roda | O que Executa | Latência & Custo | Comportamento Offline / Firewall |
+| :--- | :--- | :--- | :---: | :--- |
+| **`C0` — Go Nativo** | Qualquer CPU (`amd64` / `arm64`, sem GPU/NPU) | Preflight 10 estágios, `SEKG` CSR + Leiden, `HybridRouter` BM25, Tribunal JEV (25 especialistas), Gates, Linter ASL/VTL, SecretScan e Relatório `QUID`. | **`< 10 ms` · `US$ 0`** | **100% Offline** (zero rede). |
+| **`C1` — Neural Local** | CPU AVX2, Intel/AMD NPU, iGPU ou GPU RTX local | Reranking semântico denso (`384-d`), classificação auxiliar local e embeddings sem sair da máquina. | **`< 25 ms` · `US$ 0`** | **100% Offline** (pesos locais em `~/.squad-ai/models`). |
+| **`C2` — LLM Cloud** | Provedor configurado no agente (Anthropic, Google, OpenAI, Bedrock) | Geração criativa de código, modelagem de domínio complexa e arbitragem arquitetural profunda (`Haiku` / `Sonnet` / `Opus`). | Sob demanda (contexto reduzido em até 75%) | Protegido por **Circuit Breaker de 3 camadas** com fallback gracioso para `C0`. |
+
+---
+
+## 🗺️ Ecossistema das 106 Skills: Mapa por Domínio e Composição Dinâmica de Equipe
+
+Toda capacidade da Squad nasce como uma **Skill auditável** (`skills/<nome>/SKILL.md`), seguindo o princípio **Agent-First / Skills-First**. O `HybridRouter` seleciona dinamicamente apenas os especialistas necessários para cada etapa do ciclo de engenharia:
+
+```mermaid
+flowchart LR
+    D1["1. Especificacao & DDD (engenheiro-especificacao, comissao-arquitetos)"]
+    D2["2. Arquitetura & Cloud AWS (arquiteto-minimalista, arquiteto-cloud-aws, step-functions)"]
+    D3["3. Backend & Runtimes (golang-pro, java25-spring-boot, python-pro, rust-pro, dotnet-csharp-pro)"]
+    D4["4. Frontend & UI/UX (especialista-frontend, angular-error-investigator, ui-ux-pro-max)"]
+    D5["5. Bancos & Streaming (especialista-banco, arquiteto-dados-streaming, localstack-dev)"]
+    D6["6. Qualidade, Caos & Contratos (especialista-qualidade, contrato-reverso, testes-resiliencia-caos-aws)"]
+    D7["7. Seguranca & Supply Chain (engenheiro-seguranca, auditoria-skill-externa, validacao-veracode)"]
+    D8["8. Observabilidade, DevOps & IaC (engenheiro-iac, logs-observabilidade, dd-apm, trace2local)"]
+
+    D1 --> D2
+    D2 --> D3
+    D2 --> D4
+    D2 --> D5
+    D3 --> D6
+    D4 --> D6
+    D5 --> D6
+    D6 --> D7
+    D7 --> D8
+```
+
+### Catálogo Resumido por Domínio de Engenharia ([`governance/registry/registry.json`](governance/registry/registry.json))
+
+| Domínio do Core | Especialistas de Referência (`skills/*/SKILL.md`) | Modelo Alvo (`P3`) | Quando o `HybridRouter` Aciona Automaticamente |
+| :--- | :--- | :---: | :--- |
+| **1. Orquestração & Planejamento** | `squad-ai`, `squad-pipeline`, `comissao-arquitetos`, `repo-ai-first-multiagente`, `batman` | `opus` | Pedidos de novos sistemas, refino arquitetural em 3 rodadas, coordenação multi-agente e melhoria contínua noturna. |
+| **2. Especificação, Produto & DDD** | `engenheiro-especificacao`, `diagramador`, `sandeco-loop`, `traceability-matrix-builder`, `spec-code-drift-detector` | `sonnet` / `opus` | Levantamento de requisitos, user stories BDD/Gherkin, EventStorming, diagramas C4/Mermaid e detecção de drift entre spec e código. |
+| **3. Arquitetura de Software & Performance** | `arquiteto-minimalista`, `engenheiro-clean-architect`, `arquiteto-performance`, `sonar-first-engineering` | `opus` | Desenho de sistemas, combate a overengineering, SOLID/Clean Architecture, análise de latência p95/p99 e complexidade cognitiva. |
+| **4. Cloud AWS, Serverless & Eventos** | `arquiteto-cloud-aws`, `aws-serverless-eda`, `orquestracao-step-functions`, `api-gateway-integracoes`, `tempo-real-aws`, `analise-producao-aws` | `opus` | Arquitetura AWS (Padrão/Enterprise), FinOps, workflows ASL Step Functions, API Gateway/VTL, WebSocket/IoT Core e diagnóstico *read-only* de produção. |
+| **5. Engenharia Go, Rust, Java 25, Python, .NET & Node** | `golang-pro`, `go-cloud-services`, `aws-lambda-go`, `rust-pro`, `java25-spring-boot`, `quarkus-java-aot`, `aws-lambda-java25-aot`, `python-pro`, `python-memoria`, `dotnet-csharp-pro`, `nodejs-pro` | `sonnet` | Implementação idiomática, concorrência segura, GraalVM/Native AOT, Lambdas de cold-start sub-100ms e otimização de memória RAM. |
+| **6. Frontend, Web & UI/UX** | `especialista-frontend`, `typescript-pro`, `angular-error-investigator`, `ui-ux-pro-max`, `validador-navegador` | `sonnet` | Aplicações Angular 21+ Signals, TypeScript 7, design systems acessíveis e validação E2E real via navegador. |
+| **7. Bancos de Dados & Streaming** | `especialista-banco`, `arquiteto-dados-streaming`, `localstack-dev` | `sonnet` / `opus` | Modelagem DBML-first, SQL (Postgres/Aurora) e NoSQL (DynamoDB single-table), migrações *Expand-Contract*, Outbox, Kafka/Kinesis e LocalStack. |
+| **8. IA, Agentes, GraphRAG & MCP** | `arquiteto-ia`, `ai-evaluation`, `mcp-builder`, `graphify`, `headroom`, `roteamento-modelo-adaptativo`, `resiliencia-agente` | `opus` | Arquitetura de agentes LLM, RAG, servidores MCP enxutos (`<= 10 servers`), avaliação A/B (LLMOps) e compressão de contexto. |
+| **9. Qualidade, Testes, Contratos & Caos** | `especialista-qualidade`, `estrategia-testes-aws`, `contrato-reverso`, `testes-carga-desempenho-aws`, `testes-resiliencia-caos-aws`, `testes-infra-iac-aws` | `sonnet` | Pirâmide TDD/BDD, Testcontainers, testes reversos dirigidos pelo consumidor (CDC), k6/Locust e engenharia de caos com AWS FIS. |
+| **10. Segurança, DevOps & Observabilidade** | `engenheiro-seguranca`, `testes-seguranca-aws`, `auditoria-skill-externa`, `validacao-veracode`, `engenheiro-iac`, `logs-observabilidade`, `dd-apm`, `dd-logs`, `dd-monitors`, `trace2local` | `opus` / `sonnet` | Acionado **automaticamente** em qualquer diff de auth/input/queries/cripto/secrets; Terraform gated, logs estruturados sem vazamento de PII e APM Datadog/Local. |
+
+---
+
 ## 🚀 Guia Rápido de Instalação e Uso
 
 ### 1. Compilar o Binário Nativo (`Go 1.24.3+`)
