@@ -1,0 +1,263 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="1280" height="560" role="img" aria-label="Pipeline Gated End-to-End (N0-N3) e Governanca DecidirEntrega">
+  <defs>
+    <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070a12"/>
+      <stop offset="50%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#080c17"/>
+    </linearGradient>
+
+    <linearGradient id="hdrGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="phaseN01" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0c192c"/>
+    </linearGradient>
+
+    <linearGradient id="phaseN2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#131633"/>
+      <stop offset="100%" stop-color="#181236"/>
+    </linearGradient>
+
+    <linearGradient id="phaseN3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06281e"/>
+      <stop offset="100%" stop-color="#0a2e26"/>
+    </linearGradient>
+
+    <linearGradient id="gateAmber" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="100%" stop-color="#271004"/>
+    </linearGradient>
+
+    <linearGradient id="gateEmerald" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#042f2e"/>
+    </linearGradient>
+
+    <linearGradient id="govGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <linearGradient id="resGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#311028" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <pattern id="grid2" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#1e293b" stroke-width="0.6" stroke-opacity="0.45"/>
+    </pattern>
+
+    <filter id="cardShadow2" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+
+    <marker id="arrSky" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrAmber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrViolet" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#a855f7"/>
+    </marker>
+    <marker id="arrEmerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="560" rx="16" fill="url(#bgGrad2)"/>
+  <rect width="1280" height="560" rx="16" fill="url(#grid2)"/>
+  <rect x="1" y="1" width="1278" height="558" rx="15" fill="none" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Top Header Banner -->
+  <rect x="24" y="18" width="1232" height="58" rx="12" fill="url(#hdrGrad2)" stroke="#475569" stroke-width="1.2" filter="url(#cardShadow2)"/>
+  <circle cx="52" cy="47" r="13" fill="#0ea5e9" fill-opacity="0.2" stroke="#38bdf8" stroke-width="1.8"/>
+  <path d="M46 47 L58 47 M52 41 L58 47 L52 53" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="76" y="43" font-family="'Segoe UI', Inter, system-ui, sans-serif" font-size="16" font-weight="800" fill="#f8fafc" letter-spacing="0.8">PIPELINE GATED END-TO-END (N0–N3), BLAST RADIUS &amp; GOVERNANÇA DECIDIR ENTREGA</text>
+  <text x="76" y="61" font-family="'Segoe UI', Inter, system-ui, sans-serif" font-size="11.5" fill="#94a3b8">Regra de Ouro: "Gated, Not Autonomous" — Autônomo na execução reversível (N2) · Gated por humano nos marcos críticos (GATE 1 &amp; GATE 2)</text>
+
+  <rect x="1038" y="31" width="202" height="30" rx="15" fill="#064e3b" fill-opacity="0.55" stroke="#10b981" stroke-width="1"/>
+  <text x="1139" y="50" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#a7f3d0">P1 &gt; P2 &gt; P3 · SEC = VETO</text>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 1: MAIN PIPELINE STAGES (N0/N1 -> GATE 1 -> N2 -> GATE 2 -> N3)     -->
+  <!-- ======================================================================= -->
+
+  <!-- STAGE N0 / N1 (X=24, W=352, Y=94, H=210) -->
+  <rect x="24" y="94" width="352" height="210" rx="12" fill="url(#phaseN01)" stroke="#0284c7" stroke-width="1.8" filter="url(#cardShadow2)"/>
+  <rect x="24" y="94" width="352" height="32" rx="12" fill="#0369a1" fill-opacity="0.35"/>
+  <text x="40" y="115" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700" fill="#7dd3fc">FASE N0 / N1 · LER &amp; PLANEJAR</text>
+  <rect x="242" y="100" width="122" height="20" rx="10" fill="#0c4a6e" stroke="#38bdf8" stroke-width="0.8"/>
+  <text x="303" y="114" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#e0f2fe">0 Escrita em Prod</text>
+
+  <!-- Step 0 -->
+  <rect x="38" y="136" width="324" height="44" rx="8" fill="#09101d" stroke="#1e293b" stroke-width="1.2"/>
+  <rect x="46" y="144" width="26" height="26" rx="6" fill="#0284c7" fill-opacity="0.25" stroke="#38bdf8" stroke-width="1"/>
+  <text x="59" y="161" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#38bdf8">01</text>
+  <text x="82" y="155" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Intake &amp; Classificador de Blast Radius</text>
+  <text x="82" y="171" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#94a3b8">trivial (1 agente) | small | standard | large</text>
+
+  <!-- Step 1 -->
+  <rect x="38" y="188" width="324" height="44" rx="8" fill="#09101d" stroke="#1e293b" stroke-width="1.2"/>
+  <rect x="46" y="196" width="26" height="26" rx="6" fill="#0284c7" fill-opacity="0.25" stroke="#38bdf8" stroke-width="1"/>
+  <text x="59" y="213" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#38bdf8">02</text>
+  <text x="82" y="207" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Research &amp; Reuse via Grafo SEKG</text>
+  <text x="82" y="223" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#94a3b8">GraphRAG Híbrido (RRF k=60) + Memória M0–M3</text>
+
+  <!-- Step 2 -->
+  <rect x="38" y="240" width="324" height="50" rx="8" fill="#09101d" stroke="#0284c7" stroke-width="1.2"/>
+  <rect x="46" y="251" width="26" height="26" rx="6" fill="#0284c7" fill-opacity="0.25" stroke="#38bdf8" stroke-width="1"/>
+  <text x="59" y="268" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#38bdf8">03</text>
+  <text x="82" y="261" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Especificação &amp; Plano Arquitetural</text>
+  <text x="82" y="278" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#7dd3fc">Artefatos: .prd.md + .plan.md + ADR</text>
+
+  <!-- Arrow N0/N1 -> GATE 1 -->
+  <line x1="376" y1="199" x2="402" y2="199" stroke="#f59e0b" stroke-width="2.2" marker-end="url(#arrAmber)"/>
+
+  <!-- GATE 1 (X=406, W=130, Y=94, H=210) -->
+  <rect x="406" y="94" width="130" height="210" rx="12" fill="url(#gateAmber)" stroke="#f59e0b" stroke-width="2.2" filter="url(#cardShadow2)"/>
+  <polygon points="471,112 492,122 492,144 471,156 450,144 450,122" fill="#78350f" stroke="#fbbf24" stroke-width="1.6"/>
+  <text x="471" y="139" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="800" fill="#fef3c7">G1</text>
+  <text x="471" y="178" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="13" font-weight="800" fill="#fbbf24">▶ GATE 1 ◀</text>
+  <text x="471" y="198" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11" font-weight="700" fill="#fef3c7">Aprovação</text>
+  <text x="471" y="213" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11" font-weight="700" fill="#fef3c7">Humana</text>
+  <line x1="422" y1="228" x2="520" y2="228" stroke="#b45309" stroke-width="1"/>
+  <text x="471" y="246" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#fde68a">Valida Escopo</text>
+  <text x="471" y="262" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#fde68a">Contratos &amp; SLA</text>
+  <rect x="420" y="274" width="102" height="20" rx="10" fill="#78350f" stroke="#f59e0b" stroke-width="0.9"/>
+  <text x="471" y="288" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#fef3c7">Libera N2</text>
+
+  <!-- Arrow GATE 1 -> N2 -->
+  <line x1="536" y1="199" x2="562" y2="199" stroke="#a855f7" stroke-width="2.2" marker-end="url(#arrViolet)"/>
+
+  <!-- STAGE N2 (X=566, W=354, Y=94, H=210) -->
+  <rect x="566" y="94" width="354" height="210" rx="12" fill="url(#phaseN2)" stroke="#9333ea" stroke-width="1.8" filter="url(#cardShadow2)"/>
+  <rect x="566" y="94" width="354" height="32" rx="12" fill="#6b21a8" fill-opacity="0.35"/>
+  <text x="582" y="115" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700" fill="#d8b4fe">FASE N2 · EXECUÇÃO AUTÔNOMA</text>
+  <rect x="798" y="100" width="110" height="20" rx="10" fill="#3b0764" stroke="#a855f7" stroke-width="0.8"/>
+  <text x="853" y="114" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#f3e8ff">TDD + Review</text>
+
+  <!-- Step 3 -->
+  <rect x="580" y="136" width="326" height="44" rx="8" fill="#090d1a" stroke="#1e293b" stroke-width="1.2"/>
+  <rect x="588" y="144" width="26" height="26" rx="6" fill="#9333ea" fill-opacity="0.25" stroke="#c084fc" stroke-width="1"/>
+  <text x="601" y="161" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#c084fc">04</text>
+  <text x="624" y="155" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Scaffold &amp; Contratos Congelados</text>
+  <text x="624" y="171" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#94a3b8">Posse exclusiva de arquivos no DAG multiagente</text>
+
+  <!-- Step 4 -->
+  <rect x="580" y="188" width="326" height="44" rx="8" fill="#090d1a" stroke="#1e293b" stroke-width="1.2"/>
+  <rect x="588" y="196" width="26" height="26" rx="6" fill="#9333ea" fill-opacity="0.25" stroke="#c084fc" stroke-width="1"/>
+  <text x="601" y="213" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#c084fc">05</text>
+  <text x="624" y="207" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Ciclo TDD (Test-First Obrigatório)</text>
+  <text x="624" y="223" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#94a3b8">RED → GREEN → REFACTOR + Ratchet Anti-Regressão</text>
+
+  <!-- Step 5 -->
+  <rect x="580" y="240" width="326" height="50" rx="8" fill="#090d1a" stroke="#9333ea" stroke-width="1.2"/>
+  <rect x="588" y="251" width="26" height="26" rx="6" fill="#9333ea" fill-opacity="0.25" stroke="#c084fc" stroke-width="1"/>
+  <text x="601" y="268" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#c084fc">06</text>
+  <text x="624" y="261" font-family="'Segoe UI', Inter, sans-serif" font-size="12" font-weight="700" fill="#f1f5f9">Review Multi-Lente &amp; Segurança</text>
+  <text x="624" y="278" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" fill="#d8b4fe">Tribunal JEV + engenheiro-seguranca (auth/crypto)</text>
+
+  <!-- Arrow N2 -> GATE 2 -->
+  <line x1="920" y1="199" x2="946" y2="199" stroke="#10b981" stroke-width="2.2" marker-end="url(#arrEmerald)"/>
+
+  <!-- GATE 2 (X=950, W=130, Y=94, H=210) -->
+  <rect x="950" y="94" width="130" height="210" rx="12" fill="url(#gateEmerald)" stroke="#10b981" stroke-width="2.2" filter="url(#cardShadow2)"/>
+  <polygon points="1015,112 1036,122 1036,144 1015,156 994,144 994,122" fill="#065f46" stroke="#34d399" stroke-width="1.6"/>
+  <text x="1015" y="139" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="800" fill="#d1fae5">G2</text>
+  <text x="1015" y="178" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="13" font-weight="800" fill="#34d399">▶ GATE 2 ◀</text>
+  <text x="1015" y="198" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11" font-weight="700" fill="#ecfdf5">Diff &amp; Gates</text>
+  <text x="1015" y="213" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11" font-weight="700" fill="#ecfdf5">Aprovados</text>
+  <line x1="966" y1="228" x2="1064" y2="228" stroke="#059669" stroke-width="1"/>
+  <text x="1015" y="246" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#a7f3d0">Zero Achado 🔴</text>
+  <text x="1015" y="262" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#a7f3d0">12 Gates PASS</text>
+  <rect x="964" y="274" width="102" height="20" rx="10" fill="#065f46" stroke="#10b981" stroke-width="0.9"/>
+  <text x="1015" y="288" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#ecfdf5">Libera N3</text>
+
+  <!-- Arrow GATE 2 -> N3 -->
+  <line x1="1080" y1="199" x2="1106" y2="199" stroke="#10b981" stroke-width="2.2" marker-end="url(#arrEmerald)"/>
+
+  <!-- STAGE N3 (X=1110, W=146, Y=94, H=210) -->
+  <rect x="1110" y="94" width="146" height="210" rx="12" fill="url(#phaseN3)" stroke="#10b981" stroke-width="1.8" filter="url(#cardShadow2)"/>
+  <rect x="1110" y="94" width="146" height="32" rx="12" fill="#047857" fill-opacity="0.4"/>
+  <text x="1183" y="115" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="11.5" font-weight="700" fill="#6ee7b7">FASE N3 · ENTREGA</text>
+
+  <rect x="1122" y="138" width="122" height="46" rx="8" fill="#041f18" stroke="#059669" stroke-width="1"/>
+  <text x="1183" y="157" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#ecfdf5">Commit Auditado</text>
+  <text x="1183" y="174" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#6ee7b7">Conventional PT-BR</text>
+
+  <rect x="1122" y="192" width="122" height="46" rx="8" fill="#041f18" stroke="#059669" stroke-width="1"/>
+  <text x="1183" y="211" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#ecfdf5">Atualiza SEKG</text>
+  <text x="1183" y="228" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#6ee7b7">Delta SQLite WAL</text>
+
+  <rect x="1122" y="246" width="122" height="46" rx="8" fill="#041f18" stroke="#059669" stroke-width="1"/>
+  <text x="1183" y="265" text-anchor="middle" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#ecfdf5">Persiste QUID</text>
+  <text x="1183" y="282" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#6ee7b7">Checkpoint Sessão</text>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 2: GOVERNANCE DECIDIR ENTREGA (LEFT) & CIRCUIT BREAKER (RIGHT)      -->
+  <!-- ======================================================================= -->
+
+  <!-- LEFT PANEL: DecidirEntrega (X=24, Y=324, W=668, H=214) -->
+  <rect x="24" y="324" width="668" height="214" rx="12" fill="url(#govGrad)" stroke="#6366f1" stroke-width="1.6" filter="url(#cardShadow2)"/>
+  <rect x="24" y="324" width="668" height="32" rx="12" fill="#312e81" fill-opacity="0.45"/>
+  <text x="42" y="345" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700" fill="#a5b4fc">GOVERNANÇA CANÔNICA · DecidirEntrega (4 Gates de Entrega em Paridade com GATE 2)</text>
+
+  <!-- 4 Delivery Gate Cards (2x2 Grid) -->
+  <rect x="40" y="368" width="310" height="52" rx="8" fill="#090d1a" stroke="#4f46e5" stroke-width="1.1"/>
+  <text x="54" y="388" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#818cf8">1. environment-infrastructure-gate</text>
+  <text x="54" y="406" font-family="'Segoe UI', Inter, sans-serif" font-size="10.5" fill="#94a3b8">Valida paridade de IaC, variáveis, quotas e runtime</text>
+
+  <rect x="366" y="368" width="310" height="52" rx="8" fill="#090d1a" stroke="#4f46e5" stroke-width="1.1"/>
+  <text x="380" y="388" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#818cf8">2. database-schema-gate</text>
+  <text x="380" y="406" font-family="'Segoe UI', Inter, sans-serif" font-size="10.5" fill="#94a3b8">Migrações Expand-Contract seguras e sem lock destrutivo</text>
+
+  <rect x="40" y="428" width="310" height="52" rx="8" fill="#090d1a" stroke="#4f46e5" stroke-width="1.1"/>
+  <text x="54" y="448" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#818cf8">3. config-compatibility-gate</text>
+  <text x="54" y="466" font-family="'Segoe UI', Inter, sans-serif" font-size="10.5" fill="#94a3b8">Retrocompatibilidade de flags, secrets e propriedades</text>
+
+  <rect x="366" y="428" width="310" height="52" rx="8" fill="#090d1a" stroke="#4f46e5" stroke-width="1.1"/>
+  <text x="380" y="448" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" fill="#818cf8">4. interop-contract-gate</text>
+  <text x="380" y="466" font-family="'Segoe UI', Inter, sans-serif" font-size="10.5" fill="#94a3b8">Invariantes de contratos REST/ Eventos / MCP preservados</text>
+
+  <!-- Verdict Bar -->
+  <rect x="40" y="490" width="636" height="34" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="56" y="511" font-family="'JetBrains Mono', Consolas, monospace" font-size="10.5" font-weight="700" fill="#cbd5e1">VEREDITOS:</text>
+  <rect x="138" y="497" width="128" height="20" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="0.9"/>
+  <text x="202" y="511" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#6ee7b7">PASS (Exit 0)</text>
+  <rect x="278" y="497" width="166" height="20" rx="10" fill="#4c0519" stroke="#f43f5e" stroke-width="0.9"/>
+  <text x="361" y="511" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#fda4af">BLOCKED (Exit 2 · Veto)</text>
+  <rect x="456" y="497" width="206" height="20" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="0.9"/>
+  <text x="559" y="511" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" font-weight="700" fill="#fcd34d">INCONCLUSIVE / STALE</text>
+
+  <!-- RIGHT PANEL: Resiliencia em 3 Camadas (X=710, Y=324, W=546, H=214) -->
+  <rect x="710" y="324" width="546" height="214" rx="12" fill="url(#resGrad)" stroke="#ec4899" stroke-width="1.6" filter="url(#cardShadow2)"/>
+  <rect x="710" y="324" width="546" height="32" rx="12" fill="#831843" fill-opacity="0.4"/>
+  <text x="728" y="345" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700" fill="#f9a8d4">RESILIÊNCIA EM 3 CAMADAS · CIRCUIT BREAKER (internal/resilience)</text>
+
+  <!-- Layer 1 -->
+  <rect x="726" y="368" width="514" height="46" rx="8" fill="#090d1a" stroke="#be185d" stroke-width="1.1"/>
+  <rect x="736" y="378" width="84" height="26" rx="6" fill="#500724" stroke="#f472b6" stroke-width="0.9"/>
+  <text x="778" y="395" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" font-weight="700" fill="#fbcfe8">CAMADA 1</text>
+  <text x="832" y="387" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#f1f5f9">Disjuntor por Especialista (CLOSED → OPEN → HALF-OPEN)</text>
+  <text x="832" y="404" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#94a3b8">Isola subagente após 2 falhas consecutivas; impede loops infinitos de retry</text>
+
+  <!-- Layer 2 -->
+  <rect x="726" y="422" width="514" height="46" rx="8" fill="#090d1a" stroke="#be185d" stroke-width="1.1"/>
+  <rect x="736" y="432" width="84" height="26" rx="6" fill="#500724" stroke="#f472b6" stroke-width="0.9"/>
+  <text x="778" y="449" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" font-weight="700" fill="#fbcfe8">CAMADA 2</text>
+  <text x="832" y="441" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#f1f5f9">Cooldown Exponencial com Jitter Determinístico</text>
+  <text x="832" y="458" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#94a3b8">Absorve rate-limits (HTTP 429) e instabilidades transitórias sem tempestade de chamadas</text>
+
+  <!-- Layer 3 -->
+  <rect x="726" y="476" width="514" height="48" rx="8" fill="#090d1a" stroke="#be185d" stroke-width="1.1"/>
+  <rect x="736" y="487" width="84" height="26" rx="6" fill="#500724" stroke="#f472b6" stroke-width="0.9"/>
+  <text x="778" y="504" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" font-weight="700" fill="#fbcfe8">CAMADA 3</text>
+  <text x="832" y="495" font-family="'Segoe UI', Inter, sans-serif" font-size="11.5" font-weight="700" fill="#f1f5f9">Lockout &amp; Cadeia de Fallback Automática de Modelo</text>
+  <text x="832" y="513" font-family="'JetBrains Mono', Consolas, monospace" font-size="9.5" fill="#f9a8d4">Opus ──► Sonnet ──► Haiku ──► Degradação Graciosa C0 Go Nativo ($0.00)</text>
+</svg>

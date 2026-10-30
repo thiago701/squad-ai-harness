@@ -46,69 +46,9 @@ Medições auditáveis ([`docs/BENCHMARKS-V080.md`](docs/BENCHMARKS-V080.md) · 
 
 ## 🧠 Arquitetura do Cérebro Cognitivo (`Cognitive Brain`)
 
-```mermaid
-flowchart TB
-    subgraph L1["1. PERCEPCAO E ENTRADA (CLI, Hook ou MCP)"]
-        IN["Prompt / Tarefa / Git Diff — Ex.: Squad ai, prepare a equipe"]
-        TRIG{"Gatilho Executivo? (gere relatorio de uso)"}
-        IN --> TRIG
-    end
-
-    subgraph L2["2. CAMADA 0 — COGNITIVE HARNESS (10 Estagios em Go · < 10 ms · $ 0)"]
-        S1["(1) TASK & (2) CONTEXT — Raio de Impacto + Orcamento CTX-1 (2k) | CTX-2 (6k) | CTX-3 (12k)"]
-        S3["(3) RETRIEVAL HIBRIDO — HybridRouter BM25 + Vetorial 384-d (Top-K entre 106 Skills)"]
-        S4["(4) PLAN -> (5) EXECUTION -> (6) TEST — Trava N0/N1 ate GATE 1 + Oraculos de Teste"]
-        S8["(8) REFLECTION -> (9) MEMORY -> (10) NEXT_ACTION — Pacote Cirurgico de Contexto"]
-        S1 --> S3
-        S3 --> S4
-    end
-
-    subgraph L3["3. GRAFO DE CONHECIMENTO — SEKG & GRAPHRAG (CSR em RAM + Comunidades de Leiden)"]
-        CSR["Grafo CSR (< 12 MB RAM) — Modulos, Contratos, Testes, ADRs e Skills (Leiden C0 / C1 / C2)"]
-        LOCAL["LocalSearch (< 1 ms) — Vizinhanca 1-hop e 2-hop (Quem chama? Qual teste cobre?)"]
-        GLOBAL["GlobalSearch (< 1 ms) — Visao Holistica de Arquitetura (Community Reports)"]
-        DRIFT["DRIFTSearch (< 1 ms) — Raciocinio Dinamico Macro + Micro (Causa Raiz)"]
-        CSR --> LOCAL
-        CSR --> GLOBAL
-        CSR --> DRIFT
-    end
-
-    subgraph L4["4. MEMORIA MULTICAMADA (M0 a M3) & GUARDRAILS EPISTEMICOS"]
-        M0["M0 Working — Contexto da sessao sob teto rigido de tokens"]
-        M1["M1 Episodic — Historico de execucoes, falhas e surpresa"]
-        M2["M2 Semantic — Quarentena (HYPOTHESIS, 7d) vs. Provado (VERIFIED)"]
-        M3["M3 Procedural — 106 Skills Auditaveis + Regras Always-On"]
-        M0 --> M1
-        M1 --> M2
-        M2 --> M3
-    end
-
-    subgraph L5["5. TRIBUNAL DETERMINISTICO JEV (25 Especialistas + Critic/Judge · ~518 us · $ 0)"]
-        JEV25["Fan-Out Paralelo de 25 Especialistas JEV (Seguranca, Arquitetura, Banco, Cloud, Clean Code)"]
-        ARB["Juiz Anti-Regressao — Seguranca (Bloqueante) >> P1 Simplicidade > P2 Performance > P3 Custo"]
-        JEV25 --> ARB
-    end
-
-    subgraph L6["6. ROTEADOR COMPUTACIONAL (C0 / C1 / C2) & TELEMETRIA QUANTICA (QUID)"]
-        C0["Rota C0 (Go Nativo CPU) — Decisoes Deterministicas · 0 Tokens · $ 0"]
-        C1["Rota C1 (Neural Local) — ONNX / NPU / iGPU / GPU Local · $ 0"]
-        C2["Rota C2 (LLM Remoto Cirurgico) — Haiku (Exploracao) | Sonnet (Codigo) | Opus (Arquitetura)"]
-        QUID["Ledger Assincrono (< 15 us) + ID Quantico (QUID-SQ8-...) — Relatorio ASCII 3 Meses ($)"]
-    end
-
-    TRIG -->|"Sim (100% Offline)"| QUID
-    TRIG -->|"Nao (Engenharia)"| S1
-    S3 <-->|"Travessia < 1 ms"| CSR
-    S4 --> JEV25
-    ARB --> S8
-    S8 <-->|"Leitura / Escrita"| M0
-    S8 --> C0
-    S8 --> C1
-    S8 --> C2
-    C0 --> QUID
-    C1 --> QUID
-    C2 --> QUID
-```
+<div align="center">
+  <img src="assets/diagram-cognitive-brain.svg" alt="Arquitetura de Alto Nível do Cérebro Cognitivo — SquadAI Harness v0.8.0" width="100%" />
+</div>
 
 ### 📖 Legendas Didáticas do Cérebro Cognitivo
 
@@ -125,39 +65,9 @@ flowchart TB
 
 ## 🔄 Pipeline Gated (`GATE 1` / `GATE 2`) & Governança (`DecidirEntrega`)
 
-```mermaid
-flowchart LR
-    subgraph N0_N1["N0 / N1 — Ler e Planejar"]
-        S0["0. Intake (Blast Radius)"]
-        S1["1. Research (SEKG)"]
-        S2["2. Plan (.prd.md + .plan.md)"]
-        S0 --> S1
-        S1 --> S2
-    end
-
-    G1{"GATE 1 — Aprova Plano?"}
-
-    subgraph N2["N2 — Execucao Reversivel"]
-        S3["3. Scaffold & Contratos"]
-        S4["4. Ciclo TDD"]
-        S5["5. Review (Tribunal JEV + 4 Gates)"]
-        S3 --> S4
-        S4 --> S5
-    end
-
-    G2{"GATE 2 — Diff + Gates PASS?"}
-
-    subgraph N3["N3 — Entrega Auditada"]
-        S6["6. Commit + Atualiza SEKG & QUID"]
-    end
-
-    S2 --> G1
-    G1 -->|"Sim"| S3
-    G1 -->|"Ajustar"| S2
-    S5 --> G2
-    G2 -->|"PASS"| S6
-    G2 -->|"Corrigir"| S4
-```
+<div align="center">
+  <img src="assets/diagram-pipeline-gated.svg" alt="Pipeline Gated End-to-End (N0-N3), Governança DecidirEntrega e Resiliência em 3 Camadas" width="100%" />
+</div>
 
 | Tamanho (*Blast Radius*) | Escopo Detectado | Cerimônia Acionada | Autonomia |
 | :--- | :--- | :--- | :--- |
