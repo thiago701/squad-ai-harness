@@ -29,18 +29,19 @@
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       background: radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08), transparent 45%), var(--bg-deep);
       color: var(--text-primary);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
-      line-height: 1.5;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      line-height: 1.55;
+      min-height: 100vh;
+      height: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
     }
 
     .mono {
@@ -48,15 +49,17 @@
     }
 
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 10px;
+      height: 10px;
     }
     ::-webkit-scrollbar-track {
-      background: transparent;
+      background: #070d19;
+      border-left: 1px solid var(--border-subtle);
     }
     ::-webkit-scrollbar-thumb {
-      background: #1e3454;
+      background: #213d63;
       border-radius: 999px;
+      border: 2px solid #070d19;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: var(--sky-bright);
@@ -76,8 +79,9 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(56, 189, 248, 0.18);
       padding: 10px 22px;
       flex-shrink: 0;
-      position: relative;
-      z-index: 30;
+      position: sticky;
+      top: 0;
+      z-index: 40;
     }
 
     .header-inner {
@@ -478,21 +482,19 @@
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
     }
 
-    /* WORKSPACE MASTER-DETAIL */
+    /* WORKSPACE MASTER-DETAIL (DEEPENED FULL-PAGE LAYOUT WITH GENERAL SCROLLBAR) */
     main {
       max-width: 1640px;
       width: 100%;
-      margin: 12px auto;
-      padding: 0 22px 18px 22px;
-      flex: 1;
+      margin: 14px auto 40px auto;
+      padding: 0 22px;
       display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 16px;
-      min-height: 0;
+      grid-template-columns: 450px 1fr;
+      gap: 18px;
+      align-items: start;
     }
 
     @media (max-width: 1024px) {
-      body { height: auto; overflow: auto; }
       main { grid-template-columns: 1fr; }
     }
 
@@ -502,8 +504,15 @@
       border-radius: 14px;
       display: flex;
       flex-direction: column;
-      min-height: 0;
       overflow: hidden;
+    }
+
+    .pane-sidebar {
+      max-height: 1220px;
+    }
+
+    .pane-inspector {
+      min-height: 1220px;
     }
 
     .pane-header {
@@ -520,17 +529,17 @@
     .skills-list {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 9px;
     }
 
     .skill-item {
       background: var(--bg-deep);
       border: 1px solid var(--border-subtle);
       border-radius: 10px;
-      padding: 11px 13px;
+      padding: 12px 14px;
       cursor: pointer;
       transition: all 0.14s ease;
       text-align: left;
@@ -567,9 +576,10 @@
     .skill-desc {
       color: var(--text-secondary);
       font-size: 12px;
-      margin-top: 5px;
+      line-height: 1.5;
+      margin-top: 6px;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -597,67 +607,87 @@
     /* INSPECTOR RIGHT PANE */
     .inspector-body {
       flex: 1;
-      overflow-y: auto;
-      padding: 18px 20px;
+      padding: 20px 24px 28px 24px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .inspector-title {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
       color: var(--sky-light);
       margin: 0;
     }
 
     .inspector-desc {
-      font-size: 13px;
+      font-size: 13.5px;
+      line-height: 1.6;
       color: var(--text-primary);
       background: var(--bg-elevated);
       border: 1px solid var(--border-subtle);
       border-left: 3px solid var(--sky-bright);
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       margin: 0;
     }
 
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 12px;
     }
 
     .meta-card {
       background: var(--bg-deep);
       border: 1px solid var(--border-subtle);
       border-radius: 9px;
-      padding: 10px 12px;
+      padding: 11px 14px;
     }
 
     .meta-label {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .meta-value {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 700;
       color: var(--sky-light);
-      margin-top: 2px;
+      margin-top: 3px;
+    }
+
+    .sections-outline {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sections-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .markdown-viewer {
       background: var(--bg-deep);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 12px;
-      line-height: 1.6;
+      border: 1px solid var(--border-sky);
+      border-radius: 12px;
+      padding: 18px 20px;
+      font-size: 13px;
+      line-height: 1.68;
       color: var(--text-primary);
       white-space: pre-wrap;
       overflow-x: auto;
+      min-height: 760px;
       margin: 0;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
     }
   </style>
 </head>
@@ -789,9 +819,9 @@
     </div>
   </section>
 
-  <!-- MASTER-DETAIL CATALOG -->
+  <!-- MASTER-DETAIL CATALOG (DEEPENED FULL-PAGE LAYOUT WITH GENERAL SCROLLBAR) -->
   <main>
-    <aside class="pane" aria-label="Lista de skills">
+    <aside class="pane pane-sidebar" aria-label="Lista de skills">
       <div class="pane-header">
         <strong style="color:var(--sky-light); font-size:12px; letter-spacing:0.03em; text-transform:uppercase;">
           Skills Canônicas
@@ -801,7 +831,7 @@
       <div class="skills-list" id="skills-list"></div>
     </aside>
 
-    <section class="pane" aria-label="Inspetor da Skill selecionada">
+    <section class="pane pane-inspector" aria-label="Inspetor da Skill selecionada">
       <div class="pane-header">
         <span class="mono" style="color:var(--text-secondary); font-size:12px;" id="insp-filepath">--</span>
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
@@ -811,6 +841,7 @@
             📂 Abrir skill
           </button>
           <button class="pill-btn mono" onclick="copySkillName()" id="copy-btn">Copiar Nome</button>
+          <button class="pill-btn mono" onclick="copyFullMarkdown()" id="copy-md-btn">📋 Copiar SKILL.md</button>
         </div>
       </div>
 
@@ -840,9 +871,19 @@
           </div>
         </div>
 
+        <div class="sections-outline" id="insp-sections-outline">
+          <div style="font-size:11.5px; font-weight:700; color:var(--sky-light); text-transform:uppercase; letter-spacing:0.04em;">
+            📑 Índice de Seções e Arquitetura da Skill (`SKILL.md`):
+          </div>
+          <div class="sections-pills" id="insp-sections-pills"></div>
+        </div>
+
         <div>
-          <div style="font-size:12px; font-weight:600; color:var(--sky-light); margin-bottom:6px;">
-            Conteúdo Completo do `SKILL.md`:
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <span style="font-size:12.5px; font-weight:700; color:var(--sky-light);">
+              Especificação Completa do `SKILL.md` (Role a página para explorar):
+            </span>
+            <span class="mono" style="font-size:11.5px; color:var(--text-muted);" id="insp-lines-stat">-- linhas</span>
           </div>
           <pre class="markdown-viewer mono" id="insp-markdown"></pre>
         </div>
@@ -1164,7 +1205,33 @@
         d.has_defense ? "🛡️ Linha de Defesa 6/6" : "⚠️ Defesa Incompleta";
 
       updateInspectorSyncBadge(d.name);
-      document.getElementById("insp-markdown").textContent = d.raw_markdown || "";
+      const rawMd = d.raw_markdown || "";
+      document.getElementById("insp-markdown").textContent = rawMd;
+      const lines = rawMd.split("\n");
+      document.getElementById("insp-lines-stat").textContent = `${lines.length} linhas · ${(d.size_bytes / 1024).toFixed(1)} KB`;
+
+      const headings = lines
+        .map(l => l.trim())
+        .filter(l => l.startsWith("#"))
+        .map(l => l.replace(/^#+\s*/, "").trim())
+        .filter(Boolean)
+        .slice(0, 14);
+      const pillsBox = document.getElementById("insp-sections-pills");
+      if (headings.length > 0) {
+        pillsBox.innerHTML = headings.map(h => `<span class="chip mono">§ ${h}</span>`).join("");
+      } else {
+        pillsBox.innerHTML = `<span class="chip mono">Especificação Canônica SKILL.md</span>`;
+      }
+    }
+
+    function copyFullMarkdown() {
+      const md = document.getElementById("insp-markdown")?.textContent || "";
+      if (!md) return;
+      navigator.clipboard?.writeText(md);
+      const btn = document.getElementById("copy-md-btn");
+      const old = btn.textContent;
+      btn.textContent = "✓ SKILL.md Copiado!";
+      setTimeout(() => { btn.textContent = old; }, 1300);
     }
 
     async function openSkillInExplorer() {
