@@ -20,6 +20,7 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
 	"github.com/thiago701/squad-ai-harness/internal/installer"
 	"github.com/thiago701/squad-ai-harness/internal/runtime/jobobject"
+	"github.com/thiago701/squad-ai-harness/internal/telemetry"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
 )
 
@@ -67,7 +68,37 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/skills/detail", s.handleSkillDetail)
 	mux.HandleFunc("/api/skills/open", s.handleOpenSkill)
 	mux.HandleFunc("/api/skills/sync", s.handleSyncSkills)
+	mux.HandleFunc("/api/telemetry/report", s.handleTelemetryReport)
+	mux.HandleFunc("/api/telemetry/ascii", s.handleTelemetryASCII)
 	return mux
+}
+
+func (s *Server) handleTelemetryReport(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	qid := strings.TrimSpace(r.URL.Query().Get("quid"))
+	if qid != "" {
+		if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
+			writeJSON(w, entry)
+			return
+		}
+	}
+	rep := telemetry.GenerateReport(s.rootDir, 3)
+	writeJSON(w, rep)
+}
+
+func (s *Server) handleTelemetryASCII(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	qid := strings.TrimSpace(r.URL.Query().Get("quid"))
+	if qid != "" {
+		if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
+			_, _ = w.Write([]byte(entry.ASCIIReport))
+			return
+		}
+	}
+	rep := telemetry.GenerateReport(s.rootDir, 3)
+	_, _ = w.Write([]byte(rep.ASCII))
 }
 
 func (s *Server) handleLogo(w http.ResponseWriter, _ *http.Request) {

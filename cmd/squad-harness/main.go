@@ -29,6 +29,7 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/jev"
 	"github.com/thiago701/squad-ai-harness/internal/mcp"
 	"github.com/thiago701/squad-ai-harness/internal/runtime/jobobject"
+	"github.com/thiago701/squad-ai-harness/internal/telemetry"
 	"github.com/thiago701/squad-ai-harness/internal/ui"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
 )
@@ -106,7 +107,19 @@ func runCLI(args []string) int {
 	case "preflight":
 		query := "auditoria de arquitetura e seguranca"
 		if len(args) > 1 {
-			query = args[1]
+			query = strings.Join(args[1:], " ")
+		}
+		// Detect natural-language trigger: "Squad ai, gere relatorio de uso" / "Squad ai. me mostre seu relatorio"
+		if isReport, qid := telemetry.MatchTrigger(query); isReport {
+			if qid != "" {
+				if entry, ok := telemetry.ResolveByQUID(qid, rootDir); ok {
+					fmt.Print(entry.ASCIIReport)
+					return 0
+				}
+			}
+			rep := telemetry.GenerateReport(rootDir, 3)
+			fmt.Print(rep.ASCII)
+			return 0
 		}
 		eng, err := harness.NewEngine(rootDir)
 		if err != nil {
@@ -114,7 +127,59 @@ func runCLI(args []string) int {
 			return 1
 		}
 		res := eng.RunPreflight(query, nil)
+		telemetry.RecordOperation(rootDir, "preflight", res.TotalDurMs)
 		printJSON(res)
+		return 0
+
+	case "report", "relatorio":
+		var quidFilter string
+		var asJSON, listQUIDs bool
+		for i := 1; i < len(args); i++ {
+			a := strings.TrimSpace(args[i])
+			switch strings.ToLower(a) {
+			case "--json", "-j":
+				asJSON = true
+			case "--list-quids", "--list", "list":
+				listQUIDs = true
+			case "--quid", "-q":
+				if i+1 < len(args) {
+					quidFilter = args[i+1]
+					i++
+				}
+			default:
+				if strings.HasPrefix(strings.ToLower(a), "--quid=") {
+					quidFilter = strings.TrimPrefix(a, "--quid=")
+					quidFilter = strings.TrimPrefix(quidFilter, "--QUID=")
+				} else if strings.HasPrefix(strings.ToUpper(a), "QUID-") {
+					quidFilter = a
+				} else if ok, extracted := telemetry.MatchTrigger(a); ok && extracted != "" {
+					quidFilter = extracted
+				}
+			}
+		}
+		if listQUIDs {
+			printJSON(telemetry.ListOfflineRegistry(rootDir))
+			return 0
+		}
+		if quidFilter != "" {
+			entry, ok := telemetry.ResolveByQUID(quidFilter, rootDir)
+			if !ok {
+				fmt.Fprintf(os.Stderr, "QUID não encontrado no registro offline local: %s\n", quidFilter)
+				return 1
+			}
+			if asJSON {
+				printJSON(entry)
+			} else {
+				fmt.Print(entry.ASCIIReport)
+			}
+			return 0
+		}
+		rep := telemetry.GenerateReport(rootDir, 3)
+		if asJSON {
+			printJSON(rep)
+		} else {
+			fmt.Print(rep.ASCII)
+		}
 		return 0
 
 	case "sekg":
@@ -174,7 +239,9 @@ func runCLI(args []string) int {
 		return 0
 
 	case "gate":
-		return runUnifiedGateDAG(rootDir)
+		code := runUnifiedGateDAG(rootDir)
+		telemetry.RecordOperation(rootDir, "gate", 288.0)
+		return code
 
 	case "sync":
 		plan, err := git.BuildPlan(context.Background(), rootDir)
@@ -191,6 +258,7 @@ func runCLI(args []string) int {
 			diff = args[1]
 		}
 		verdict := jev.EvaluateTribunal(jev.ReviewInput{DiffContent: diff})
+		telemetry.RecordOperation(rootDir, "jev", 0.52)
 		printJSON(verdict)
 		if verdict.GateState != contracts.GatePass {
 			return 1
@@ -548,5 +616,6 @@ func printUsage() {
 	fmt.Println("  mcp                           Inicia o servidor MCP JSON-RPC 2.0 unificado via stdio")
 	fmt.Println("  bench                         Executa a suíte de benchmarks reais na estação (RAM + Latência)")
 	fmt.Println("  install [all|detect|verify]   Instala/sincroniza as skills em todos os ambientes agênticos (Go nativo)")
+	fmt.Println("  report [--quid <id>] [--json] Gera o Relatório Executivo ASCII de Uso, Horas e Economia de Tokens (QUID)")
 	fmt.Println("  ui [--addr 127.0.0.1:9090]    Inicia o Control Center Web nativo embutido no binário")
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/graphrag"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
 	"github.com/thiago701/squad-ai-harness/internal/jev"
+	"github.com/thiago701/squad-ai-harness/internal/telemetry"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
 )
 
@@ -63,7 +64,45 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 					"version": contracts.Version,
 				},
 				"capabilities": map[string]any{
-					"tools": map[string]any{},
+					"tools":     map[string]any{},
+					"resources": map[string]any{},
+				},
+			},
+		}
+	case "resources/list":
+		id, _ := telemetry.LoadOrCreateQUID(s.rootDir)
+		return &RPCResponse{
+			JSONRPC: "2.0",
+			ID:      req.ID,
+			Result: map[string]any{
+				"resources": []map[string]any{
+					{
+						"uri":         "squad://telemetry/ascii",
+						"name":        "Relatório Executivo ASCII SquadAI (" + id.QUID + ")",
+						"description": "Relatório público offline em ASCII consolidando horas trabalhadas, horas economizadas e economia de tokens (US$ / R$) dos últimos 3 meses.",
+						"mimeType":    "text/plain",
+					},
+					{
+						"uri":         "squad://telemetry/quid/" + id.QUID,
+						"name":        "Snapshot Quântico Universal (" + id.QUID + ")",
+						"description": "Consulta pública offline pelo ID Quântico Universal do repositório clonado.",
+						"mimeType":    "application/json",
+					},
+				},
+			},
+		}
+	case "resources/read":
+		rep := telemetry.GenerateReport(s.rootDir, 3)
+		return &RPCResponse{
+			JSONRPC: "2.0",
+			ID:      req.ID,
+			Result: map[string]any{
+				"contents": []map[string]any{
+					{
+						"uri":      "squad://telemetry/ascii",
+						"mimeType": "text/plain",
+						"text":     rep.ASCII,
+					},
 				},
 			},
 		}
@@ -142,6 +181,36 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 							"properties": map[string]any{},
 						},
 					},
+					{
+						"name":        "squad_usage_report",
+						"description": "Gera o relatório executivo em ASCII e JSON consolidando ganhos x tempo de uso (últimos 3 meses agrupados por dia/mês, horas trabalhadas, horas economizadas, economia de tokens em US$ e R$) e ID Quântico Universal (QUID)",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"quid": map[string]any{
+									"type":        "string",
+									"description": "ID Quântico Universal opcional (QUID-SQ8-...) para consultar um repositório específico offline",
+								},
+								"months": map[string]any{
+									"type":        "integer",
+									"description": "Janela de meses consolidada (padrão: 3)",
+								},
+							},
+						},
+					},
+					{
+						"name":        "squad_resolve_quid",
+						"description": "Consulta publicamente de forma 100% offline na estação/rede local o relatório ASCII de qualquer repositório pelo seu ID Quântico Universal (QUID-SQ8-...)",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"quid": map[string]any{
+									"type":        "string",
+									"description": "ID Quântico Universal (QUID-SQ8-...) ou prefixo para busca offline (vazio lista todos os QUIDs da estação)",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -168,10 +237,21 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 }
 
 func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) *RPCResponse {
+	telemetry.RecordAsync(s.rootDir, "mcp", 0.5)
 	var payload any
 	switch toolName {
 	case "squad_route_skill":
 		q, _ := args["query"].(string)
+		if isTrig, qid := telemetry.MatchTrigger(q); isTrig {
+			if qid != "" {
+				if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
+					payload = entry
+					break
+				}
+			}
+			payload = telemetry.GenerateReport(s.rootDir, 3)
+			break
+		}
 		payload = s.engine.Router().Route(q, 5)
 	case "squad_sekg_query":
 		q, _ := args["query"].(string)
@@ -190,13 +270,60 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 		payload = jev.EvaluateTribunal(jev.ReviewInput{DiffContent: diff})
 	case "squad_cultivator_status":
 		val := s.engine.Catalog().Validate()
+		qid, _ := telemetry.LoadOrCreateQUID(s.rootDir)
 		payload = map[string]any{
 			"identity":    contracts.FullIdentity,
+			"quid":        qid.QUID,
 			"skills":      val.CanonicalSkills,
 			"sekg_nodes":  len(s.engine.Graph().Nodes),
 			"sekg_edges":  len(s.engine.Graph().Edges),
 			"communities": len(s.engine.Graph().Communities),
 			"status":      "HEALTHY",
+		}
+	case "squad_usage_report":
+		qid, _ := args["quid"].(string)
+		if qid != "" {
+			if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
+				return &RPCResponse{
+					JSONRPC: "2.0",
+					ID:      id,
+					Result: map[string]any{
+						"content": []map[string]any{
+							{"type": "text", "text": entry.ASCIIReport},
+						},
+					},
+				}
+			}
+		}
+		rep := telemetry.GenerateReport(s.rootDir, 3)
+		return &RPCResponse{
+			JSONRPC: "2.0",
+			ID:      id,
+			Result: map[string]any{
+				"content": []map[string]any{
+					{"type": "text", "text": rep.ASCII},
+				},
+			},
+		}
+	case "squad_resolve_quid":
+		qid, _ := args["quid"].(string)
+		if qid == "" {
+			payload = telemetry.ListOfflineRegistry(s.rootDir)
+		} else if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
+			return &RPCResponse{
+				JSONRPC: "2.0",
+				ID:      id,
+				Result: map[string]any{
+					"content": []map[string]any{
+						{"type": "text", "text": entry.ASCIIReport},
+					},
+				},
+			}
+		} else {
+			payload = map[string]any{
+				"found": false,
+				"quid":  qid,
+			}
 		}
 	default:
 		return &RPCResponse{

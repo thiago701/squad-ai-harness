@@ -161,6 +161,21 @@ Quando o usuário pedir variações de **"instale squad ai"**, **"instalar squad
    .\squad-harness.exe compute
    ```
 
+### 3.4. Gatilho de Relatório Executivo de Uso, Horas e Economia de Tokens — "Squad ai, gere relatorio de uso" / "Squad ai. me mostre seu relatorio"
+
+Quando o usuário ou gestor pedir variações de **"Squad ai, gere relatorio de uso"** (ou `"relatorio de usoi"`), **"Squad ai. me mostre seu relatorio"**, **"relatório de ganhos"** ou fornecer um **ID Quântico Universal (`QUID-SQ8-...`)**, execute imediatamente em Go nativo (`< 1 ms`, 100% offline):
+
+```powershell
+# 1. Exibir o Relatório Executivo ASCII consolidado (últimos 3 meses agrupados por mês e dia, US$, R$, horas de uso e horas economizadas)
+.\squad-harness.exe report
+
+# 2. Consultar pelo ID Quântico Universal (QUID) exclusivo do repositório clonado (modo gestor / auditoria offline)
+.\squad-harness.exe report --quid QUID-SQ8-...
+```
+
+> **Acesso Público Offline via MCP e Rede Local (Sem bloqueio de Firewall):**
+> Qualquer outra ferramenta agêntica ou LLM na máquina/rede local pode consultar o relatório ASCII via servidor MCP nativo (`.\squad-harness.exe mcp` → tools `squad_usage_report` e `squad_resolve_quid`, ou resource `squad://telemetry/ascii`) ou via endpoint HTTP local (`http://127.0.0.1:9090/api/telemetry/ascii?quid=QUID-SQ8-...`).
+
 
 ---
 
