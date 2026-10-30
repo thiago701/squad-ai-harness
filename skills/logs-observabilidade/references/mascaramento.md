@@ -26,9 +26,9 @@ Só a camada 3 = incidente adiado: o dado já saiu do processo, já está no std
 | Senha/segredo `k=v` | `senha=hunter2` | `senha=****` | some inteiro |
 | Authorization | `Authorization: Bearer eyJ…` | `Authorization: Bearer [TOKEN:****6789]` | 4 finais para correlacionar com o IdP |
 | JWT solto | `eyJhbGci….eyJzdWI….c2lu…` | `[JWT:****FrZQ]` | idem |
-| AWS access key | `AKIAIOSFODNN7EXAMPLE` | `AKIA************MPLE` | prefixo + 4 finais (identifica a chave para rotação) |
+| AWS access key | `AKIA_<REDACTED_EXAMPLE>` | `AKIA************MPLE` | prefixo + 4 finais (identifica a chave para rotação) |
 | Credencial em URL | `postgres://app:S3nha@db:5432/x` | `postgres://app:****@db:5432/x` | |
-| Chave privada PEM | `-----BEGIN RSA PRIVATE KEY-----…` | `[CHAVE_PRIVADA_REDIGIDA]` | bloco inteiro |
+| Chave privada PEM | `-----BEGIN [RSA_REDACTED] PRIVATE KEY-----…` | `[CHAVE_PRIVADA_REDIGIDA]` | bloco inteiro |
 
 Princípios: **reconhecível** (o operador sabe que algo foi mascarado e de que tipo), **irreversível**, **validado**
 (CPF/CNPJ por dígito verificador, PAN por Luhn + prefixo de bandeira — nunca corromper números de pedido,

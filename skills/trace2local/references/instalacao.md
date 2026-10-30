@@ -30,12 +30,12 @@ git clone https://github.com/thiago701/trace2local.git && cd trace2local
 ## 2. Plugin Maven: analisar → configurar
 
 ```bash
-P=tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT
+P=tech.squadai.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT
 ./mvnw -q compile $P:analyze
 ./mvnw $P:configure -Dtrace2local.version=0.1.0-SNAPSHOT
 ```
 
-O prefixo curto (`mvn trace2local:analyze`) só resolve com `<pluginGroup>tech.neural7.trace2local</pluginGroup>`
+O prefixo curto (`mvn trace2local:analyze`) só resolve com `<pluginGroup>tech.squadai.trace2local</pluginGroup>`
 no `~/.m2/settings.xml`; na dúvida, use a coordenada completa.
 
 **`analyze`** — somente leitura, escaneia o **bytecode** (ASM) de `target/classes`: rode depois de `compile`, senão
@@ -65,8 +65,8 @@ Maven: `trace2local-bom` (`<scope>import</scope>`, `0.1.0-SNAPSHOT`) em `depende
 ```kotlin
 repositories { mavenLocal(); mavenCentral() }
 dependencies {
-    implementation(platform("tech.neural7.trace2local:trace2local-bom:0.1.0-SNAPSHOT"))
-    implementation("tech.neural7.trace2local:trace2local-spring-boot-starter")
+    implementation(platform("tech.squadai.trace2local:trace2local-bom:0.1.0-SNAPSHOT"))
+    implementation("tech.squadai.trace2local:trace2local-spring-boot-starter")
 }
 ```
 

@@ -112,7 +112,7 @@ def cmd_selftest(_: argparse.Namespace) -> int:
         "cartao 4111 1111 1111 1111": "cartao **** **** **** 1111",
         "email thiago.silva@exemplo.com": "email t***********@exemplo.com",
         "senha=hunter2": "senha=****",
-        "Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123456789": "Authorization: Bearer [TOKEN:****6789]",
+        "Authorization: Bearer <TOKEN_EXEMPLO>": "Authorization: Bearer [TOKEN:****6789]",
     }
     for antes, esperado in provas.items():
         obtido = mascara.mascarar_texto(antes)

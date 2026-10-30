@@ -49,7 +49,6 @@ O novo repositório `<workspaces>/squad-ai-harness` foi construído para ser **1
 - **`cmd/squad-harness/` + `internal/` + `pkg/contracts/`**: Motor nativo em Go 1.24.3 (`CGO_ENABLED=0`, zero dependências externas), incluindo DAG Runner concorrente, Camada 0 CognitiveHarness, SEKG (CSR + Leiden) + GraphRAG (Local, Global, DRIFT), Tribunal JEV de 25 especialistas determinísticos, Cognitive Compute Router (`C0/C1/C2`), Secret Scanner, Hooks `< 1ms` e Servidor MCP JSON-RPC 2.0 via `stdio`.
 - **`skills/` (106 skills canônicas)**: Catálogo completo de especialistas com frontmatter validado e Linha de Defesa de Prompt.
 - **`governance/`, `security/`, `rules/`, `contracts/`, `templates/`**: Governança ativa, políticas de segurança, invariantes always-on, JSON Schemas e templates de engenharia limpos.
-- **`examples/agencia-virtual-viral-intelligence/`**: Projeto de referência em Go 1.24.3 + AWS Serverless (Step Functions ASL, API Gateway VTL, DynamoDB Single-Table, motor de Viral Score e descoberta autônoma com testes `go test ./...` verdes).
 - **`docs/`**: Documentação arquitetural e tabela de resultados científicos medidos (`Baseline Python vs. SquadAI Harness v0.8.0`).
 - **`install-squad-ai.py` / `.ps1` / `.sh`**: Instalador multi-estação com detecção de hardware (`C0/C1/C2`) e verificação SHA-256.
 

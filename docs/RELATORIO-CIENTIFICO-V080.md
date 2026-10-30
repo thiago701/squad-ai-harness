@@ -1,6 +1,6 @@
 # Relatorio de Validacao Cientifica — Projeto Piloto `servico-pix-ledger` (SquadAI Harness v0.8.0)
 
-> **Data:** `2026-10-29T17:08:47` · **Estacao:** `SAMSUNG-BOOK` (`Windows 11`) · **Repeticoes por hipotese:** `N = 3` · **Nivel de Evidencia:** `V4 (Medido em Execucao Real)`
+> **Data:** `2026-10-29T17:08:47` · **Estacao:** `WORKSTATION-CPU` (`Windows 11`) · **Repeticoes por hipotese:** `N = 3` · **Nivel de Evidencia:** `V4 (Medido em Execucao Real)`
 
 ---
 

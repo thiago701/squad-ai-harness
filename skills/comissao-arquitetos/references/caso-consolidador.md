@@ -10,7 +10,7 @@ Dashboard de treinamentos (CloudFront) com autocomplete de colaboradores, backen
 |---|---|
 | Staging | 5 arquivos de contexto + referência de UX lidos; CSVs perfilados por script |
 | Brief | pedido verbatim, 10 tensões (síncrono × scan de pastas; 0 Lambda × fuzzy; HTTP × REST; LGPD; fonte das evidências…) |
-| Ajustes em voo | 3 (Secrets Manager; valor completo do "grupo NTT"; avaliar JEV) → 2 relançamentos da R1 |
+| Ajustes em voo | 3 (Secrets Manager; valor completo do "grupo corp"; avaliar JEV) → 2 relançamentos da R1 |
 | R1 | 6 memos (A–F); B com 38 fontes oficiais |
 | R2 | 10 ADRs; 57 APROVO / 3 OBJEÇÃO (todas com alternativa) |
 | R3 | 6/6 "sem dúvidas" + 4 correções (REVISAO# órfã, lote em vários POSTs, `hash8`, invariantes 7–8) |

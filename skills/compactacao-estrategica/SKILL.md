@@ -192,11 +192,11 @@ Após ativar C5, o orquestrador deve produzir um bloco compacto que:
 3. Permite retomar a sessão do ponto exato onde parou
 4. Pode ser colado no início de uma nova sessão como contexto
 
-## Exemplo Real (N7 Acolhe)
+## Exemplo Real (Plataforma Acolhe)
 
 ```
-=== COMPACTAÇÃO C5 — N7 Acolhe Backend ===
-Projeto: <raiz-do-workspace>/n7/plataforma-inovacao-2026-sesi-senai/backend/
+=== COMPACTAÇÃO C5 — Plataforma Acolhe Backend ===
+Projeto: <raiz-do-workspace>/core/plataforma-inovacao-2026-enterprise-suite/backend/
 Testes: 164 passed, 0 failed
 Git: f4e9a44 (Sprint AI-4 — SageMaker + HealthLake + Personalize)
 

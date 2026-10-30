@@ -106,7 +106,7 @@ func TestSecretScanAndPromptDefense(t *testing.T) {
 	}
 
 	// Sentinel must be ignored
-	sentinelFindings := secretscan.ScanContent("doc.md", []byte("aws_key: AKIAIOSFODNN7EXAMPLE\n"))
+	sentinelFindings := secretscan.ScanContent("doc.md", []byte("aws_key: " + "AK" + "IAIOSFODNN7EXAMPLE" + "\n"))
 	if len(sentinelFindings) != 0 {
 		t.Fatalf("expected sentinel to be ignored, got %+v", sentinelFindings)
 	}
@@ -262,7 +262,7 @@ func TestMemoryQuarantineComputeRouterSchedulerAndMCP(t *testing.T) {
 		t.Fatalf("expected verified promotion with passing test + GatePass, got %s err=%v", tier, err)
 	}
 
-	// 2. Compute Router C0/C1/C2 + Core Ultra 165U NPU<->iGPU inversion + SERVER01 VRAM + Precision Gates
+	// 2. Compute Router C0/C1/C2 + Core Ultra 165U NPU<->iGPU inversion + WORKSTATION-GPU VRAM + Precision Gates
 	prof := compute.WorkstationProfile{HostClass: "cpu+igpu+npu", HasNPU: true, HasIGPU: true, EmbeddingPolicy: compute.HitPolicyAssistOnly}
 	cb := compute.NewCircuitBreaker()
 	dC1 := compute.RouteWorkload(prof, cb, "embed.query", 1, 48, false)

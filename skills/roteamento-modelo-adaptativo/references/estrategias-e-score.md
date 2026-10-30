@@ -67,7 +67,7 @@ mandar um payload de 200k para um modelo de 128k, falhar, e pagar de novo no fal
 
 Custo real: **~3× tokens + latência do mais lento**. Use com parcimônia — mas use. É a arbitragem
 que o `AGENTS.md` já pede ("consenso entre especialistas"), agora com nome, critério e preço
-declarado. Um painel que roda em toda decisão é *agent soup* com etiqueta nova (N7 do `RULES.md`).
+declarado. Um painel que roda em toda decisão é *agent soup* com etiqueta nova (core do `RULES.md`).
 
 ### `encadeado`
 Saída de um alimenta o próximo (spec → arquitetura → código → teste). A Squad **já faz isso** no

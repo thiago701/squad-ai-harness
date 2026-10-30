@@ -68,7 +68,7 @@
       "id": 7,
       "name": "controle-evoluir-o-nucleo",
       "tipo": "controle",
-      "prompt": "Vale a pena extrair o rag-kit do n7-ai-core para um pacote separado agora?",
+      "prompt": "Vale a pena extrair o rag-kit do squad-ai-core para um pacote separado agora?",
       "expected_output": "NÃO DISPARA. Decisão de arquitetura e regra de três para extração — território de `minimalist-architect`. A skill chatbot-comercial CONSOME o núcleo, não decide sobre ele.",
       "files": []
     },

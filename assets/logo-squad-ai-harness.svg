@@ -26,8 +26,6 @@
     <circle cx="0" cy="34" r="5" fill="#38BDF8"/>
   </g>
   <text x="215" y="92" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="44" font-weight="800" fill="#F8FAFC" letter-spacing="0.5">SquadAI <tspan fill="url(#cyanGlow)">Harness</tspan></text>
-  <rect x="615" y="62" width="76" height="30" rx="8" fill="#0EA5E9" fill-opacity="0.18" stroke="#38BDF8" stroke-width="1.5"/>
-  <text x="653" y="83" font-family="Consolas, monospace" font-size="16" font-weight="700" fill="#38BDF8" text-anchor="middle">v0.8.0</text>
-  <text x="215" y="132" font-family="Consolas, SFMono-Regular, monospace" font-size="15" font-weight="600" fill="#94A3B8" letter-spacing="1.8">GATED AUTONOMOUS SOFTWARE ENGINEERING · GO 1.24.3 RUNTIME</text>
+  <text x="215" y="132" font-family="Consolas, SFMono-Regular, monospace" font-size="15" font-weight="600" fill="#94A3B8" letter-spacing="1.8">GATED AUTONOMOUS SOFTWARE ENGINEERING · GO RUNTIME</text>
   <text x="215" y="168" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="14" fill="#64748B">106 Canonical Skills · 25 JEV Deterministic Specialists · SEKG + GraphRAG · C0/C1/C2 Compute Router</text>
 </svg>

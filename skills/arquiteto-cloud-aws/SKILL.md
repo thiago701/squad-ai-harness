@@ -295,7 +295,7 @@ completo e executável: `labs/aws-referencia-ordens/`.
 ### KMS — Decisão de Chave por Serviço, Custo, Quotas e FinOps (AWS owned × managed × CMK, Bucket Key, reuso de data key, `GetKeyLastUsage`)
 **Quando:** escolher o tipo de chave por serviço (S3, DynamoDB, SSM, Secrets Manager, Lambda, Step Functions, SNS/SQS, Logs), estimar o custo de KMS de um desenho (US$ 1/chave, rotação com teto, free tier de 20 k req, assimétricas fora), evitar throttling por Região (10 k/20 k/100 k rps), achar chaves sem uso e montar o painel de maturidade de criptografia da squad.
 **Conteúdo em** `references/kms-custo-e-decisao.md`.
-_Adicionado em 2026-10-15 — pesquisa KMS do projeto OpsNauta._
+_Adicionado em 2026-10-15 — pesquisa KMS do projeto CloudOps._
 
 ## Anti-padrões AWS para Nomear Explicitamente
 

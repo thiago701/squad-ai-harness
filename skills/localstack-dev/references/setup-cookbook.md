@@ -188,7 +188,7 @@ echo "🔐 Criando secrets..."
 
 awslocal secretsmanager create-secret \
     --name circuit/openai/key \
-    --secret-string 'sk-proj-test-key-12345' \
+    --secret-string 'sk_<REDACTED_EXAMPLE>' \
     --region us-east-1
 
 awslocal secretsmanager create-secret \

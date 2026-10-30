@@ -6,7 +6,7 @@ description: >
   GERA (faz scaffold de) um projeto de chatbot comercial multi-tenant para estabelecimentos — agente
   especializado por vertical, RAG com citação obrigatória, gestão de leads, retreinamento com
   aprovação humana e trilha de auditoria com custo por conversa. Consome `llm-gateway` e
-  `n7-ai-core` (rag_kit + conversation_core + channels.whatsapp); não reimplementa roteamento,
+  `squad-ai-core` (rag_kit + conversation_core + channels.whatsapp); não reimplementa roteamento,
   cache, retry nem limite de custo. (lista completa em gatilhos).
 gatilhos_texto: >
   Use SEMPRE que o usuário disser "criar um chatbot para uma
@@ -15,7 +15,7 @@ gatilhos_texto: >
   gerar o projeto do chatbot comercial", "scaffold do chatbot multi-tenant", "chatbot que captura
   lead e escala para humano", "novo vertical do chatbot", "adicionar vertical-pack", ou pedir um
   atendente virtual com painel, leads e auditoria. NÃO use para: perguntas conceituais sobre RAG ou
-  LLM sem projeto a gerar (isso é `learn`); evoluir o próprio `n7-ai-core` ou extrair pacote
+  LLM sem projeto a gerar (isso é `learn`); evoluir o próprio `squad-ai-core` ou extrair pacote
   reutilizável (isso é `minimalist-architect` + regra de três); rodar o quality gate de um projeto
   já existente (isso é `verificacao-loop`); criar uma skill nova (isso é `skill-creator`);
   orquestrar entrega gated de software genérico (isso é `squad-pipeline`); ou chatbot interno de
@@ -27,7 +27,7 @@ metadata:
   status: ativa
   tipo: gerador
   fase: BUILD
-  stack: [python, sqlite, docker-compose, n7-ai-core]
+  stack: [python, sqlite, docker-compose, squad-ai-core]
   custo_tokens: medio
   consome: [llm-gateway, rag_kit, conversation_core, channels.whatsapp]
   riscos:
@@ -109,10 +109,10 @@ Um comando sobe: `make instalar && make up`.
 ```bash
 python scripts/scaffold.py --destino ../<cliente> --nome <cliente> \
   --tenant <tenant> --vertical <vertical> --estabelecimento "<Nome>" \
-  --canais whatsapp,web --porta 8080 [--n7-core ../n7-ai-core]
+  --canais whatsapp,web --porta 8080 [--core-core ../squad-ai-core]
 
 cd ../<cliente>
-make instalar          # projeto + n7-ai-core
+make instalar          # projeto + squad-ai-core
 make seed              # ingestão inicial (incremental por sha256)
 make up                # sobe e responde de verdade
 make eval              # golden set → publica a tabela no README

@@ -31,7 +31,7 @@ def redigir(texto: str) -> str:
 
 
 def _sal() -> str:
-    return os.getenv("CHATBOT_SAL_HASH", "n7-chatbot-comercial")
+    return os.getenv("CHATBOT_SAL_HASH", "core-chatbot-comercial")
 
 
 def hash_contato(contato: str) -> str:

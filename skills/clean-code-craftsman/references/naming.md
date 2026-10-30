@@ -146,7 +146,7 @@ Variável dentro de um loop curto: `i` está bem. Variável que vive por uma cla
 ### N6: Evite codificações
 Já dito acima. Notação húngara, prefixos `m_`, `I` em interfaces — tudo lixo legado.
 
-### N7: Nomes devem descrever efeitos colaterais
+### core: Nomes devem descrever efeitos colaterais
 `createOrReturnOos` é melhor que `getOos` se a função pode criar quando não existe. Não esconda atividade.
 
 ## Resumo

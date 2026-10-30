@@ -1,13 +1,13 @@
 // Package compute implements the Cognitive Compute Router (C0 Go Deterministic ->
 // C1 Local NPU/GPU/CPU Assist -> C2 Specialized LLM) absorbing the empirical laws from
-// SUPERDOC NPU-GPU-CPU (SPEC-NPU-GPU v2, ADR-014, ADR-017, Core Ultra 7 165U & SERVER01 RTX 3060):
+// SUPERDOC NPU-GPU-CPU (SPEC-NPU-GPU v2, ADR-014, ADR-017, Core Ultra 7 165U & WORKSTATION-GPU RTX 3060):
 //   - Device selection comes from MEASUREMENT (~/.squad-ai/workstation.json "medido"), never fixed rules.
 //   - Cosine cache HIT is REJECTED in all spaces; neural embeddings run strictly in "assist_only"
 //     until a dedicated cross-encoder verifier is active.
 //   - Core Ultra 165U NPU<->iGPU inversion: NPU wins interactive B=1 RAG query e2e (53.3ms vs 83.5ms iGPU,
 //     1.62x vs CPU) due to zero host<->device copy overhead on SoC, while iGPU Arc FP32 wins batch B=16/64
 //     kernel throughput (241.6 it/s = 19x vs CPU) and contention (11.76ms vs 16.37ms).
-//   - SERVER01 RTX 3060 (CUDA): 24-27x batch indexing (B=256); CPU+CUDA partitioning is forbidden on weak
+//   - WORKSTATION-GPU RTX 3060 (CUDA): 24-27x batch indexing (B=256); CPU+CUDA partitioning is forbidden on weak
 //     CPUs (<= 4 cores); 3-tenant VRAM slices (1280/2048/5888/3072 MB) forbid co-loading Laya+LLM with Embedding.
 //   - Quantization gate: INT8-ONNX dynamic is rejected on iGPU/NPU (NaN/0.80 parity break); INT8-NNCF static
 //     (calibrated on sealed Golden v1) is allowed for CPU VNNI (2.07x); INT4 is rejected for embeddings (cos 0.936).
@@ -50,7 +50,7 @@ const (
 	SpaceIDNeuralMiniLM   = "neural:paraphrase-multilingual-MiniLM-L12-v2@e8f8c211:mean"
 )
 
-// VRAMBudget defines the measured 3-tenant VRAM slices on 12 GB NVIDIA RTX 3060 (SERVER01, ADR-017).
+// VRAMBudget defines the measured 3-tenant VRAM slices on 12 GB NVIDIA RTX 3060 (WORKSTATION-GPU, ADR-017).
 const (
 	VRAMSystemReserveMB  = 1280
 	VRAMTenantEmbedMB    = 2048
@@ -388,7 +388,7 @@ func AdmitVRAM(freeVRAMMB, tenantRequiredMB int64) bool {
 	return (freeVRAMMB - tenantRequiredMB) >= VRAMSafetyMarginMB
 }
 
-// AdmitVRAMMultiTenant enforces the SERVER01 3-tenant VRAM governance rule (SUPERDOC §2, §7.4):
+// AdmitVRAMMultiTenant enforces the WORKSTATION-GPU 3-tenant VRAM governance rule (SUPERDOC §2, §7.4):
 // Slices: system=1280 MB, embedding=2048 MB, laya=5888 MB, llm=3072 MB.
 // Never co-load Laya + Local LLM alongside Embedding on 12 GB VRAM (peak 11,783 MB violates the 512 MB safety margin).
 func AdmitVRAMMultiTenant(totalVRAMMB int64, activeTenants []string, candidateTenant string) (bool, string) {
@@ -527,7 +527,7 @@ func routeEmbeddingWorkload(prof WorkstationProfile, cb *CircuitBreaker3Layer, w
 		}
 	}
 
-	// Case B: Station with Intel iGPU only (cpu+igpu, e.g., SAMSUNG-BOOK UHD 620 / Iris Xe)
+	// Case B: Station with Intel iGPU only (cpu+igpu, e.g., WORKSTATION-CPU UHD 620 / Iris Xe)
 	// Batch (B > 1) uses iGPU FP32; single query (B = 1) avoids host<->device copy overhead and runs on CPU.
 	if prof.HasIGPU && (cb == nil || cb.IsModelHealthy("IGPU_INTEL")) {
 		if workload == "embed.index" && batchSize > 1 {
@@ -545,7 +545,7 @@ func routeEmbeddingWorkload(prof WorkstationProfile, cb *CircuitBreaker3Layer, w
 		}
 	}
 
-	// Case C: Station with NVIDIA dGPU CUDA (e.g., SERVER01 RTX 3060 12 GB — cpu+dgpu)
+	// Case C: Station with NVIDIA dGPU CUDA (e.g., WORKSTATION-GPU RTX 3060 12 GB — cpu+dgpu)
 	// Empirical law (SUPERDOC §2 17-18/10/2026):
 	//   - 24-27x CUDA vs CPU on batch indexing (B=256 when calibrated).
 	//   - NEVER partition CPU+CUDA when CPU has <= 4 cores (weak CPU delays GPU -> policy ['CUDA'] only).

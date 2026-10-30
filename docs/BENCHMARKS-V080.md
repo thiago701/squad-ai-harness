@@ -1,6 +1,6 @@
 # Resultados Científicos Medidos (Baseline Python vs. SquadAI Harness v0.8.0)
 
-> **Data da Medição:** `2026-10-29` · **Estação:** `SAMSUNG-BOOK` (`Windows 11`) · **Projeto Piloto:** `labs/piloto-validacao-cientifica-v080/servico-pix-ledger` · **Nível de Evidência:** `V4 (Medido em Execução Real Local)`
+> **Data da Medição:** `2026-10-29` · **Estação:** `WORKSTATION-CPU` (`Windows 11`) · **Projeto Piloto:** `labs/piloto-validacao-cientifica-v080/servico-pix-ledger` · **Nível de Evidência:** `V4 (Medido em Execução Real Local)`
 
 | Hipótese | Métrica Avaliada | Baseline Legado (Python) | SquadAI Harness v0.8.0 (Go 1.24.3) | Ganho Empírico Medido | Veredito |
 |---|---|---|---|---|---|

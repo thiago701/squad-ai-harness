@@ -1,13 +1,13 @@
 SHELL := /bin/bash
 PY ?= python3
-N7_AI_CORE_PATH ?= ../n7-ai-core
+N7_AI_CORE_PATH ?= ../squad-ai-core
 
 .DEFAULT_GOAL := ajuda
 
 ajuda:
 	@grep -E '^[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS=":.*?## "} {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-instalar: ## instala o projeto + n7-ai-core em modo editável
+instalar: ## instala o projeto + squad-ai-core em modo editável
 	$(PY) -m pip install -e "$(N7_AI_CORE_PATH)"
 	$(PY) -m pip install -e ".[dev]"
 

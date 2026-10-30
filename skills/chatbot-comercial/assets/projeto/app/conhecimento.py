@@ -1,6 +1,6 @@
 """M2 — RAG. Ingestão, indexação incremental e citação obrigatória.
 
-Chunking, embedding, store e busca híbrida vêm do `rag_kit` (n7-ai-core).
+Chunking, embedding, store e busca híbrida vêm do `rag_kit` (squad-ai-core).
 Este módulo só faz o que é do produto: ler formatos de cliente, decidir o que
 precisa ser reindexado, e garantir que nenhuma resposta saia sem fonte.
 """

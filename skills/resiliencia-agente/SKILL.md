@@ -208,7 +208,7 @@ primeira ocorrência** — é marco crítico (A4 do `RULES.md`).
 
 - Falha única e explicada (teste vermelho legítimo, arquivo faltando) — é trabalho do
   `error-investigator`, não de resiliência.
-- Tarefa `trivial` de um passo só — cerimônia proporcional ao *blast radius* (N7 do `RULES.md`).
+- Tarefa `trivial` de um passo só — cerimônia proporcional ao *blast radius* (core do `RULES.md`).
 - Como substituto de investigação: se o especialista falha sempre, o disjuntor **compra tempo**,
   não conserta. Abra o achado.
 

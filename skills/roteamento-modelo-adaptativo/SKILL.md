@@ -213,7 +213,7 @@ congelou palpite, o mesmo erro que a série V1–V2 dos benchmarks cometeu e que
 ## 10. Quando NÃO usar
 
 - Tarefa `trivial` (1 arquivo, sem ambiguidade) — a tabela fixa do `AGENTS.md` §3.1 basta. Rotear
-  uma pergunta de 5 segundos com score de 6 fatores é *agent soup* de outro sabor (N7).
+  uma pergunta de 5 segundos com score de 6 fatores é *agent soup* de outro sabor (core).
 - Quando o humano escolheu o modelo explicitamente — pedido explícito vence heurística.
 - Como desculpa para baratear fase com piso. Se a conversa virar "dá para fazer a revisão de
   segurança em sonnet?", a resposta é não.

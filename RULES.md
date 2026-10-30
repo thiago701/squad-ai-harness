@@ -49,7 +49,7 @@ e encerra qualquer arbitragem. **Gated, não autônomo:** autônomo para fazer o
 - **N5 — Nunca rodar comando destrutivo sem confirmação.** `push --force`, `reset --hard`, `clean -fd`, `destroy`,
   `DROP`, deleção de recurso — N3, exigem confirmação explícita, mesmo "para corrigir".
 - **N6 — Nunca iniciar implementação grande sem spec.** Tarefa `standard`/`large` não escreve código antes do GATE 1.
-- **N7 — Nunca usar todos os agentes para tarefa trivial.** Evitar *agent soup* e desperdício de tokens (P3).
+- **core — Nunca usar todos os agentes para tarefa trivial.** Evitar *agent soup* e desperdício de tokens (P3).
 - **N8 — Nunca importar código que se atualiza do upstream do ECC.** Importar é *fork* datado com atribuição (snapshot
   estável), nunca dependência viva que puxa mudanças automáticas do upstream.
 

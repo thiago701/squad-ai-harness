@@ -9,7 +9,7 @@ monólito. Ordem de decisão: **P1-Simplicidade > P2-Performance > P3-CustoBaixo
 
 O briefing desta skill afirma que `llm-gateway` está entregue (94 testes, 100% de cobertura)
 e que `rag-kit`, `channel-whatsapp` e `conversation-core` estão previstos. **No repositório
-`n7-ai-core` a situação é a inversa**, verificada em 2026-08-08:
+`squad-ai-core` a situação é a inversa**, verificada em 2026-08-08:
 
 | Pacote | Briefing | Repositório |
 |---|---|---|

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "squad-harness": {
+      "command": "./squad-harness",
+      "args": ["mcp"],
+      "description": "Servidor MCP JSON-RPC 2.0 unificado em Go 1.24.3 (substitui squad-context, squad-cultivator e dora com < 12 MB RAM e 0 dependências externas)"
+    }
+  }
+}

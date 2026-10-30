@@ -76,22 +76,71 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 					{
 						"name":        "squad_route_skill",
 						"description": "Roteia uma tarefa para as skills canônicas mais relevantes usando BM25 Híbrido em Go (< 1ms)",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"query": map[string]any{
+									"type":        "string",
+									"description": "Descrição da tarefa ou dúvida técnica para rotear às skills ideais",
+								},
+							},
+							"required": []string{"query"},
+						},
 					},
 					{
 						"name":        "squad_sekg_query",
 						"description": "Executa busca GraphRAG (Local, Global ou DRIFT Search) sobre o Software Engineering Knowledge Graph",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"query": map[string]any{
+									"type":        "string",
+									"description": "Termo, conceito ou componente a consultar no grafo SEKG",
+								},
+								"mode": map[string]any{
+									"type":        "string",
+									"enum":        []string{"local", "global", "drift"},
+									"description": "Modo GraphRAG: local (vizinhança), global (comunidades Leiden) ou drift (causa raiz)",
+								},
+							},
+							"required": []string{"query"},
+						},
 					},
 					{
 						"name":        "squad_sekg_impact",
 						"description": "Calcula o raio de explosão (blast radius), testes impactados e gatilhos de segurança para arquivos alterados",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"target": map[string]any{
+									"type":        "string",
+									"description": "Caminho do arquivo, pacote ou skill alvo para análise de impacto",
+								},
+							},
+							"required": []string{"target"},
+						},
 					},
 					{
 						"name":        "squad_jev_review",
 						"description": "Executa os 25 especialistas determinísticos JEV + Tribunal Critic/Judge sobre um diff (0 tokens)",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"diff": map[string]any{
+									"type":        "string",
+									"description": "Conteúdo do diff ou trecho de código a ser julgado pelos 25 especialistas JEV",
+								},
+							},
+							"required": []string{"diff"},
+						},
 					},
 					{
 						"name":        "squad_cultivator_status",
 						"description": "Retorna o estado de saúde do catálogo, SEKG e backlog de evolução (substitui squad-cultivator Python)",
+						"inputSchema": map[string]any{
+							"type":       "object",
+							"properties": map[string]any{},
+						},
 					},
 				},
 			},

@@ -23,7 +23,7 @@ paths = [
   '''engenheiro-seguranca/.*''',
 
   # Corpora de prompt gerados (agentes Java): trazem exemplos de código de segurança
-  # com placeholders explícitos (ex.: "sk-prod-abcd1234efgh5678", seguido de asserção
+  # com placeholders explícitos (ex.: "sk_<REDACTED_EXAMPLE>", seguido de asserção
   # de que o log sai [REDACTED]). Aparece como `copilot-studio/` e `.agents/copilot-studio/`.
   '''copilot-studio/.*''',
 
@@ -35,7 +35,7 @@ paths = [
   '''docs/relatorios/benchmarks/.*context-manifest.*\.json''',
 
   # hooks/README.md: documenta o procedimento de TESTE do próprio hook com uma
-  # senha temporária de exemplo (password="abcdef12") — doc de operação, não segredo.
+  # senha temporária de exemplo (password="***") — doc de operação, não segredo.
   # Ancorado na raiz (08/10/2026, revisão independente): sem âncora, `hooks/.*` isentava QUALQUER diretório
   # `*/hooks/` do repositório (ex.: `ops/hooks/`, `labs/x/hooks/`). Só o hooks/ da raiz documenta o teste.
   '''^hooks/.*''',

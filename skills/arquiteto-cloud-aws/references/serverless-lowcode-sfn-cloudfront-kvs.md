@@ -81,7 +81,7 @@ Quando Cognito é pesado demais para o caso de uso (ex.: login por matrícula/fu
 - **`session_secret`** → segredo aleatório de 256 bits para assinar o cookie HMAC-SHA256
 - **`auth_verifier`** → fallback legado opcional
 - **Cookie de sessão:** `__Host-ntt_session=<colabId>.<expEpoch>.<funcional>.<hmacBase64Url>; Path=/; Secure; HttpOnly; SameSite=Strict`
-- A CloudFront Function valida o cookie, injeta `request.headers['x-colab-id'] = { value: colabId }` para a origem e expõe a identidade em `/auth/ntt-whoami`.
+- A CloudFront Function valida o cookie, injeta `request.headers['x-colab-id'] = { value: colabId }` para a origem e expõe a identidade em `/auth/corp-whoami`.
 
 ### 3.2. Três Restrições Físicas do Runtime CloudFront Functions (Bloqueantes)
 1. **Orçamento rígido de `10.240 bytes` (`10 KB`):**
@@ -89,7 +89,7 @@ Quando Cognito é pesado demais para o caso de uso (ex.: login por matrícula/fu
    - Quebras de linha **CRLF** no Windows adicionam ~200–300 bytes invisíveis e quebram o deploy (`InvalidParameterValue`).
    - **Regra:** forçar `LF` no arquivo `.js` e manter invariante automatizado `len(bytes) + 64 < 10240`.
 2. **Default Cache Behavior bloqueia `POST` em rotas virtuais (`403 Forbidden`):**
-   - Se `AllowedMethods` do comportamento padrão for `["GET", "HEAD", "OPTIONS"]`, qualquer `POST /auth/ntt-trocar-senha` recebe `403` do CloudFront **antes** da função `viewer-request` rodar.
+   - Se `AllowedMethods` do comportamento padrão for `["GET", "HEAD", "OPTIONS"]`, qualquer `POST /auth/corp-trocar-senha` recebe `403` do CloudFront **antes** da função `viewer-request` rodar.
    - **Regra:** rotas virtuais respondidas pela própria CloudFront Function devem usar **`GET`** com parâmetros na query string, blindadas contra CSRF por `Sec-Fetch-Site: same-origin` + header customizado `X-Requested-With: XMLHttpRequest` + `Cache-Control: no-store`.
 3. **Sincronia Tripla de Identidade (`DynamoDB` ↔ `S3` ↔ `KVS`):**
    - Todo colaborador ativo precisa existir simultaneamente em:
@@ -207,6 +207,6 @@ Para expor dados consolidados e séries históricas retroativas a sistemas parce
      - `auditoria-360/dataset-consolidado-2026.json` (`~302 KB`), `auditoria-360/dataset-tabular-2026.csv` (`58 × 45`) e `auditoria-360/marcos-conquistas-2026.jsonl` (`187` linhas) para ingestão direta S3/Data Lake;
      - `auditoria-360/dataset-tabular-api-2026.json` (`~134 KB < 190 KB`) omitindo arrays brutos redundantes para leitura síncrona ultrarrápida na State Machine `consolidador-treinamentos-auditoria` (`POST /integracao/auditoria-360`).
 3. **Autenticação Multi-Cliente com Escopos por Sistema Consumidor (`Secrets Manager`):**
-   - Segredo `consolidador-treinamentos/integracao-clientes-api-keys` com mapa `clientes[clientId]` (`avaliacao-360-a2a`, `datalake-ntt`, `rh-corporativo`), cada um com `apiKey` própria e `escopos[]` (`dataset:read`, `colaborador:read`, `marcos:read`, `ranking:read`), validado em `auditoria-validar-api-key.jsonata` usando `$not(...)` e zero eco de segredo.
+   - Segredo `consolidador-treinamentos/integracao-clientes-api-keys` com mapa `clientes[clientId]` (`avaliacao-360-a2a`, `datalake-corp`, `rh-corporativo`), cada um com `apiKey` própria e `escopos[]` (`dataset:read`, `colaborador:read`, `marcos:read`, `ranking:read`), validado em `auditoria-validar-api-key.jsonata` usando `$not(...)` e zero eco de segredo.
 4. **Servidor MCP (`JSON-RPC 2.0` stdio — `scripts/mcp/servidor_auditoria_360_mcp.py`):**
    - Expõe 6 tools semânticas (`obter_resumo_executivo_360`, `listar_dataset_tabular_360`, `obter_dossie_treinamentos_colaborador`, `obter_historico_marcos_conquistas`, `consultar_ranking_ciclo_mensal`, `exportar_insumo_avaliacao_360`) prontas para acoplamento no Gate 4 do pipeline multi-agente `avaliacao-enterprise-a2a`.

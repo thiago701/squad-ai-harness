@@ -33,7 +33,7 @@ Segredos por `${env:NOME}`; valores `PASSWORD` nunca são persistidos nem exibid
 | SINK | `embedded` (journal, near-misses, roteamento) · `wiremock` (publica num WireMock existente) · `file` (mappings para CI) |
 
 Plugin próprio: implementar `StubSource` / `ResponseTransform` / `RequestPredicate` / `StubSink`, declarar as chaves
-em `config()`, registrar em `META-INF/services/tech.neural7.trace2local.mocks.spi.MockPlugin`, JAR em
+em `config()`, registrar em `META-INF/services/tech.squadai.trace2local.mocks.spi.MockPlugin`, JAR em
 `TRACE2LOCAL_MOCKS_PLUGIN_PATH` (classloader isolado por JAR).
 
 ## Como a chamada chega ao mock

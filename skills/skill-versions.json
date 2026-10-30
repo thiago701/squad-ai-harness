@@ -85,7 +85,7 @@
         {
           "version": 6,
           "date": "2026-10-15",
-          "summary": "Novo reference kms-custo-e-decisao.md (matriz owned × managed × CMK, modelo de custo com exemplos, chamadas por serviço e redução — Bucket Key, reuso de data key, cache —, quotas por Região, FinOps de chaves com GetKeyLastUsage, padrões POC × banco × DR) + heurística no hub. Pesquisa KMS do OpsNauta (LL-0032, EVO-0009)."
+          "summary": "Novo reference kms-custo-e-decisao.md (matriz owned × managed × CMK, modelo de custo com exemplos, chamadas por serviço e redução — Bucket Key, reuso de data key, cache —, quotas por Região, FinOps de chaves com GetKeyLastUsage, padrões POC × banco × DR) + heurística no hub. Pesquisa KMS do CloudOps (LL-0032, EVO-0009)."
         },
         {
           "version": 7,
@@ -400,12 +400,12 @@
         {
           "version": 4,
           "date": "2026-10-15",
-          "summary": "Novo reference kms-terraform.md (aws_kms_key: rotação desligada por padrão/janela 30/policy ausente = só root; política idiomática; SSE por serviço com nomes exatos; kms:Decrypt mínimo com PARAMETER_ARN; asserções de terraform test; Checkov × Security Hub) + bullet 'Criptografia em repouso'. Pesquisa KMS do OpsNauta (LL-0032, EVO-0009)."
+          "summary": "Novo reference kms-terraform.md (aws_kms_key: rotação desligada por padrão/janela 30/policy ausente = só root; política idiomática; SSE por serviço com nomes exatos; kms:Decrypt mínimo com PARAMETER_ARN; asserções de terraform test; Checkov × Security Hub) + bullet 'Criptografia em repouso'. Pesquisa KMS do CloudOps (LL-0032, EVO-0009)."
         },
         {
           "version": 5,
           "date": "2026-10-16",
-          "summary": "kms-terraform.md §3.1 (o que não automatizar em lote: SNS com serviço publicando, Bucket Key com contexto de objeto, chaves sem rotação possível) e §4.1 (CMK opt-in: bool conhecido no plan × ARN desconhecido, mock_resource no terraform test, Resource da policy com o mesmo tipo nos dois ramos, PendingDeletion na limpeza) + bullet no hub. Onda 6 do OpsNauta (LL-0034, EVO-0010)."
+          "summary": "kms-terraform.md §3.1 (o que não automatizar em lote: SNS com serviço publicando, Bucket Key com contexto de objeto, chaves sem rotação possível) e §4.1 (CMK opt-in: bool conhecido no plan × ARN desconhecido, mock_resource no terraform test, Resource da policy com o mesmo tipo nos dois ramos, PendingDeletion na limpeza) + bullet no hub. Onda 6 do CloudOps (LL-0034, EVO-0010)."
         }
       ]
     },
@@ -433,17 +433,17 @@
         {
           "version": 4,
           "date": "2026-10-15",
-          "summary": "Novo reference aws-kms.md (tipos de chave, política em 4 papéis, condition keys incl. kms:TrailingDaysWithoutKeyUsage, encryption context por serviço, rotação automática/sob demanda/manual com custo, GetKeyLastUsage e ciclo de vida, custo/quotas, integração por serviço, ML-DSA/ML-KEM, 12 anti-padrões, modelo de maturidade 0–4, Res. CMN 4.893/5.274, checklist) + 3 heurísticas no hub. Pesquisa KMS do OpsNauta (LL-0032, instinto-0017, EVO-0009)."
+          "summary": "Novo reference aws-kms.md (tipos de chave, política em 4 papéis, condition keys incl. kms:TrailingDaysWithoutKeyUsage, encryption context por serviço, rotação automática/sob demanda/manual com custo, GetKeyLastUsage e ciclo de vida, custo/quotas, integração por serviço, ML-DSA/ML-KEM, 12 anti-padrões, modelo de maturidade 0–4, Res. CMN 4.893/5.274, checklist) + 3 heurísticas no hub. Pesquisa KMS do CloudOps (LL-0032, instinto-0017, EVO-0009)."
         },
         {
           "version": 5,
           "date": "2026-10-16",
-          "summary": "aws-kms.md §12.1 (operacionalizar a régua de maturidade como DADO: regra com indicador + nível + remediação, validador que recusa correção que reduz segurança, achados que abrem/fecham, um próximo passo, motor sem nuvem, medir a própria plataforma) + pergunta 11 do checklist. Onda 6 do OpsNauta (LL-0033, instinto-0018, EVO-0010)."
+          "summary": "aws-kms.md §12.1 (operacionalizar a régua de maturidade como DADO: regra com indicador + nível + remediação, validador que recusa correção que reduz segurança, achados que abrem/fecham, um próximo passo, motor sem nuvem, medir a própria plataforma) + pergunta 11 do checklist. Onda 6 do CloudOps (LL-0033, instinto-0018, EVO-0010)."
         },
         {
           "version": 6,
           "date": "2026-10-17",
-          "summary": "aws-kms.md §12.2 (sondar o parser antes de confiar nele: Deny × permissão, política de recurso × identidade, Principal em lista, data aws_kms_key alias/aws/*, SSE inline do provider 3.x, índice em referência, chave assimétrica sem rotação, variações de texto no validador, squad ≤ repo mais fraco, item com teto de bytes). Revisão independente da Onda 6 do OpsNauta (LL-0035)."
+          "summary": "aws-kms.md §12.2 (sondar o parser antes de confiar nele: Deny × permissão, política de recurso × identidade, Principal em lista, data aws_kms_key alias/aws/*, SSE inline do provider 3.x, índice em referência, chave assimétrica sem rotação, variações de texto no validador, squad ≤ repo mais fraco, item com teto de bytes). Revisão independente da Onda 6 do CloudOps (LL-0035)."
         }
       ]
     },

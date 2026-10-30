@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Chatbot comercial multi-tenant — vertical {{VERTICAL}} ({{ESTABELECIMENTO}})"
 requires-python = ">=3.10"
 # Núcleo sem dependência externa: HTTP e persistência são stdlib.
-# `n7-ai-core` entra por N7_AI_CORE_PATH (dev) ou pelo índice privado (produção).
+# `squad-ai-core` entra por N7_AI_CORE_PATH (dev) ou pelo índice privado (produção).
 dependencies = []
 
 [project.optional-dependencies]

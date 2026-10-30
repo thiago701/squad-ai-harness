@@ -42,7 +42,7 @@ Formatação é comunicação. **Metáfora do jornal**: o topo do arquivo dá o 
 
 ### Catálogo de smells (`references/smells-catalog.md`)
 
-Referência rápida do Capítulo 17. Use quando precisar de **vocabulário preciso** para um problema que está vendo: Comments (C1-C5), Environment (E1-E2), Functions (F1-F4), General (G1-G36), Names (N1-N7), Tests (T1-T9). Cada smell tem nome, sintoma e correção.
+Referência rápida do Capítulo 17. Use quando precisar de **vocabulário preciso** para um problema que está vendo: Comments (C1-C5), Environment (E1-E2), Functions (F1-F4), General (G1-G36), Names (N1-core), Tests (T1-T9). Cada smell tem nome, sintoma e correção.
 
 ### Coordenação com outras skills (`references/coordination.md`)
 

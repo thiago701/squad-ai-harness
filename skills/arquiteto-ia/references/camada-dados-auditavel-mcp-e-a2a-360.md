@@ -50,7 +50,7 @@ Cada sistema consumidor recebe um `clientId`, uma `apiKey` exclusiva e uma lista
 | `clientId` | Sistema Consumidor | Escopos Autorizados (`escopos[]`) |
 |---|---|---|
 | `avaliacao-360-a2a` | Pipeline Multi-Agente Avaliação 360° (`avaliacao-enterprise-a2a`) | `dataset:read`, `colaborador:read`, `marcos:read`, `ranking:read` |
-| `datalake-ntt` | Enterprise Corporate Data Lake & Analytics | `dataset:read`, `marcos:read`, `ranking:read` |
+| `datalake-corp` | Enterprise Corporate Data Lake & Analytics | `dataset:read`, `marcos:read`, `ranking:read` |
 | `rh-corporativo` | Sistemas Corporativos de RH / Talent Management | `dataset:read`, `colaborador:read`, `ranking:read` |
 
 ### Validação JSONata Segura (`auditoria-auth.jsonata`)

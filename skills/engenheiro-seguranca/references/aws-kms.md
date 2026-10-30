@@ -231,7 +231,7 @@ contra compartilhamento indevido e veda acesso de terceiros às chaves que assin
 dedicada). Tradução prática: nível **≥ 3** para dados do banco, chaves de assinatura em CMK/HSM com política que
 exclui prestadores, e auditoria por CloudTrail. (Síntese informativa, não jurídica — confira o texto no DOU.)
 
-### 12.1 Operacionalizar a régua (o que funcionou no OpsNauta, 16/10/2026)
+### 12.1 Operacionalizar a régua (o que funcionou no CloudOps, 16/10/2026)
 
 Sem isto o modelo fica em slide. A régua vira **dado** e o motor fica estúpido de propósito (nenhum modelo de IA
 decide o que é seguro):
@@ -256,7 +256,7 @@ decide o que é seguro):
 - **Um próximo passo** por repositório e pela squad (o indicador do nível mais baixo, com a correção e a tarefa em
   lote), mais o relatório executivo com fórmulas (Resumo · Recursos · Chaves · Permissões · Recomendações).
 - **O mesmo motor roda sem nuvem** sobre checkouts (parser do IaC → regras → maturidade): é o teste de aceite e a
-  ferramenta do dev. E **mede a própria plataforma**: no OpsNauta isso expôs o tópico SNS de avisos sem SSE (nível 0).
+  ferramenta do dev. E **mede a própria plataforma**: no CloudOps isso expôs o tópico SNS de avisos sem SSE (nível 0).
 - Inventário guarda **só o trecho `kms:`** de cada policy (ações, `Resource *` sem condição, `ViaService`,
   `EncryptionContext`, chaves nomeadas) — nunca a policy inteira; chave sem alias ganha ARN **provisório**
   (`key/<rótulo>`) e uma regra cobrando o alias; valor de chave que vem de `local.`/função fica `indefinida` (revisão).
@@ -264,7 +264,7 @@ decide o que é seguro):
 ### 12.2 Sondar o parser antes de confiar nele (revisão independente, 17/10/2026)
 
 Gabarito escrito pela mesma mão que escreveu o parser só confirma o que o autor já pensou. Antes de dar um nível a
-alguém, rode estes cenários sintéticos contra o parser — cada um foi um erro real no OpsNauta:
+alguém, rode estes cenários sintéticos contra o parser — cada um foi um erro real no CloudOps:
 
 | Sondagem | Resposta certa |
 |---|---|

@@ -76,7 +76,7 @@ instrumentado, **leia a execução** (UI ou MCP). Cite `executionId` e `[nodeId]
 
 ```bash
 # 0) uma vez por versão, no repo da lib (sem Maven Central): ./mvnw -B install -DskipTests  (Windows: .\mvnw.cmd)
-P=tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT
+P=tech.squadai.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT
 ./mvnw -q compile $P:analyze                                    # só lê o BYTECODE → target/trace2local/
 ./mvnw $P:configure -Dtrace2local.version=0.1.0-SNAPSHOT        # BOM + starter, glossário, config, logback
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=trace2local   # liga a ferramenta

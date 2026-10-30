@@ -79,8 +79,8 @@ Quando a autenticação e autorização rodam numa CloudFront Function (`viewer-
 1. **Cookie `__Host-` assinado com HMAC-SHA256:**
    - Prefixo `__Host-` exige `Secure; Path=/` e ausência de atributo `Domain`, impedindo cookie tossing por subdomínios.
    - Comparação de digest e HMAC em **tempo constante** (`constantTimeEqual`) para mitigar timing attacks.
-2. **Proteção CSRF em Rotas Virtuais `GET` (`/auth/ntt-*`):**
-   - Como o Default Cache Behavior do CloudFront só aceita `GET/HEAD/OPTIONS`, ações de borda (como `/auth/ntt-trocar-senha` e `/auth/ntt-logout`) usam `GET` mas exigem obrigatoriamente:
+2. **Proteção CSRF em Rotas Virtuais `GET` (`/auth/corp-*`):**
+   - Como o Default Cache Behavior do CloudFront só aceita `GET/HEAD/OPTIONS`, ações de borda (como `/auth/corp-trocar-senha` e `/auth/corp-logout`) usam `GET` mas exigem obrigatoriamente:
      - `Sec-Fetch-Site` igual a `same-origin` ou `same-site` (se presente);
      - Header customizado `X-Requested-With: XMLHttpRequest` (que não pode ser enviado por navegação `<a href>`, `<img>` ou `<form>` cross-site sem preflight CORS).
    - Respostas de `/auth/*` sempre retornam `Cache-Control: no-store, no-cache, must-revalidate, private`.
@@ -141,7 +141,7 @@ Ao validar nomes de arquivos em endpoints de visualização/download na CloudFro
    - **Nunca** use `<input type="text">` mascarado com `-webkit-text-security: disc`, `autocomplete="off"` ou `data-lpignore="true"`;
    - **Nunca** limpe `passInp.value = ""` antes da resposta `200 OK` do servidor de autenticação (gerenciadores nativos leem o valor no momento do sucesso).
 2. **Contrato Semântico Obrigatório:**
-   - `<form id="ntt-auth-gate-form" action="/auth/ntt-status" method="post" autocomplete="on">`;
+   - `<form id="corp-auth-gate-form" action="/auth/corp-status" method="post" autocomplete="on">`;
    - Campo usuário: `name="username" autocomplete="username"`;
    - Campo senha: `type="password" name="password" autocomplete="current-password"` + botão de alternância explícito (`toggleAuthGatePasswordVisibility` com `aria-pressed`);
    - Integração com `navigator.credentials.store(new window.PasswordCredential({ id, password, name }))` após login `200 OK`;

@@ -10,7 +10,7 @@ financeiro.
 ## Papéis
 
 O estabelecimento é **controlador** — ele decide por que trata o dado do cliente dele.
-A Neural7 é **operadora** — trata em nome do controlador. Isso implica contrato de operador
+A SquadAI é **operadora** — trata em nome do controlador. Isso implica contrato de operador
 (art. 39), e implica que decisões de retenção e base legal são do cliente, não suas. O código
 só precisa tornar as duas configuráveis.
 

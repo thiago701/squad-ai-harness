@@ -110,7 +110,7 @@ class RespostaExtrativa:
 
 
 class LlmGateway:
-    """Adapter para o pacote `llm-gateway` da Neural7.
+    """Adapter para o pacote `llm-gateway` da SquadAI.
 
     Contrato esperado (ver `references/arquitetura-referencia.md`):
 
@@ -178,7 +178,7 @@ class LlmResiliente:
     """Timeout/retry/breaker de `conversation_core` + fallback extrativo.
 
     Não reimplementa resiliência: delega a `ResilientCaller`, já testado no
-    n7-ai-core.
+    squad-ai-core.
     """
 
     def __init__(

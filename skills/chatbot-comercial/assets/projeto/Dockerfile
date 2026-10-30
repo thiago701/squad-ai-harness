@@ -8,11 +8,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# n7-ai-core: vendorizado por `scaffold.py --n7-core ../n7-ai-core` (build offline) ou,
+# squad-ai-core: vendorizado por `scaffold.py --core-core ../squad-ai-core` (build offline) ou,
 # em produção, resolvido pelo índice privado.
 COPY vendor /opt/vendor
-RUN if [ -d /opt/vendor/n7-ai-core ]; then pip install /opt/vendor/n7-ai-core; \
-    else pip install n7-ai-core; fi
+RUN if [ -d /opt/vendor/squad-ai-core ]; then pip install /opt/vendor/squad-ai-core; \
+    else pip install squad-ai-core; fi
 
 COPY pyproject.toml ./
 COPY app ./app

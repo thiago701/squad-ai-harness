@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo-squad-ai-harness.jpg" alt="SquadAI Harness v0.8.0 Banner" width="100%" />
+  <img src="assets/logo-squad-ai-harness.jpg" alt="SquadAI Harness Banner" width="100%" />
 
   # SquadAI Harness (`squad-ai-harness`) · v0.8.0
 

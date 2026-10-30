@@ -295,7 +295,7 @@ Lei de Demeter de novo. `a.getB().getC().getD()` é frágil — qualquer mudanç
 | **N4** | Nomes não-ambíguos | Diga **o que** é — não deixe duas operações similares sem distinção |
 | **N5** | Nomes longos para escopos longos | `i` em loop é ok; `i` como campo de classe não |
 | **N6** | Evite codificações | Notação húngara, prefixos `m_`, `I` em interfaces — todos lixo |
-| **N7** | Nomes devem descrever efeitos colaterais | `createOrReturnOos` é melhor que `getOos` se cria quando não existe |
+| **core** | Nomes devem descrever efeitos colaterais | `createOrReturnOos` é melhor que `getOos` se cria quando não existe |
 
 ## Testes (T)
 
@@ -317,4 +317,4 @@ Lei de Demeter de novo. `a.getB().getC().getD()` é frágil — qualquer mudanç
 - Em **modo Refatoração**: ataque os mais impactantes primeiro (geralmente `G5` duplicação, `G30` faz mais de uma coisa, `N1` nomes).
 - Em **modo Escrita**: use mentalmente como filtro antes de entregar.
 
-Não é necessário decorar. Use como referência. Os mais frequentes (G5, G30, F1, N1, N7, C5, T1) aparecem em quase toda revisão — esses, sim, vale internalizar.
+Não é necessário decorar. Use como referência. Os mais frequentes (G5, G30, F1, N1, core, C5, T1) aparecem em quase toda revisão — esses, sim, vale internalizar.

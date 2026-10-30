@@ -114,7 +114,7 @@ public class PiiRedactionTest {
     // ── TESTE 5: SENHAS/TOKENS NUNCA LOGAM ─────────────────────────────────
     @Test
     void shouldNeverLogPasswordOrToken() {
-        String password = "SuperSecretP@ss123";
+        String password = "***";
         String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
         
         // Código nunca deveria logar essas informações
@@ -180,8 +180,8 @@ public class PiiRedactionTest {
     void shouldNotLogAuthorizationHeaderValues() {
         var req = HttpRequest.newBuilder()
             .uri(URI.create("http://api.example.com/pedidos"))
-            .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiIs...")
-            .header("X-API-Key", "sk-prod-abcd1234efgh5678")
+            .header("Authorization", "Bearer <TOKEN_EXEMPLO>")
+            .header("X-API-Key", "sk_<REDACTED_EXAMPLE>")
             .build();
         
         // Usar RestClient com interceptor que redacta headers sensíveis

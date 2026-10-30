@@ -10,8 +10,8 @@ Uso:
         --nome pousada-serra-viva --tenant serra-viva --vertical pousada \\
         --estabelecimento "Pousada Serra Viva" --canais whatsapp,web --porta 8080
 
-    # levando o n7-ai-core junto (para `docker compose build` funcionar offline)
-    python scripts/scaffold.py --destino ../cliente --n7-core ../n7-ai-core
+    # levando o squad-ai-core junto (para `docker compose build` funcionar offline)
+    python scripts/scaffold.py --destino ../cliente --core-core ../squad-ai-core
 """
 
 from __future__ import annotations
@@ -86,7 +86,7 @@ def main() -> int:
     p.add_argument("--canais", default="whatsapp,web")
     p.add_argument("--porta", default="8080")
     p.add_argument("--volume", default="até 1k conversas/mês por tenant")
-    p.add_argument("--n7-core", type=Path, help="caminho do n7-ai-core para vendorizar")
+    p.add_argument("--core-core", type=Path, help="caminho do squad-ai-core para vendorizar")
     p.add_argument("--forcar", action="store_true", help="sobrescreve destino existente")
     a = p.parse_args()
 
@@ -145,17 +145,17 @@ def main() -> int:
     vendor.mkdir(exist_ok=True)
     (vendor / "README.md").write_text(
         "# vendor\n\n"
-        "`docker compose build` procura `vendor/n7-ai-core` aqui. Gere com:\n\n"
-        "    python scripts/scaffold.py --destino . --forcar --n7-core ../n7-ai-core\n\n"
-        "Sem isso, o Dockerfile cai para `pip install n7-ai-core` (exige índice privado).\n",
+        "`docker compose build` procura `vendor/squad-ai-core` aqui. Gere com:\n\n"
+        "    python scripts/scaffold.py --destino . --forcar --core-core ../squad-ai-core\n\n"
+        "Sem isso, o Dockerfile cai para `pip install squad-ai-core` (exige índice privado).\n",
         encoding="utf-8",
     )
 
     if a.n7_core:
         origem = a.n7_core.resolve()
         if not (origem / "pyproject.toml").exists():
-            raise SystemExit(f"{origem} não parece o n7-ai-core (sem pyproject.toml).")
-        alvo = vendor / "n7-ai-core"
+            raise SystemExit(f"{origem} não parece o squad-ai-core (sem pyproject.toml).")
+        alvo = vendor / "squad-ai-core"
         shutil.rmtree(alvo, ignore_errors=True)
         shutil.copytree(
             origem, alvo,
