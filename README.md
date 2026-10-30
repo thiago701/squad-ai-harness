@@ -67,6 +67,89 @@ flowchart LR
 
 ---
 
+## 🧠 Arquitetura de Alto Nível do Cérebro Cognitivo (`Cognitive Brain`)
+
+O diagrama abaixo ilustra como o **Cérebro Cognitivo** do `squad-ai-harness` processa qualquer pedido antes de consumir tokens de um LLM remoto — combinando **percepção de impacto**, **busca em grafo (`SEKG + GraphRAG`)**, **memória em 4 camadas (`M0–M3`)**, **julgamento determinístico (`Tribunal JEV`)** e **roteamento adaptativo de hardware (`C0 / C1 / C2`)**:
+
+```mermaid
+flowchart TB
+    subgraph L1["1. PERCEPCAO E ENTRADA (Dev, Diff Git ou Agente via MCP)"]
+        IN["Prompt / Tarefa / Git Diff — Ex.: Squad ai, prepare a equipe"]
+        TRIG{"Gatilho Executivo? (gere relatorio de uso)"}
+        IN --> TRIG
+    end
+
+    subgraph L2["2. CAMADA 0 — COGNITIVE HARNESS (10 Estagios em Go · < 10 ms · US$ 0)"]
+        S1["(1) TASK & (2) CONTEXT — Raio de Impacto + Orcamento CTX-1 (2k) | CTX-2 (6k) | CTX-3 (12k)"]
+        S3["(3) RETRIEVAL HIBRIDO — HybridRouter BM25 + Vetorial 384-d (Top-K entre 106 Skills)"]
+        S4["(4) PLAN -> (5) EXECUTION -> (6) TEST — Trava N0/N1 ate GATE 1 + Oraculos de Teste"]
+        S8["(8) REFLECTION -> (9) MEMORY -> (10) NEXT_ACTION — Pacote Cirurgico de Contexto"]
+        S1 --> S3
+        S3 --> S4
+    end
+
+    subgraph L3["3. GRAFO DE CONHECIMENTO — SEKG & GRAPHRAG (CSR em RAM + Comunidades de Leiden)"]
+        CSR["Grafo CSR (< 12 MB RAM) — Modulos, Contratos, Testes, ADRs e Skills (Leiden C0 / C1 / C2)"]
+        LOCAL["LocalSearch (< 1 ms) — Vizinhanca 1-hop e 2-hop (Quem chama? Qual teste cobre?)"]
+        GLOBAL["GlobalSearch (< 1 ms) — Visao Holistica de Arquitetura (Community Reports)"]
+        DRIFT["DRIFTSearch (< 1 ms) — Raciocinio Dinamico Macro + Micro (Causa Raiz)"]
+        CSR --> LOCAL
+        CSR --> GLOBAL
+        CSR --> DRIFT
+    end
+
+    subgraph L4["4. MEMORIA MULTICAMADA (M0 a M3) & GUARDRAILS EPISTEMICOS"]
+        M0["M0 Working Memory — Contexto ativo da sessao com teto rigido de tokens"]
+        M1["M1 Episodic Memory — Historico de execucoes, falhas e indice de surpresa"]
+        M2["M2 Semantic Memory — Quarentena (HYPOTHESIS, TTL 7d) vs. Provado (VERIFIED)"]
+        M3["M3 Procedural Memory — 106 Skills Auditaveis + Regras Always-On + Instintos"]
+        M0 --> M1
+        M1 --> M2
+        M2 --> M3
+    end
+
+    subgraph L5["5. TRIBUNAL DETERMINISTICO JEV (25 Especialistas + Critic/Judge · ~518 us · US$ 0)"]
+        JEV25["Fan-Out Paralelo de 25 Especialistas JEV (Seguranca, Arquitetura, Banco, Cloud, Clean Code)"]
+        ARB["Juiz Anti-Regressao — Seguranca (Bloqueante) >> P1 Simplicidade > P2 Performance > P3 Custo"]
+        JEV25 --> ARB
+    end
+
+    subgraph L6["6. ROTEADOR COMPUTACIONAL (C0 / C1 / C2) & TELEMETRIA QUANTICA (QUID)"]
+        C0["Rota C0 (Go Nativo CPU) — Decisoes Deterministicas · 0 Tokens · US$ 0"]
+        C1["Rota C1 (Neural Assist Local) — ONNX / NPU / iGPU / GPU Local · US$ 0"]
+        C2["Rota C2 (LLM Remoto Cirurgico) — Haiku (Exploracao) | Sonnet (Codigo) | Opus (Arquitetura)"]
+        QUID["Ledger Assincrono (< 15 us) + ID Quantico (QUID-SQ8-...) — Relatorio ASCII 3 Meses (US$ e R$)"]
+    end
+
+    TRIG -->|"Sim (100% Offline)"| QUID
+    TRIG -->|"Nao (Fluxo de Engenharia)"| S1
+    S3 <-->|"Travessia em Microssegundos"| CSR
+    S4 --> JEV25
+    ARB --> S8
+    S8 <-->|"Leitura / Escrita Auditada"| M0
+    S8 --> C0
+    S8 --> C1
+    S8 --> C2
+    C0 --> QUID
+    C1 --> QUID
+    C2 --> QUID
+```
+
+### 📖 Legendas Didáticas — Como o Cérebro Cognitivo Funciona na Prática
+
+Para facilitar o entendimento técnico e executivo, cada bloco numerado no diagrama acima cumpre um papel específico inspirado na cognição humana e na engenharia de sistemas de baixa latência:
+
+| Bloco do Diagrama | O que é (Explicação Didática) | Como funciona por dentro (`Go 1.24.3`) | Ganho Prático (Velocidade & Economia) |
+| :--- | :--- | :--- | :--- |
+| **1. Percepção e Entrada** | É a **"porta sensorial"** da Squad. Recebe tanto pedidos de engenharia (`"implemente API em Go"`, `"revise este PR"`) quanto gatilhos executivos (`"Squad ai, gere relatorio de uso"`). | Intercepta a intenção via CLI, hook (`PreToolUse`) ou servidor MCP local (`stdio`). Se for uma consulta de relatório ou `QUID`, responde instantaneamente sem acionar o restante da pipeline. | Evita chamadas desnecessárias à nuvem e funciona **100% offline** dentro da rede corporativa. |
+| **2. Camada 0 (`CognitiveHarness`)** | É o **"pré-frontal de triagem rápida"**. Antes de perguntar qualquer coisa a um LLM caro, executa **10 estágios determinísticos** (`TASK` → `NEXT_ACTION`) em menos de `10 ms`. | Mede o *Blast Radius* (raio de impacto dos arquivos alterados), classifica o tamanho da tarefa (`trivial`, `small`, `standard`, `large`), trava o orçamento de tokens (`CTX-1` a `CTX-3`) e seleciona apenas as skills relevantes via `HybridRouter` (BM25 + Vetor `384-d`). | Reduz de **60% a 75% o consumo de tokens**, pois o LLM nunca recebe o repositório inteiro nem todas as 106 skills de uma vez — apenas o recorte cirúrgico. |
+| **3. Grafo `SEKG` & `GraphRAG`** | É o **"mapa relacional vivo"** do sistema. Enquanto um RAG comum lê trechos soltos de texto (e falha ao responder *"o que quebra se eu mudar esta tabela?"*), o `SEKG` conhece quem chama quem, qual teste valida qual módulo e qual ADR governa cada pacote. | Mantém o grafo em memória no formato compacto **CSR (*Compressed Sparse Row*)** com agrupamento hierárquico pelo algoritmo de **Leiden** (`C0` domínio, `C1` subsistema, `C2` pacote), oferecendo 3 buscas em `< 1 ms`: **`LocalSearch`** (vizinhança 1–2 saltos), **`GlobalSearch`** (visão macro por comunidades) e **`DRIFTSearch`** (investigação combinada macro + micro). | Elimina "alucinações de acoplamento" e responde perguntas de impacto arquitetural em **`~526 µs`** a **custo US$ 0 de LLM**. |
+| **4. Memória Multicamada (`M0–M3`) & Guardrails** | É o **"sistema de memória com imunidade anti-alucinação"**. Divide o conhecimento em 4 horizontes de tempo e impede que suposições não provadas contaminem decisões futuras. | **`M0` (Trabalho)**: contexto enxuto da sessão atual.<br/>**`M1` (Episódica)**: histórico de execuções e falhas.<br/>**`M2` (Semântica)**: separa hipóteses em **Quarentena (`HYPOTHESIS`, expira em 7 dias)** de fatos **Verificados (`VERIFIED`)** — uma hipótese só vira fato se passar por teste automatizado + gate verde.<br/>**`M3` (Procedural)**: as **106 Skills** e regras versionadas no Git. | Garante que o agente aprenda entre sessões sem sofrer *memory poisoning* (envenenamento de memória por respostas antigas incorretas). |
+| **5. Tribunal Determinístico `JEV`** | É o **"conselho de 25 juízes especialistas"** que audita arquitetura, segurança, banco de dados e código limpo paralelamente em meio milissegundo (`~518 µs`). | Executa 25 avaliadores determinísticos em goroutines e consolida os votos no *Critic/Judge* sob a regra pétrea:<br/>$$\text{Segurança} \gg \text{P1 Simplicidade} > \text{P2 Performance} > \text{P3 Custo}$$<br/>Qualquer violação crítica de segurança ou tentativa de quebrar a trava Go-Exclusive barra a operação na hora (`BLOCKED`). | Substitui dezenas de chamadas repetitivas de code review em LLM por verificações exatas a **US$ 0** e latência sub-milissegundo. |
+| **6. Roteador `C0/C1/C2` & Telemetria `QUID`** | É o **"despachante inteligente de custos e auditoria executiva"**. Decide qual motor computacional usar e registra cada segundo e dólar economizado. | - **`C0` (Go Nativo)**: resolve localmente tudo o que é determinístico (`US$ 0`).<br/>- **`C1` (Neural Local)**: usa CPU/NPU/iGPU/GPU local quando disponível (`US$ 0`).<br/>- **`C2` (LLM Cloud)**: roteia para `Haiku` (exploração), `Sonnet` (implementação) ou `Opus` (arquitetura/segurança) já com o contexto comprimido.<br/>- **`QUID`**: grava em *ring-buffer* assíncrono (`< 15 µs`) as horas trabalhadas, horas otimizadas e tokens poupados (`US$` e `R$`) sob o ID Quântico do repositório. | Dá visibilidade executiva imediata em ASCII para o gestor (`.\squad-harness.exe report`) sem qualquer impacto na velocidade de resposta do desenvolvedor. |
+
+---
+
 ## 🚀 Guia Rápido de Instalação e Uso
 
 ### 1. Compilar o Binário Nativo (`Go 1.24.3+`)
