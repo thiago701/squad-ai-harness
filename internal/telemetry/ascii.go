@@ -74,7 +74,7 @@ func normalizePTBR(s string) string {
 func renderASCIICore(rep Report, signature string) string {
 	var b strings.Builder
 
-	const innerW = 92
+	const innerW = 100
 	hrTop := "╔" + strings.Repeat("═", innerW) + "╗\n"
 	hrMid := "╠" + strings.Repeat("═", innerW) + "╣\n"
 	hrSep := "╟" + strings.Repeat("─", innerW) + "╢\n"
