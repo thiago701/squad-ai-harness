@@ -403,6 +403,9 @@ func runCLI(args []string) int {
 			Addr:              addr,
 			Handler:           srv.Handler(),
 			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       15 * time.Second,
+			WriteTimeout:      30 * time.Second,
+			IdleTimeout:       60 * time.Second,
 		}
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Fprintf(os.Stderr, "erro no servidor HTTP: %v\n", err)
@@ -569,6 +572,11 @@ func runLiveBenchmarkSuite(rootDir string) int {
 	runtime.ReadMemStats(&mAfter)
 	sysMem, _ := jobobject.ProbeSystemMemory()
 
+	topSkill := ""
+	if len(pfRes.TopSkills) > 0 {
+		topSkill = pfRes.TopSkills[0].SkillName
+	}
+
 	report := map[string]any{
 		"identity":                   contracts.FullIdentity,
 		"go_toolchain":               runtime.Version(),
@@ -589,7 +597,7 @@ func runLiveBenchmarkSuite(rootDir string) int {
 		"heap_sys_mb":                float64(mAfter.HeapSys) / (1024 * 1024),
 		"host_avail_ram_mb":          sysMem.AvailPhysMB,
 		"host_total_ram_mb":          sysMem.TotalPhysMB,
-		"top_routed_skill":           pfRes.TopSkills[0].SkillName,
+		"top_routed_skill":           topSkill,
 		"total_bench_ms":             float64(time.Since(t0).Microseconds()) / 1000.0,
 	}
 	printJSON(report)

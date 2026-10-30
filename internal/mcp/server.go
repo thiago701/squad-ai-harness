@@ -282,6 +282,10 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 		}
 	case "squad_usage_report":
 		qid, _ := args["quid"].(string)
+		months := 3
+		if mVal, ok := args["months"].(float64); ok && int(mVal) > 0 && int(mVal) <= 12 {
+			months = int(mVal)
+		}
 		if qid != "" {
 			if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
 				return &RPCResponse{
@@ -294,8 +298,13 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 					},
 				}
 			}
+			return &RPCResponse{
+				JSONRPC: "2.0",
+				ID:      id,
+				Error:   &RPCError{Code: -32602, Message: "QUID não encontrado no registro offline: " + qid},
+			}
 		}
-		rep := telemetry.GenerateReport(s.rootDir, 3)
+		rep := telemetry.GenerateReport(s.rootDir, months)
 		return &RPCResponse{
 			JSONRPC: "2.0",
 			ID:      id,

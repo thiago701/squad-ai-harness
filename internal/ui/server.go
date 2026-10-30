@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/thiago701/squad-ai-harness/internal/catalog"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
@@ -32,8 +34,11 @@ var logoPNG []byte
 
 // Server serves the embedded Interactive Skills Catalog and live Resource Monitor API.
 type Server struct {
-	rootDir string
-	engine  *harness.Engine
+	rootDir      string
+	engine       *harness.Engine
+	syncMu       sync.RWMutex
+	cachedSync   installer.SyncReport
+	cachedSyncAt time.Time
 }
 
 // NewServer initializes the UI Server backed by the live CognitiveHarness.
@@ -75,12 +80,16 @@ func (s *Server) Handler() http.Handler {
 
 func (s *Server) handleTelemetryReport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	qid := strings.TrimSpace(r.URL.Query().Get("quid"))
 	if qid != "" {
 		if entry, ok := telemetry.ResolveByQUID(qid, s.rootDir); ok {
 			writeJSON(w, entry)
 			return
 		}
+		w.WriteHeader(http.StatusNotFound)
+		writeJSON(w, map[string]any{"found": false, "quid": qid, "error": "QUID não encontrado no registro offline"})
+		return
 	}
 	rep := telemetry.GenerateReport(s.rootDir, 3)
 	writeJSON(w, rep)
@@ -96,6 +105,8 @@ func (s *Server) handleTelemetryASCII(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte(entry.ASCIIReport))
 			return
 		}
+		http.Error(w, "QUID nao encontrado no registro offline: "+qid, http.StatusNotFound)
+		return
 	}
 	rep := telemetry.GenerateReport(s.rootDir, 3)
 	_, _ = w.Write([]byte(rep.ASCII))
@@ -127,7 +138,26 @@ func currentGoMemLimitMiB() float64 {
 }
 
 func (s *Server) inspectSyncStatus() installer.SyncReport {
-	return installer.Verify(s.engine.Catalog(), nil)
+	s.syncMu.RLock()
+	if !s.cachedSyncAt.IsZero() && time.Since(s.cachedSyncAt) < 5*time.Second {
+		rep := s.cachedSync
+		s.syncMu.RUnlock()
+		return rep
+	}
+	s.syncMu.RUnlock()
+
+	rep := installer.Verify(s.engine.Catalog(), nil)
+	s.syncMu.Lock()
+	s.cachedSync = rep
+	s.cachedSyncAt = time.Now()
+	s.syncMu.Unlock()
+	return rep
+}
+
+func (s *Server) invalidateSyncCache() {
+	s.syncMu.Lock()
+	s.cachedSyncAt = time.Time{}
+	s.syncMu.Unlock()
 }
 
 func (s *Server) handleOverview(w http.ResponseWriter, _ *http.Request) {
@@ -334,6 +364,7 @@ func (s *Server) handleOpenSkill(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	var req struct {
 		Name   string `json:"name"`
 		DryRun bool   `json:"dry_run"`
@@ -382,6 +413,7 @@ func (s *Server) handleSyncSkills(w http.ResponseWriter, r *http.Request) {
 		Target string `json:"target"`
 	}
 	if r.Body != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 		_ = json.NewDecoder(r.Body).Decode(&req)
 	}
 	var customTargets []installer.TargetDef
@@ -398,6 +430,7 @@ func (s *Server) handleSyncSkills(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	s.invalidateSyncCache()
 	writeJSON(w, summary)
 }
 
