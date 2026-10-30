@@ -29,18 +29,28 @@ func TestNativeGoInstallerSyncAndVerify(t *testing.T) {
 	if len(supported) != 12 {
 		t.Fatalf("expected 12 supported enterprise/dev agentic tools in catalog, got %d", len(supported))
 	}
+	for _, s := range supported {
+		if !s.PrimaryAuto {
+			t.Fatalf("expected PrimaryAuto=true for tool %q so all detected tools activate squad-ai-harness", s.ID)
+		}
+	}
 	resolved, err := ResolveTargetsByIDs([]string{"cursor,copilot", "windsurf"})
 	if err != nil || len(resolved) != 3 {
 		t.Fatalf("ResolveTargetsByIDs failed: got %+v err=%v", resolved, err)
 	}
 
 	tmpHome := t.TempDir()
+	claudeRoot := filepath.Join(tmpHome, ".claude")
+	_ = os.MkdirAll(claudeRoot, 0o755)
+	legacyManifest := filepath.Join(claudeRoot, "squad-ai-manifest.json")
+	_ = os.WriteFile(legacyManifest, []byte(`{"legacy":true}`), 0o644)
+
 	targets := []TargetDef{
 		{
-			ID:        "claude-test",
+			ID:        "claude",
 			Name:      "Claude Code Test",
-			RootDir:   filepath.Join(tmpHome, ".claude"),
-			SkillsDir: filepath.Join(tmpHome, ".claude", "skills"),
+			RootDir:   claudeRoot,
+			SkillsDir: filepath.Join(claudeRoot, "skills"),
 		},
 		{
 			ID:        "antigravity-test",
@@ -66,6 +76,12 @@ func TestNativeGoInstallerSyncAndVerify(t *testing.T) {
 	}
 	if !sum.PostSync.AllSynced {
 		t.Fatalf("expected PostSync.AllSynced = true after install, got %+v", sum.PostSync)
+	}
+	if _, err := os.Stat(legacyManifest); !os.IsNotExist(err) {
+		t.Fatalf("expected legacy squad-ai-manifest.json to be retired, err=%v", err)
+	}
+	if _, err := os.Stat(filepath.Join(claudeRoot, "commands", "squad-install.md")); err != nil {
+		t.Fatalf("expected .claude/commands/squad-install.md to be synced into claude target: %v", err)
 	}
 
 	// 3. Verify manifest was written in each target

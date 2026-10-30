@@ -28,10 +28,10 @@
 - **graphify** (`.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
 
-# instalar-skills (Multi-PC: CPU / GPU / NPU)
+# instalar-skills (Multi-PC: CPU / GPU / NPU — 100% Go Nativo)
 - **instalar-skills** (`skills/instalar-skills/SKILL.md` · `/squad-install`) — gatilhos: `"instale squad ai"`, `"instalar squad ai"`, `"instale as skills"`, `"instalei as skills"`, `"configurar estação"`.
-  - Para **"instale squad ai"** / **"instale as skills"**: rode `python install-squad-ai.py detectar`, `python install-squad-ai.py instalar-todos`, `python install-squad-ai.py estacao` e `.\squad-harness.exe compute`.
-  - Para **"instalei as skills"**: valide com `python install-squad-ai.py verify`, `.\squad-harness.exe gate`, `.\squad-harness.exe compute` e `python -m scripts.accel.model_cards list` (em PCs sem GPU/NPU, o `squad-harness.exe` opera 100% na Camada C0 Go Nativo `CPU_GO` sem exigir modelos; para calibrar o caminho neural local no PC, use `python install-squad-ai.py estacao --aplicar --calibrar --rapido`).
+  - Para **"instale squad ai"** / **"instale as skills"**: rode `.\squad-harness.exe install detect`, `.\squad-harness.exe install` e `.\squad-harness.exe compute` (ativa automaticamente em todas as ferramentas agênticas presentes na máquina e aposenta os artefatos legados do `install-squad-ai.py`).
+  - Para **"instalei as skills"**: valide com `.\squad-harness.exe install verify`, `.\squad-harness.exe gate` e `.\squad-harness.exe compute` (em PCs sem GPU/NPU, o `squad-harness.exe` opera 100% na Camada C0 Go Nativo `CPU_GO` sem exigir modelos externos).
 
 
 ## 🛡️ Linha de Defesa de Prompt

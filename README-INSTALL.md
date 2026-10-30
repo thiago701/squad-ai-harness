@@ -1,50 +1,36 @@
-# Instalar o ecossistema Squad AI no `.claude/`
+# Instalar o ecossistema SquadAI Harness em Todas as Ferramentas Agênticas
 
-Importa skills, agents, commands, templates, workflows, memory e docs do orquestrador
-Squad AI para um diretório `.claude/`, deixando o Claude pronto para usar a squad.
+Sincroniza concorrentemente as 106 skills canônicas e comandos `/squad-*` do **SquadAI Harness (`v0.8.0`)** em todos os ambientes agênticos instalados na estação (`Claude Code`, `Google Antigravity`, `Cursor`, `GitHub Copilot`, `OpenAI Codex`, `Windsurf`, `Gemini CLI`, `Cline`, `OpenCode`, `Qwen`, `DeepSeek Harness`, `Resolve AI` e `~/.agents/skills`).
 
-**Stdlib pura · offline · idempotente · com backup, rollback, manifesto e verify.** Só precisa de **Python 3.8+**.
+**100% Go 1.24.3 nativo (`CGO_ENABLED=0`) · offline · idempotente · porta de segurança fail-closed · manifesto SHA-256 (`.squad-ai-manifest.json`).** O antigo instalador Python (`install-squad-ai.py`) foi desativado e substituído pelo binário único `squad-harness.exe`.
 
 ## TL;DR
 
-```bash
-# 1) ver o que será feito (não escreve nada)
-python install-squad-ai.py plan --target ~/.claude
+```powershell
+# 1) Detectar ferramentas agênticas presentes na estação (somente leitura)
+.\squad-harness.exe install detect
 
-# 2) instalar (cria backup do que sobrescrever)
-python install-squad-ai.py install --target ~/.claude
+# 2) Instalar/sincronizar em todas as ferramentas presentes (paralelo via goroutines)
+.\squad-harness.exe install
 
-# 3) conferir integridade
-python install-squad-ai.py verify --target ~/.claude
+# 3) Conferir integridade byte-a-byte (LF normalizado) e rodar o gate unificado
+.\squad-harness.exe install verify
+.\squad-harness.exe gate
 ```
-
-Windows: `./install-squad-ai.ps1 install --target $HOME\.claude` · Linux/macOS: `./install-squad-ai.sh install --target ~/.claude`
 
 ## Subcomandos
 
 | Comando | O que faz |
 |---|---|
-| `plan` | Dry-run: lista NEW/UPDATE/SAME e duplicidades. Não escreve nada. |
-| `install` | Instala/atualiza. Faz **backup** do que for sobrescrito. Gera manifesto, índice, relatório e log. |
-| `verify` | Confere cada arquivo instalado contra o **hash** do manifesto. Sai ≠ 0 se houver drift/ausência. |
-| `rollback` | Restaura o último backup (`--backup TS` para um específico) e remove o que foi criado. |
-| `index` | (Re)gera `SKILLS-INDEX.md` (skills por domínio). |
-| `baseline` | (Re)gera `squad-ai-manifest.json` (snapshot da fonte: hash por arquivo + `aggregate_sha256`) para auditoria de integridade. |
-
-## Opções
-
-- `--target DIR` destino do `.claude` (default `~/.claude`). Use `./.claude` para instalar no projeto.
-- `--source DIR` raiz do repo Squad AI (default: a pasta do script).
-- `--config J` perfil de exportação (JSON; veja `squad-ai-install.json`).
-- `--force` sobrescreve arquivos sensíveis (ex.: `.env`), que por padrão são preservados.
-- `--quiet` menos saída.
+| `.\squad-harness.exe install detect` | Detecta todas as ferramentas agênticas presentes no host (12 ferramentas suportadas no catálogo). |
+| `.\squad-harness.exe install` | Audita as 106 skills canônicas (UTF-8, Linha de Defesa, Secret Scan), sincroniza em paralelo todas as ferramentas instaladas, atualiza `.claude/commands` e remove artefatos legados. |
+| `.\squad-harness.exe install verify` | Verifica integridade byte-a-byte (LF normalizado) de todas as 106 skills em cada ferramenta ativa. Sai `≠ 0` se houver drift ou ausência. |
+| `.\squad-harness.exe install --target <ids>` | Instala sob demanda em ferramentas específicas (ex.: `--target cursor,copilot,windsurf`). |
+| `.\squad-harness.exe compute` | Diagnostica o hardware da estação (`cpu`, `cpu+igpu`, `cpu+igpu+npu`, `cpu+dgpu`) e exibe as rotas C0/C1/C2. |
 
 ## Garantias
 
-- **Idempotente:** reinstalar não muda nada que já está igual (compara por SHA-256).
-- **Seguro:** nunca apaga nem sobrescreve sem backup; sensíveis preservados sem `--force`.
-- **Reversível:** `rollback` volta ao estado anterior.
-- **Rastreável:** `squad-ai-manifest.json`, `squad-ai-install-report.md` e `squad-ai-install.log` no destino.
-- **Offline/corporativo:** zero rede, zero dependência externa.
-
-Detalhes: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) · Reverter: [`docs/ROLLBACK.md`](docs/ROLLBACK.md) · Skills: [`docs/SKILLS-INDEX.md`](docs/SKILLS-INDEX.md) · Evidências: [`docs/INSTALL-VALIDATION-REPORT.md`](docs/INSTALL-VALIDATION-REPORT.md)
+- **Idempotente e concorrente:** reinstalar só grava arquivos cujo conteúdo mudou (comparação normalizada LF + SHA-256).
+- **Porta de segurança fail-closed:** skills sem Linha de Defesa de Prompt, com UTF-8 inválido ou achado HIGH/CRITICAL no scanner são bloqueadas antes da cópia.
+- **Rastreável:** gera `.squad-ai-manifest.json` em cada destino ativo e aposenta manifestos legados.
+- **Offline/corporativo:** binário estático Go 1.24.3 com zero dependências externas.

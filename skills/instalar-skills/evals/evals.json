@@ -1,26 +1,26 @@
 {
   "skill_name": "instalar-skills",
-  "descricao": "Evals do instalar-skills: destinos presentes, sugestões sem instalar, preservação de conteúdo de terceiros.",
+  "descricao": "Evals do instalar-skills (100% Go 1.24.3 nativo via squad-harness.exe install): detecção e ativação em todas as ferramentas presentes, validação SHA-256 e desativação da squad-ai legada.",
   "evals": [
     {
       "id": 1,
-      "name": "instala-so-nos-destinos-presentes",
+      "name": "instala-em-todas-ferramentas-presentes-go-nativo",
       "prompt": "Instale as skills.",
-      "expected_output": "Rodar `python install-squad-ai.py detectar` e depois `python install-squad-ai.py instalar-todos` a partir da raiz do repo: instala em paralelo só nos destinos principais que existem na máquina (~/.claude, ~/.dsh e %LOCALAPPDATA%/RAI/CLI ou ~/.resolveai — uma máquina pode ter 1, 2 ou 3), cada um com backup e manifesto próprios. Relatar por destino (novos, atualizados, idênticos, bloqueados com motivo, de terceiros preservados), o comando de verify/rollback e as sugestões de outras ferramentas detectadas, sem instalá-las.",
+      "expected_output": "Rodar `.\\squad-harness.exe install detect` e depois `.\\squad-harness.exe install` a partir da raiz do repo `squad-ai-harness`: audita as 106 skills canônicas e sincroniza em paralelo todas as ferramentas agênticas presentes na máquina (`~/.claude`, `~/.gemini/config`, `~/.cursor`, `~/.copilot`, `~/.codex`, `~/.codeium/windsurf`, `~/.gemini`, `~/.cline`, `~/.qwen`, `~/.dsh`, `~/.agents/skills`), gravando `.squad-ai-manifest.json` e removendo artefatos legados do antigo `install-squad-ai.py`. Em seguida validar com `.\\squad-harness.exe install verify` e `.\\squad-harness.exe compute`.",
       "files": []
     },
     {
       "id": 2,
-      "name": "sugere-sem-instalar-e-sem-duplicar",
-      "prompt": "Tenho Cursor, Codex e Copilot nesta máquina também. As skills vão para eles?",
-      "expected_output": "Não automaticamente: novos locais são só sugeridos. Cursor já lê ~/.claude/skills (não precisa instalar de novo, duplicaria). Copilot lê ~/.agents/skills (sugestão `agents`, que também atende Gemini/Windsurf). Codex lê ~/.codex/skills (sugestão `codex`). Mostrar o comando pronto `python install-squad-ai.py instalar-todos --destinos claude,dsh,agents,codex` e instalar só se o usuário pedir.",
+      "name": "instala-sob-demanda-com-target",
+      "prompt": "Quero reinstalar especificamente no Cursor, Copilot e Windsurf.",
+      "expected_output": "Executar `.\\squad-harness.exe install --target cursor,copilot,windsurf` e confirmar sincronização byte-a-byte com `.\\squad-harness.exe install verify`.",
       "files": []
     },
     {
       "id": 3,
-      "name": "preserva-skill-pessoal",
-      "prompt": "Na instalação apareceu 'conteúdo de terceiros preservado' em ~/.claude/skills/minha-skill. Força a instalação por cima?",
-      "expected_output": "Não por conta própria: o instalador preservou um arquivo que ele não criou (fora do manifesto anterior). Explicar o que seria substituído e só usar `--force` se o usuário confirmar — mesmo assim com backup automático e rollback disponível (`python install-squad-ai.py rollback --target ~/.claude`).",
+      "name": "valida-pos-instalacao-e-rota-compute",
+      "prompt": "Instalei as skills, valide minha estação.",
+      "expected_output": "Rodar `.\\squad-harness.exe install verify`, `.\\squad-harness.exe gate` e `.\\squad-harness.exe compute` para confirmar 106/106 skills sincronizadas, 6/6 nós do DAG aprovados e exibir a rota ativa C0/C1/C2 da estação.",
       "files": []
     }
   ]

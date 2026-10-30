@@ -158,7 +158,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.cursor/skills",
 			RootDir:     filepath.Join(home, ".cursor"),
 			SkillsDir:   filepath.Join(home, ".cursor", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "copilot",
@@ -167,7 +167,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.copilot/skills",
 			RootDir:     filepath.Join(home, ".copilot"),
 			SkillsDir:   filepath.Join(home, ".copilot", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "codex",
@@ -176,7 +176,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.codex/skills",
 			RootDir:     filepath.Join(home, ".codex"),
 			SkillsDir:   filepath.Join(home, ".codex", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "windsurf",
@@ -185,7 +185,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.codeium/windsurf/skills",
 			RootDir:     filepath.Join(home, ".codeium", "windsurf"),
 			SkillsDir:   filepath.Join(home, ".codeium", "windsurf", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "gemini",
@@ -194,7 +194,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.gemini/skills",
 			RootDir:     filepath.Join(home, ".gemini"),
 			SkillsDir:   filepath.Join(home, ".gemini", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "cline",
@@ -203,7 +203,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.cline/skills",
 			RootDir:     filepath.Join(home, ".cline"),
 			SkillsDir:   filepath.Join(home, ".cline", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "opencode",
@@ -212,7 +212,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.opencode/skills",
 			RootDir:     filepath.Join(home, ".opencode"),
 			SkillsDir:   filepath.Join(home, ".opencode", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "qwen",
@@ -221,7 +221,7 @@ func SupportedCatalog() []TargetDef {
 			DisplayPath: "~/.qwen/skills",
 			RootDir:     filepath.Join(home, ".qwen"),
 			SkillsDir:   filepath.Join(home, ".qwen", "skills"),
-			PrimaryAuto: false,
+			PrimaryAuto: true,
 		},
 		{
 			ID:          "dsh",
@@ -510,6 +510,34 @@ func collectSkillAssets(cat *catalog.Catalog, blocked map[string][]string) ([]sk
 	return assets, nil
 }
 
+type commandFileAsset struct {
+	name   string
+	data   []byte
+	sha256 string
+}
+
+func collectCommandAssets(rootDir string) []commandFileAsset {
+	cmdsGlob, err := filepath.Glob(filepath.Join(rootDir, ".claude", "commands", "*.md"))
+	if err != nil {
+		return nil
+	}
+	sort.Strings(cmdsGlob)
+	var out []commandFileAsset
+	for _, p := range cmdsGlob {
+		raw, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		norm := normalizeLF(raw)
+		out = append(out, commandFileAsset{
+			name:   filepath.Base(p),
+			data:   norm,
+			sha256: sha256Hex(norm),
+		})
+	}
+	return out
+}
+
 // InstallAll synchronizes all audited canonical skills concurrently across all active targets.
 func InstallAll(rootDir string) (*InstallSummary, error) {
 	cat, err := catalog.Load(rootDir)
@@ -531,6 +559,7 @@ func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummar
 	if err != nil {
 		return nil, err
 	}
+	cmdAssets := collectCommandAssets(cat.RootDir)
 
 	results := make([]TargetInstallResult, len(targets))
 	var wg sync.WaitGroup
@@ -543,7 +572,7 @@ func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummar
 		wg.Add(1)
 		go func(idx int, target TargetDef) {
 			defer wg.Done()
-			res, err := syncSingleTarget(target, assets, validSkillsCount)
+			res, err := syncSingleTarget(target, assets, cmdAssets, validSkillsCount)
 			if err != nil {
 				errMu.Lock()
 				if firstErr == nil {
@@ -559,6 +588,22 @@ func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummar
 
 	if firstErr != nil {
 		return nil, firstErr
+	}
+
+	// Keep interoperable ~/.agents/skills synchronized if ~/.agents exists on workstation
+	if !isCustom {
+		if home, err := os.UserHomeDir(); err == nil && home != "" {
+			agentsRoot := filepath.Join(home, ".agents")
+			if st, err := os.Stat(agentsRoot); err == nil && st.IsDir() {
+				_, _ = syncSingleTarget(TargetDef{
+					ID:          "agents",
+					Name:        "Interoperable Agent Skills (~/.agents/skills)",
+					DisplayPath: "~/.agents/skills",
+					RootDir:     agentsRoot,
+					SkillsDir:   filepath.Join(agentsRoot, "skills"),
+				}, assets, nil, validSkillsCount)
+			}
+		}
 	}
 
 	var verifyTargets []TargetDef
@@ -578,7 +623,7 @@ func InstallToTargets(cat *catalog.Catalog, targets []TargetDef) (*InstallSummar
 	}, nil
 }
 
-func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCount int) (TargetInstallResult, error) {
+func syncSingleTarget(target TargetDef, assets []skillFileAsset, cmdAssets []commandFileAsset, validSkillsCount int) (TargetInstallResult, error) {
 	res := TargetInstallResult{
 		ID:           target.ID,
 		Name:         target.Name,
@@ -591,7 +636,12 @@ func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCoun
 		return res, err
 	}
 
-	manifestFiles := make(map[string]map[string]string, len(assets))
+	// Retire legacy Python installer artifacts (squad-ai-manifest.json without leading dot, report, log)
+	for _, legacyName := range []string{"squad-ai-manifest.json", "squad-ai-install-report.md", "squad-ai-install.log"} {
+		_ = os.Remove(filepath.Join(target.RootDir, legacyName))
+	}
+
+	manifestFiles := make(map[string]map[string]string, len(assets)+len(cmdAssets))
 
 	for _, a := range assets {
 		dstPath := filepath.Join(target.SkillsDir, a.skillName, filepath.FromSlash(a.relPath))
@@ -623,6 +673,30 @@ func syncSingleTarget(target TargetDef, assets []skillFileAsset, validSkillsCoun
 		manifestFiles[relKey] = map[string]string{
 			"sha256":   a.sha256,
 			"category": "skills",
+		}
+	}
+
+	// Synchronize .claude/commands/*.md for Claude Code and DeepSeek Harness
+	if len(cmdAssets) > 0 && (target.ID == "claude" || target.ID == "dsh") {
+		cmdsDir := filepath.Join(target.RootDir, "commands")
+		if err := os.MkdirAll(cmdsDir, 0o755); err == nil {
+			for _, cmdAsset := range cmdAssets {
+				dstCmd := filepath.Join(cmdsDir, cmdAsset.name)
+				existing, err := os.ReadFile(dstCmd)
+				if err != nil {
+					if err := os.WriteFile(dstCmd, cmdAsset.data, 0o644); err == nil {
+						res.FilesInstalled++
+					}
+				} else if !bytes.Equal(normalizeLF(existing), cmdAsset.data) {
+					if err := os.WriteFile(dstCmd, cmdAsset.data, 0o644); err == nil {
+						res.FilesUpdated++
+					}
+				}
+				manifestFiles["commands/"+cmdAsset.name] = map[string]string{
+					"sha256":   cmdAsset.sha256,
+					"category": "commands",
+				}
+			}
 		}
 	}
 
