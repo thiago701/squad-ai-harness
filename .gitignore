@@ -3,6 +3,7 @@
 /squad-harness
 /squad-harness.exe
 /*.exe
+/*.exe~
 /*.old.exe
 .squad-harness/
 coverage.out
