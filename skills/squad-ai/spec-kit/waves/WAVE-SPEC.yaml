@@ -1,0 +1,46 @@
+# WAVE-SPEC — formato canonico de uma wave do Squad AI spec-kit.
+# Uma "wave" e uma fatia executavel (W-N) com sub-tarefas (S-tasks) que passam pelo
+# loop Build -> Audit(5 vetores) -> Fix. Alimentada por uma fase SPARC (milestone_pai).
+# Executada/registrada por wave-runner.ps1. Lida pelo comando /squad-wave.
+#
+# owner de uma sub_task (1 dos 8):
+#   build | audit:fidelity | audit:security | audit:functional | audit:a11y | audit:judge | fix
+# resultado da wave: GREEN (todos os gates passam) | DEFERRED (gate falhou, parou) | FAILED
+#
+# Este arquivo e um TEMPLATE com uma wave de exemplo. Copie por projeto/wave e preencha.
+
+wave:
+  id: "W1"
+  name: "Fatia inicial - nome curto"
+  objetivo: "O que esta wave entrega, em 1 frase verificavel."
+  milestone_pai: "BUILD"            # qual fase SPARC alimenta (DISCOVERY|DESIGN|BUILD|TEST|REVIEW|DELIVER)
+  sub_tasks:
+    - id: "W1-S1"
+      descricao: "Implementar o nucleo conforme as RN do OPENDESIGN.md"
+      owner: "build"                # build | audit:* | fix
+      depende_de: []
+      gate: "pytest tests/ verde"   # criterio countable (machine-checkable)
+      token_budget: 40              # estimativa em k tokens
+    - id: "W1-S2"
+      descricao: "Auditar fidelidade do codigo vs OPENDESIGN (ACs cobertas, Non-Goals nao vazaram)"
+      owner: "audit:fidelity"
+      depende_de: ["W1-S1"]
+      gate: "todas as AC cobertas; 0 Non-Goal violado"
+      token_budget: 8
+    - id: "W1-S3"
+      descricao: "Auditar seguranca (OWASP top-10, segredos, injecao)"
+      owner: "audit:security"
+      depende_de: ["W1-S1"]
+      gate: "0 finding HIGH"
+      token_budget: 8
+    - id: "W1-S4"
+      descricao: "Corrigir findings bloqueantes da auditoria"
+      owner: "fix"
+      depende_de: ["W1-S2", "W1-S3"]
+      gate: "re-audit sem finding bloqueante"
+      token_budget: 15
+  metricas:
+    tokens_reais: 0                 # preenchido pelo wave-runner.ps1 -Record
+    duracao_min: 0
+    tools_calls: 0
+  resultado: ""                     # GREEN | DEFERRED | FAILED (preenchido ao final)

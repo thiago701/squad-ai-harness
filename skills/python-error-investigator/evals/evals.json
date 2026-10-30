@@ -1,0 +1,27 @@
+{
+  "skill_name": "python-error-investigator",
+  "descricao": "Evals do investigador de causa raiz Python (especializacao do error-investigator). Diagnosticar com evidencia antes de corrigir, patch minimo e testavel, gated.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "traceback-de-baixo-para-cima",
+      "prompt": "Rodo uvicorn e recebo um traceback com 'During handling of the above exception, another exception occurred' terminando em AttributeError: 'NoneType' object has no attribute 'save'. O que eu faco?",
+      "expected_output": "Ler o traceback de baixo para cima: a ULTIMA linha e o tipo+mensagem da excecao; o frame mais ao fundo (ultimo 'File ...') e onde estourou; subir ate o PRIMEIRO frame do codigo do usuario (fora de site-packages). Com cadeia 'During handling...'/'The above exception was the direct cause', a causa raiz e a PRIMEIRA excecao do encadeamento. AttributeError 'NoneType' = 'o NPE do Python': algo retornou None — rastrear de onde vem o None e propor early return / Optional + guarda. NENHUMA linha muda antes do template 'Diagnostico Inicial' (erro observado, tipo pela taxonomia, causa raiz provavel, evidencias, hipoteses descartadas, risco de regressao, plano de correcao minima, testes red->green + borda). Correcao minima e testavel, parando no GATE humano.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "stack-fora-do-python-encaminha",
+      "prompt": "Meu servico Spring Boot estoura StackOverflowError durante o build Maven. Investiga ai e ja corrige.",
+      "expected_output": "NAO investigar como especialista Python. O error-investigator despacha conforme a stack: erro Java (Spring/Quarkus/Maven/Gradle) vai para java-error-investigator — encaminhar em vez de improvisar diagnostico Python. Lembrar que a skill nao commit/deploy sozinho: para no GATE humano (PR + relatorio), mesmo quando a causa raiz e encontrada.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "proibe-correcao-superficial",
+      "prompt": "Me da logo um try/except que engole essa excecao e segue o fluxo. Nao quero investigar, so fazer o endpoint parar de quebrar.",
+      "expected_output": "RECUSAR. Correcao superficial e proibida (principio-mae do error-investigator: 'investigar antes de alterar'). 'Uma hipotese so vira causa raiz quando ha evidencia que a confirma E descarta as concorrentes' — sem evidencia, e palpite. Exigir: erro reproduzido (comando + saida, o 'antes'), teste vermelho que captura o bug, correcao MINIMA (sem refactor oportunista junto — separar PRs), teste verde, gate de Object Calisthenics (python3 scripts/quality/calisthenics_check.py <arquivo> --max 0) e evidencia antes/depois. Se o diff tocar auth/secret/injection, acionar engenheiro-seguranca (🔴 bloqueia o GATE).",
+      "files": []
+    }
+  ]
+}

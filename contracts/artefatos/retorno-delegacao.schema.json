@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://squad-ai.local/contracts/artefatos/retorno-delegacao.schema.json",
+  "title": "Contrato de RETORNO DE DELEGACAO (subagente -> motor)",
+  "description": "Onda 2 / I6 do plano de evolucao de 11/10/2026. Todo subagente devolve ao motor do squad-pipeline este objeto, nunca prosa livre. O motor avalia o retorno contra o CRITERIO DE ACEITE do despacho pelo campo `status` + `evidencias`; `status=concluido` sem evidencia e INCONFORME_RETRY (o subagente afirma, o motor verifica). `bloqueado` e `escalar` exigem `motivo` nao vazio. O retorno e factual: o que foi feito, com prova; o que nao foi, com o porque.",
+  "type": "object",
+  "required": ["status", "resumo", "evidencias", "artefatos"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["concluido", "parcial", "bloqueado", "escalar"],
+      "description": "concluido = critério de aceite atendido com prova; parcial = parte feita, débito declarado em `pendencias`; bloqueado = não pôde avançar (motivo obrigatório); escalar = decisão que não cabe ao subagente (motivo obrigatório)."
+    },
+    "resumo": { "type": "string", "minLength": 1, "maxLength": 600, "description": "Até 3 frases, PT-BR, sem narrativa de esforço." },
+    "evidencias": {
+      "type": "array",
+      "description": "Provas verificáveis pelo motor: comando + saída resumida, arquivo:linha, teste que passou. Obrigatória e não vazia quando status=concluido ou parcial.",
+      "items": {
+        "type": "object",
+        "required": ["tipo", "ref"],
+        "properties": {
+          "tipo": { "type": "string", "enum": ["comando", "teste", "arquivo", "diff", "metrica", "link"] },
+          "ref": { "type": "string", "minLength": 1, "description": "O comando rodado, o id do teste, o caminho:linha, o nome da métrica…" },
+          "resultado": { "type": "string", "description": "Saída resumida / valor observado (nunca estimado)." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "artefatos": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Caminhos escritos/alterados (ex.: .claude/pipeline/<slug>/03-plano.md). Lista vazia é válida quando o retorno é só análise."
+    },
+    "pendencias": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Débitos declarados. Obrigatória e não vazia quando status=parcial."
+    },
+    "motivo": { "type": "string", "description": "Obrigatório e não vazio quando status=bloqueado ou escalar." },
+    "riscos": { "type": "array", "items": { "type": "string" }, "description": "Riscos que o motor precisa conhecer antes de aceitar." },
+    "custo": {
+      "type": "object",
+      "description": "Opcional; só valores medidos (hook Stop / relatorio_entrega).",
+      "properties": {
+        "tokens": { "type": "integer", "minimum": 0 },
+        "modelo": { "type": "string" },
+        "turnos": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "skills_usadas": { "type": "array", "items": { "type": "string" }, "description": "Skill § seção efetivamente carregadas (alimenta o REMEMBER)." }
+  },
+  "additionalProperties": true
+}

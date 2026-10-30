@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://squad-ai.local/contracts/artefatos/relatorio-review.schema.json",
+  "title": "Contrato de artefato RELATORIO DE VERIFICACAO (Review)",
+  "description": "Contrato tipado do relatorio READY/NOT READY da fase Review. Pre-requisito do GATE 2. A regra de ouro: achados_seguranca_red > 0 => INCONFORME_ESCALAR (bloqueante, seguranca nunca e negociavel).",
+  "type": "object",
+  "required": ["veredito", "resumo", "achados_seguranca_red", "testes_verdes"],
+  "properties": {
+    "veredito": {
+      "type": "string",
+      "enum": ["READY", "NOT_READY"],
+      "description": "Veredito canônico. NADA alem de READY ou NOT_READY."
+    },
+    "resumo": { "type": "string", "minLength": 1, "description": "Resumo da verificacao em PT-BR." },
+    "achados_seguranca_red": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Quantidade de achados 🔴 de seguranca. > 0 = bloqueante incondicional."
+    },
+    "testes_verdes": { "type": "boolean", "description": "true somente se TODOS os testes passaram." },
+    "achados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["regra", "severidade", "detalhe"],
+        "properties": {
+          "regra": { "type": "string", "description": "Identificador da regra violada (ex.: cobertura_baixa)." },
+          "severidade": {
+            "type": "string",
+            "enum": ["blocker", "necessary", "suggestion"],
+            "description": "Severidade canonica da Squad (🔴 blocker / 🟡 necessary / 🔵 suggestion)."
+          },
+          "detalhe": { "type": "string", "description": "Evidencia ancorada (arquivo/linha/trecho)." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "metricas_semanticas": {
+      "type": "object",
+      "description": "Bloco opcional da camada semantica (doc 01 §2.4): faithfulness, relevance, coherence, completeness.",
+      "properties": {
+        "faithfulness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "relevance": { "type": "number", "minimum": 0, "maximum": 1 },
+        "coherence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "completeness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "amostrado": { "type": "boolean", "description": "true se as metricas vieram de amostragem estratificada." }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

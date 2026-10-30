@@ -1,0 +1,48 @@
+{
+  "skill_name": "rust-pro",
+  "descricao": "Evals da v1.0.0. Cobrem o gate de versão/edição (let chains), erros tipados × anyhow, borrow checker sem Rc<RefCell>, invariantes no tipo (newtype/typestate), migração para a edição 2024 e definição de pronto (fmt/clippy/test/doc/deny).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "let-chains-fora-da-edicao",
+      "prompt": "Meu Cargo.toml tem edition = \"2021\" e rust-version = \"1.80\". Reescreva essa função usando let chains: if let Some(x) = a { if x > 0 { if let Ok(y) = f(x) { ... } } }",
+      "expected_output": "Aplicar o Passo 0 antes de usar o recurso: let chains exigem Rust 1.88+ E edição 2024 — com edition 2021 / rust-version 1.80 o código novo não compila. Não entregar o código quebrado em silêncio. Oferecer (a) a versão compatível com o alvo atual (let-else / match aninhado / função auxiliar que devolve Option) e (b) o caminho de upgrade: subir rust-version para a stable atual, migrar a edição com `cargo fix --edition` em commit isolado, revisar mudanças da 2024 (unsafe extern, static mut, temporários), e só então usar `if let Some(x) = a && x > 0 && let Ok(y) = f(x)`. Dizer em uma linha o ganho do upgrade.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "biblioteca-de-config-erros-tipados",
+      "prompt": "Escreva uma biblioteca Rust que lê um arquivo de configuração com a porta do serviço. Pode usar unwrap() e Box<dyn Error> pra ficar rápido?",
+      "expected_output": "Recusar unwrap()/expect() no caminho de produção e Box<dyn Error> na API pública de biblioteca. Entregar enum de erro tipado com thiserror (#[non_exhaustive], variantes Leitura{path, #[source] io::Error}, Porta(String, #[source] ParseIntError), Ausente(&'static str)), função ler_porta(&Path) -> Result<u16, ConfigError> com `?` e map_err, aceitar impl AsRef<Path> ou &Path. Explicar que anyhow + .context() pertence ao binário/fronteira da aplicação, não à biblioteca, e que a mensagem exibida ao usuário final não deve vazar detalhes internos. Incluir testes (erro de leitura, campo ausente, porta inválida) e rodar fmt/clippy -D warnings/test.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "borrow-checker-rc-refcell",
+      "prompt": "O borrow checker não me deixa mutar a lista de usuários enquanto itero e consulto outro campo. Vou envolver tudo em Rc<RefCell<>> e clonar o que reclamar. Ok?",
+      "expected_output": "Desaconselhar: Rc<RefCell<_>> e .clone() para calar o compilador trocam erro de compilação por pânico em runtime (BorrowMutError) e escondem erro de modelagem. Diagnosticar o conflito (empréstimo mutável da coleção enquanto há empréstimo imutável ativo) e propor correções em ordem: encurtar o empréstimo (coletar índices/ids primeiro e mutar depois), separar a struct em campos emprestáveis independentemente, usar índices/ids em vez de referências, retain/extract_if/iter_mut conforme o caso, devolver dado owned. Só considerar Arc<Mutex<_>> se houver compartilhamento real entre threads. Mostrar o código corrigido compilando.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "newtype-e-typestate",
+      "prompt": "Tenho create_user(email: String, age: i32, port: i32) e validação de e-mail copiada em 6 lugares. Como melhoro em Rust idiomático?",
+      "expected_output": "Aplicar 'parse, don't validate': newtypes com campo privado e TryFrom/FromStr (Email, Idade, Porta(u16)) validando uma vez na borda; funções internas recebem os tipos válidos e dispensam revalidação; conversões numéricas com try_from (não `as`). Se há campos obrigatórios na construção, builder com typestate (build() só existe quando todos foram informados) — mas sem exagero (P1): para opções todas opcionais, struct + Default. Mostrar o código compilável com testes, #[must_use] e Debug derivado, e mencionar a cadeia de erro (thiserror).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "migracao-edicao-2024",
+      "prompt": "Mudei edition para 2024 e agora recebo: 'extern blocks must be unsafe', 'unsafe attribute used without unsafe' e 'creating a shared reference to mutable static'. Como migro com segurança?",
+      "expected_output": "Explicar que são mudanças deliberadas da edição 2024: `unsafe extern \"C\" { ... }` (itens podem ser `safe fn` quando provadamente seguros), `#[unsafe(no_mangle)]`/`#[unsafe(export_name)]`, e static mut sem referências (usar &raw const/&raw mut, ou AtomicXxx / Mutex / LazyLock<Mutex<_>> — preferir eliminar o static mut). Mencionar outras mudanças: unsafe_op_in_unsafe_fn = warn (blocos unsafe explícitos), gen reservado (r#gen), set_var/remove_var unsafe, escopo de temporários na expressão-cauda e em `if let`, impl Trait captura todos os lifetimes (use<..>), resolver 3. Procedimento: cargo fix --edition antes de trocar a edição, commit isolado, build+test, revisar o diff; qualquer unsafe novo exige comentário // SAFETY: e passa pelo rust-unsafe-security.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "definicao-de-pronto-rust",
+      "prompt": "Vou abrir o PR de uma crate Rust (workspace com 3 crates, uma delas biblioteca pública). Que verificações devo rodar antes?",
+      "expected_output": "Sequência do mais barato ao mais caro: cargo fmt --all --check; cargo clippy --workspace --all-targets --locked -- -D warnings (lints do workspace: unsafe_code forbid, unwrap_used, dbg_macro...); cargo test --workspace --locked e cargo test --doc; RUSTDOCFLAGS='-D warnings' cargo doc --no-deps; job de MSRV com o rust-version; cargo deny check (advisories/licenses/bans/sources) e/ou cargo audit se tocou dependências; cargo semver-checks na biblioteca pública (mudança quebrante => major); Miri se houver unsafe; Cargo.lock commitado e --locked no CI. Mencionar que publicar é irreversível e exige GATE humano; reportar comandos rodados e resultados.",
+      "files": []
+    }
+  ]
+}

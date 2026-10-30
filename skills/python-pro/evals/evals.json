@@ -1,0 +1,20 @@
+{
+  "skill_name": "python-pro",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "free-threaded-3.14-nao-e-gratis",
+      "prompt": "Vou trocar para o build free-threaded do Python 3.14 para paralelizar um workload CPU-bound. É só instalar e usar threads?",
+      "expected_output": "Não é um flag: free-threaded (PEP 779) é OFICIALMENTE suportado no 3.14, mas é um BUILD SEPARADO (variante t / sem-GIL), não o default. Antes de adotar: (1) validar que TODAS as libs C são thread-safe — muitas wheels ainda não publicam variante cp314t; (2) código que assumia atomicidade do GIL pode passar a ter corrida; (3) medir ganho real. Alternativa a threads para CPU-bound: subinterpretadores (PEP 734, concurrent.interpreters) ou processos. Só migrar com ganho medido.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "t-strings-sql-injection",
+      "prompt": "Monto SQL dinâmico com f-string interpolando variáveis do usuário. É idiomático em Python 3.14?",
+      "expected_output": "f-string para SQL é vetor de injeção — nunca. Em 3.14, t-strings (PEP 750) produzem um objeto Template (não str), permitindo que uma biblioteca processe as interpolações com segurança ANTES de virar texto — é a base para SQL/HTML/shell seguros. Mas a resposta correta para banco é query PARAMETRIZADA (placeholders do driver), não montar string. t-string é primitivo de biblioteca; nunca passe direto onde se espera str.",
+      "files": []
+    }
+  ]
+}

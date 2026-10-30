@@ -1,0 +1,51 @@
+# Versão CORRETA do ../ruim/application.yml.
+# Perfil padrão (produção): estruturado, sem wire/bind/request-details; perfil local isolado abaixo.
+spring:
+  application:
+    name: pedidos
+  mvc:
+    log-request-details: false
+  jpa:
+    show-sql: false
+  threads:
+    virtual:
+      enabled: true
+
+app:
+  env: ${APP_ENV:prod}
+  version: ${APP_VERSION:dev}
+
+logging:
+  structured:
+    format:
+      console: ecs              # Spring Boot 4: JSON ECS nativo (alternativa ao logstash-logback-encoder)
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false
+  level:
+    root: INFO
+    org.apache.http.wire: "OFF"
+    org.springframework.security: INFO
+    org.hibernate.orm.jdbc.bind: "OFF"
+
+management:
+  tracing:
+    sampling:
+      probability: 0.1        # 10% em prod; logs continuam 100% com trace_id
+  observations:
+    key-values:
+      service: pedidos
+
+---
+# Perfil LOCAL: o único lugar onde detalhe de request e SQL podem aparecer
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    show-sql: true
+  mvc:
+    log-request-details: true
+logging:
+  level:
+    root: DEBUG

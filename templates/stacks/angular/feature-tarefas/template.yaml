@@ -1,0 +1,32 @@
+id: angular-feature-tarefas
+stack: angular
+language_version: "TypeScript 5.9+ (workspace Angular)"
+framework_version: "Angular 22 (standalone + signals)"
+app_type: frontend-spa
+architecture: "feature folder standalone sobre workspace ng new (template overlay)"
+context: >
+  Feature Angular atual como OVERLAY: componente standalone com OnPush,
+  estado em signals (store de feature), computed para derivacoes, template
+  com control flow novo (@for/@if), acessibilidade basica e specs unitarias.
+  Compoe sobre um workspace `ng new` — exemplo de composicao de templates.
+prerequisites: "node >= 22, @angular/cli >= 22, workspace ng new existente"
+dependencies: ["@angular/core ^22"]
+dev_dependencies: []
+tests: "specs unitarias da store e do componente (runner do workspace); build de producao"
+security_rules: "fragmento seguranca-input; sem innerHTML; sanitizacao padrao do Angular"
+observability: "console estruturado apenas em erro de borda; hooks para APM adicionaveis"
+documentation: "README.md com passos de composicao"
+usage_example: "copiar src/app/tarefas para o workspace e rotear o componente"
+adrs: ["ADR-MITR-001", "ADR-MITR-006", "ADR-MITR-007"]
+update_rules: "acompanhar major do Angular com rodada de validacao do workspace"
+aot_compatible: "sim (build Angular e AOT por padrao)"
+components: [validacao-entrada, tratamento-erros, testes-unitarios, design-tokens]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, object-calisthenics]
+anti_patterns:
+  - "NgModule para feature nova (standalone e o padrao)"
+  - "subscribe manual onde signal/computed resolve"
+  - "logica de dominio dentro do componente (mora na store)"
+checklist_revisao:
+  - "OnPush + signals em toda a feature?"
+  - "control flow novo (@for com track)?"
+  - "specs verdes e build de producao ok?"

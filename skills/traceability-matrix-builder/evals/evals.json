@@ -1,0 +1,24 @@
+{
+  "skill": "traceability-matrix-builder",
+  "version": "1.0.0",
+  "scenarios": [
+    {
+      "id": "matriz-aponta-requisito-sem-teste",
+      "description": "Spec com FR1, FR2, FR3. Código e teste tagueiam FR1; código tagueia FR2 (sem teste); FR3 não aparece em lugar nenhum.",
+      "input": "SPEC_FREEZE com FR1..FR3; Code.java cita FR1,FR2; Test.java cita FR1.",
+      "with_skill_expected": "Matriz: FR1=OK, FR2=SEM-TESTE, FR3=ORFAO; cobertura 1/3 (33%); recomenda tarefas para FR2 (teste) e FR3 (código+teste).",
+      "without_skill_expected": "Sem matriz, ninguém percebe que FR2 não tem teste e FR3 não foi implementado; drift silencioso até produção.",
+      "grader": "code",
+      "pass_criteria": "build-traceability.py reporta cobertura 33% e marca FR2 SEM-TESTE e FR3 ORFAO no traceability.md."
+    },
+    {
+      "id": "tag-morta-scope-creep",
+      "description": "Um teste cita FR9, que não existe na SPEC (referência morta / requisito removido sem limpar).",
+      "input": "SPEC com FR1..FR3; Test.java cita FR1 e FR9.",
+      "with_skill_expected": "Reporta FR9 como tag órfã (no teste, ausente da spec); sinaliza para limpeza ou para criar o requisito.",
+      "without_skill_expected": "FR9 fica como referência morta enganando o próximo leitor.",
+      "grader": "code",
+      "pass_criteria": "Saída lista FR9 em 'Tags orfas'."
+    }
+  ]
+}

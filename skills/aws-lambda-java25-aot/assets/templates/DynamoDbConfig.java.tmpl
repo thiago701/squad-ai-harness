@@ -1,0 +1,52 @@
+package {{ base_package }}.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+
+import {{ base_package }}.model.SingleTableItem;
+
+import java.time.Duration;
+
+/**
+ * Configuração do cliente DynamoDB para Lambda.
+ *
+ * Pontos críticos:
+ * - UrlConnectionHttpClient (não Apache nem Netty) — leve, AOT-friendly,
+ *   zero deps transitivas pesadas.
+ * - Single instance reutilizada entre invocações warm da mesma Lambda.
+ * - Timeouts agressivos: DynamoDB tem p99 sub-10ms; timeouts altos só
+ *   escondem bugs (hot partition, throttle).
+ */
+@Configuration
+public class DynamoDbConfig {
+
+    @Bean
+    public DynamoDbClient dynamoDbClient() {
+        return DynamoDbClient.builder()
+            .region(Region.of(System.getenv("AWS_REGION")))
+            .httpClientBuilder(UrlConnectionHttpClient.builder()
+                .socketTimeout(Duration.ofSeconds(3))
+                .connectionTimeout(Duration.ofMillis(500)))
+            .build();
+    }
+
+    @Bean
+    public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient client) {
+        return DynamoDbEnhancedClient.builder()
+            .dynamoDbClient(client)
+            .build();
+    }
+
+    @Bean
+    public DynamoDbTable<SingleTableItem> singleTable(DynamoDbEnhancedClient enhanced) {
+        String tableName = System.getenv("SINGLE_TABLE_NAME");
+        return enhanced.table(tableName, TableSchema.fromBean(SingleTableItem.class));
+    }
+}

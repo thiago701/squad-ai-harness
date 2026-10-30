@@ -1,0 +1,288 @@
+{
+ "Description": "Task Manager (equivalente ao app/template.yaml) \u2014 sa\u00edda t\u00edpica de `cdk synth`",
+ "Parameters": {
+  "CorsAllowedOrigins": {
+   "Type": "CommaDelimitedList",
+   "Default": "https://painel.exemplo.local"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version"
+  }
+ },
+ "Resources": {
+  "TaskFunctionB0A3F1C2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "com.squadai.taskmanager.api.TaskApiGatewayHandler::handleRequest",
+    "Runtime": "java25",
+    "Timeout": 10,
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "TaskFunctionServiceRole5A1B",
+      "Arn"
+     ]
+    }
+   }
+  },
+  "TaskHttpApi8D2E4F10": {
+   "Type": "AWS::ApiGatewayV2::Api",
+   "Properties": {
+    "Name": "task-manager",
+    "ProtocolType": "HTTP",
+    "CorsConfiguration": {
+     "AllowOrigins": {
+      "Ref": "CorsAllowedOrigins"
+     },
+     "AllowMethods": [
+      "GET",
+      "POST",
+      "PATCH",
+      "DELETE",
+      "OPTIONS"
+     ],
+     "AllowHeaders": [
+      "authorization",
+      "content-type"
+     ],
+     "AllowCredentials": false,
+     "MaxAge": 600
+    }
+   }
+  },
+  "TaskHttpApiDefaultStage3C9A": {
+   "Type": "AWS::ApiGatewayV2::Stage",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "StageName": "prod",
+    "AutoDeploy": true,
+    "DefaultRouteSettings": {
+     "ThrottlingBurstLimit": 50,
+     "ThrottlingRateLimit": 100
+    }
+   }
+  },
+  "TaskHttpApiCognitoJwt7F21": {
+   "Type": "AWS::ApiGatewayV2::Authorizer",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "AuthorizerType": "JWT",
+    "Name": "CognitoJwt",
+    "IdentitySource": [
+     "$request.header.Authorization"
+    ],
+    "JwtConfiguration": {
+     "Audience": [
+      {
+       "Ref": "TaskUserPoolClientA1"
+      }
+     ],
+     "Issuer": {
+      "Fn::Join": [
+       "",
+       [
+        "https://cognito-idp.",
+        {
+         "Ref": "AWS::Region"
+        },
+        ".amazonaws.com/",
+        {
+         "Ref": "TaskUserPool0B"
+        }
+       ]
+      ]
+     }
+    }
+   }
+  },
+  "TaskHttpApiLambdaIntegration5E88": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "TaskFunctionB0A3F1C2",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   }
+  },
+  "TaskHttpApiCreateTaskRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "POST /tasks",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiListTasksRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "GET /tasks",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiGetTaskRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "GET /tasks/{taskId}",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiUpdateTaskRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "PATCH /tasks/{taskId}",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiDeleteTaskRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "DELETE /tasks/{taskId}",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiTransitionTaskRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "POST /tasks/{taskId}/transitions",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  },
+  "TaskHttpApiTaskSummaryRoute9A": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "TaskHttpApi8D2E4F10"
+    },
+    "RouteKey": "GET /tasks/summary",
+    "AuthorizationType": "JWT",
+    "AuthorizerId": {
+     "Ref": "TaskHttpApiCognitoJwt7F21"
+    },
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "TaskHttpApiLambdaIntegration5E88"
+       }
+      ]
+     ]
+    }
+   }
+  }
+ }
+}

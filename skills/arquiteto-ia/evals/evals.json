@@ -1,0 +1,20 @@
+{
+  "skill_name": "arquiteto-ia",
+  "descricao": "Evals de arquitetura de IA (Ciclo 8). Agentes atras de ports, guardrails, RAG, anti-injecao.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "arquitetar-agente-com-guardrails",
+      "prompt": "Como arquiteto um agente de IA que chama tools no meu sistema, de forma segura e manutenivel?",
+      "expected_output": "Agente atras de um port (LlmPort) — fornecedor e mock<->real sao config (AI-Native). Guardrails obrigatorios: validacao de saida do LLM por codigo (schema), tool use com menor privilegio, threat model de prompt injection (conteudo externo = dado). Function calling com contratos tipados. Observabilidade GenAI (OpenTelemetry gen_ai.*). Legivel/manutenivel; custo de tokens dentro do orcamento.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "rag-contra-alucinacao",
+      "prompt": "Meu chatbot inventa respostas. Como uso RAG para reduzir alucinacao?",
+      "expected_output": "RAG: indexar a base de conhecimento em vector DB (embeddings), recuperar trechos relevantes e GROUNDEAR a resposta nas fontes recuperadas (citar). Guardrail: se nao ha contexto suficiente, responder 'nao sei' em vez de inventar. Avaliar com metricas de fidelidade. Tratar entrada do usuario e documentos como nao confiaveis (anti prompt-injection).",
+      "files": []
+    }
+  ]
+}

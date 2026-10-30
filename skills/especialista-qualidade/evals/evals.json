@@ -1,0 +1,34 @@
+{
+  "skill_name": "especialista-qualidade",
+  "descricao": "Evals de TDD/testes (Ciclo 7). RED->GREEN, Testcontainers, mutation; testa comportamento, nao implementacao.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "tdd-use-case-com-borda",
+      "prompt": "Como testo este use case ConfirmarPedido que valida estoque e emite um Domain Event?",
+      "expected_output": "Metodo TDD red->green->refactor: primeiro um teste que FALHA. Unitario do dominio sem mocks (dominio puro); use case com mock nas ports. Cenarios preditivos: happy path, bordas (estoque zero/insuficiente), erros (pedido inexistente), e o Domain Event emitido (verificar pullEvents). Integracao com Testcontainers (Postgres real) para repositorio/Outbox. Cobertura >=80% no dominio; testar COMPORTAMENTO, nao implementacao.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "cobertura-alta-mas-bugs-passam",
+      "prompt": "Tenho 100% de cobertura de linha mas bugs ainda passam pra producao. Como assim?",
+      "expected_output": "Explicar que cobertura de LINHA nao garante qualidade do teste (pode executar a linha sem assertar o resultado). Subir na hierarquia: branch coverage, depois MUTATION testing (PIT) para medir se os testes DETECTAM mudancas no codigo. Apontar testes que so executam sem assertir (cobertura cosmetica). Testar comportamento e cenarios de borda, nao perseguir % de linha. Referenciar coverage-90-strategy.md.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "teste-api-rest-restassured",
+      "prompt": "Como escrevo um teste de API REST profissional em Java para POST /pedidos/{id}/confirmar?",
+      "expected_output": "Usar RestAssured com DSL given/when/then. Centralizar base URI/headers/auth/SLA em RequestSpecBuilder/ResponseSpecBuilder (DRY). Happy path assertando corpo + JSON Schema (matchesJsonSchemaInClasspath) + tempo de resposta (SLA), nao so status. Cobrir os 8 eixos: 401 sem token, 403 outro usuario (BOLA), 404 inexistente, 409 conflito de estado, 400 input invalido data-driven (@ParameterizedTest/@MethodSource). Desserializar em record/POJO tipado (BigDecimal p/ dinheiro). Token via env/secret, nunca hardcoded. Escolher a fronteira: RestAssured core p/ servico em pe; RestAssuredMockMvc/MockMvcTester p/ slice de controller (nao duplicar). Alvo Java 25 = RestAssured 6.0.0. Referenciar rest-assured-api-testing.md.",
+      "files": []
+    },
+    {
+      "name": "e2e-cli-nuvem-simulada",
+      "prompt": "Quero testar ponta a ponta a CLI Python que fala com DynamoDB e AppConfig sem usar a conta AWS. Como?",
+      "expected_output": "Subir moto ThreadedMotoServer e rodar a CLI como SUBPROCESSO com AWS_ENDPOINT_URL apontando para ele, credenciais 'testing' e AWS_PROFILE removido; tabelas criadas com o MESMO esquema do IaC (GSIs/projeções lidos do Terraform); stub explícito para o que o moto não implementa; asserts em código de saída, stdout/stderr (sem Traceback) e JSON. Gabarito à mão + oráculo que não importa o código sob teste. Feature futura: contrato estável e skip no e2e real. Complementar com terraform test (mock_provider) e teste da limpeza.",
+      "id": 4,
+      "files": []
+    }
+  ]
+}

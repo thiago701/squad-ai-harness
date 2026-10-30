@@ -1,0 +1,54 @@
+name: SquadAI Harness Go CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build, Test & Unified Gate (Go 1.24.3)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go 1.24.3
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache: true
+
+      - name: Verify zero external dependencies in go.mod
+        shell: bash
+        run: |
+          if grep -q "require" go.mod; then
+            echo "ERROR: External dependencies found in go.mod (zero-dependency policy violated)"
+            exit 1
+          fi
+
+      - name: Run Go Vet & Unit Tests
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go vet ./...
+          go test -v ./...
+
+      - name: Build Static Binary & Run Unified DAG Gate
+        shell: bash
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go build -trimpath -ldflags="-s -w" -o squad-harness ./cmd/squad-harness
+          ./squad-harness version
+          ./squad-harness compute
+          ./squad-harness gate
+          ./squad-harness bench

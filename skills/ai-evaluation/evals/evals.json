@@ -1,0 +1,34 @@
+{
+  "skill_name": "ai-evaluation",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a regra-zero de integridade e a comparação pareada — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "regra-zero-e-comparacao-valida",
+      "prompt": "Testei o modelo novo em 5 fotos, ficou visivelmente melhor que o atual e deve reduzir o custo em uns 30%. Posso publicar isso como resultado e trocar?",
+      "expected_output": "Não. Três problemas. (1) Regra-zero: '30%' é estimativa, e estimativa nunca é apresentada como medição — todo número publicado leva selo (medido | proxy | estimado | pendente); um relatório sem selo é reprovado. (2) N=5 com julgamento informal não distingue sinal de ruído: use eval-set versionado com N>=60 (mínimo absoluto 30), seeds fixas por caso, diversidade declarada (tom de pele, idade, óculos, luz de festa) e consentimento documentado. Compare PAREADO (mesma foto, mesmo tema, mesma seed nos dois braços) e reporte a diferença média com intervalo de confiança e em quantos pares o candidato venceu; se o IC inclui zero, o resultado é 'sem diferença detectável com N=X'. (3) O aceite exige os quatro eixos juntos (qualidade, latência, confiabilidade, custo) e ausência de regressão crítica — melhora de qualidade que estoura o p95 do SLA é rejeição. Mude uma variável por vez e registre também o resultado negativo.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "metrica-calibrada-e-goodhart",
+      "prompt": "Vou usar similaridade facial por embedding como gate automático: acima de 0,7 aprova, abaixo regera. Simples e objetivo, certo?",
+      "expected_output": "Objetivo sim; validado, ainda não. Um limiar copiado sem calibração reprova gente real. Antes de gatilhar decisão automática: avalie >=60 saídas com 3 avaliadores humanos em apresentação cega e ordem aleatória (notas 'parece com a pessoa?' e 'está bem feita?', mais a binária 'você postaria?'), meça a concordância entre avaliadores, e CORRELACIONE a métrica automática com a nota humana — publique o coeficiente. Escolha o limiar pela curva precisão/recall, não por número redondo. Métrica com correlação fraca vira sinal para revisão, não gate. Alerte também para a lei de Goodhart: otimizar similaridade isoladamente premia o pipeline que devolve a foto original sem transformação — ele passa no gate e reprova no evento; por isso a nota humana permanece como âncora final e as métricas são reportadas por subgrupo demográfico, não só na média.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "metrica-errada-e-pior-que-codigo-errado",
+      "prompt": "Meu teste de carga do totem reporta 100% de sucesso em 60 sessoes seguidas. Posso colocar isso no relatorio como evidencia de confiabilidade?",
+      "expected_output": "So depois de conferir O QUE esta sendo contado. Um caso real: o script media o status do JOB, nao da SESSAO. Como o grafo roda ate o fim mesmo quando a validacao reprova a foto, o job termina COMPLETED — entao o teste reportaria '100% de sucesso' com TODAS as fotos rejeitadas. Metrica errada e pior que codigo errado: codigo errado quebra e alguem investiga; metrica errada produz um relatorio confiante e falso que vira decisao de negocio. Corrija separando tres coisas que somadas viram mentira: (1) ENTREGUE — o sistema fez o trabalho; (2) REJEITADO NA ENTRADA — o sistema FUNCIONANDO, porque rejeitar foto ruim antes de gastar IA e a feature; (3) ERRO — o sistema quebrando. Na medicao real: 65,6% entregues, 34,4% rejeitadas, 0,0% de erro — o primeiro numero parece ruim e nao e, o terceiro e o que importa. Antes de agregar dois contadores, pergunte se eles significam a mesma coisa para quem vai decidir.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "teste-que-impede-leitura-errada-da-suite-verde",
+      "prompt": "Minha suite de avaliacao esta 100% verde usando imagens sinteticas. Posso dizer que a metrica de identidade esta validada?",
+      "expected_output": "Nao — e vale escrever um TESTE que impeca essa leitura. Conjunto sintetico valida a MECANICA (deteccao, alinhamento, embedding, cosseno, agregacao, comparacao pareada), nunca o LIMIAR: num caso real as faces eram a mesma ilustracao com parametros diferentes, entao 'outra pessoa' media 0,92 contra ~1,00 da mesma pessoa — separacao de 0,08 onde um conjunto real daria ordens de grandeza. A pratica recomendada e codificar o disclaimer: um teste que FALHA se a separacao ficar grande, forcando quem melhorar as fixtures a revisar tambem o texto do relatorio. Quando uma suite verde pode ser lida como uma garantia que ela nao da, escreva um teste cuja funcao e impedir essa leitura — e a forma executavel de um aviso, e a unica que nao apodrece. Enquanto isso, identidade sai com selo `proxy`, nunca `medido`.",
+      "files": []
+    }
+  ]
+}

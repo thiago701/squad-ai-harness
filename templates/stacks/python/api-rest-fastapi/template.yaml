@@ -1,0 +1,32 @@
+id: python-api-rest-fastapi
+stack: python
+language_version: "3.10+ (alvo 3.13)"
+framework_version: "FastAPI 0.139+ / Pydantic v2"
+app_type: api-rest
+architecture: "monolito-modular (dominio puro + borda FastAPI fina)"
+context: >
+  API REST Python moderna: FastAPI com Pydantic v2 (validacao declarativa na
+  borda), dominio puro reutilizado do padrao modular, handler central de
+  excecoes de dominio -> HTTP, OpenAPI automatica, health check. A borda e
+  fina: rota chama servico, servico fala com dominio.
+prerequisites: "python >= 3.10, pip"
+dependencies: ["fastapi>=0.139", "pydantic>=2"]
+dev_dependencies: ["pytest", "pytest-cov", "httpx", "ruff", "mypy"]
+tests: "pytest + TestClient (httpx) cobrindo rotas e erros; cobertura >=90% (gate)"
+security_rules: "fragmento seguranca-input; Pydantic valida na borda + VO no dominio; sem segredos"
+observability: "logging estruturado JSON; GET /health para liveness"
+documentation: "README.md executavel; OpenAPI em /docs"
+usage_example: "make install && make check && make run"
+adrs: ["ADR-MITR-001", "ADR-MITR-006", "ADR-MITR-007"]
+update_rules: "minor de fastapi/pydantic livre com suite verde; major exige rodada de validacao"
+aot_compatible: "n/a"
+components: [tratamento-erros, validacao-entrada, logging-estruturado, health-check, documentacao-api, testes-unitarios, testes-integracao, container, ci]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, observabilidade-minima, object-calisthenics]
+anti_patterns:
+  - "logica de negocio dentro da rota (borda gorda)"
+  - "Pydantic model circulando como entidade de dominio"
+  - "excecao HTTP lancada de dentro do dominio"
+checklist_revisao:
+  - "rota so orquestra? dominio nao importa fastapi?"
+  - "erros de dominio mapeados no exception handler central?"
+  - "cobertura >=90 no gate?"

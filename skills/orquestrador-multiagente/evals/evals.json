@@ -1,0 +1,20 @@
+{
+  "skill_name": "orquestrador-multiagente",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ial-salvaguardas-multiplas",
+      "prompt": "Meu sistema multiagente às vezes entra em loop e queima créditos de API. Coloquei um timeout global de 5 minutos. Basta?",
+      "expected_output": "Timeout sozinho não basta — é uma salvaguarda, não a defesa. Loops infinitos de agentes (IAL) exigem várias barreiras combinadas: (1) TTL/max-turns rígido por thread (teto de custo); (2) detecção de estagnação semântica (similaridade de cosseno turno-a-turno — pega o agente repetindo a mesma ideia com sinônimos, o que o timeout/contador não veem); (3) disjuntores de handoff (detectar ciclos de transferência entre agentes); (4) idempotência por ID de tarefa (mensagem duplicada não dispara novo ciclo); (5) estados finais estritos (completed/failed/needs_human). Referência: IAL-Scan (arXiv 2607.01641) achou 68 loops em 47 projetos reais por ausência dessas salvaguardas. Combinar >=2, nunca uma só.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "checkpoint-so-no-supervisor",
+      "prompt": "Persisto o estado de cada subagente no Postgres a cada passo e a base está saturando de escritas. Como escalar?",
+      "expected_output": "Persistir cada transição de cada subagente é insustentável (~93 escritas para uma conversa simples de 2 mensagens + 3 tools). Diretriz: acoplar o motor de checkpoint SÓ ao grafo do supervisor/orquestrador; rodar os agentes especialistas como SUBGRAFOS SEM ESTADO em memória (só o resultado estruturado final volta ao supervisor para gravar). Complementar: particionar as tabelas por thread_id (pg_partman) + limpeza ativa de partições antigas; ETL assíncrono para armazenamento frio (S3) preservando histórico. Observação: engine durável externo (Temporal/Step Functions) é overengineering neste contexto se GHA + log já dão idempotência/retry.",
+      "files": []
+    }
+  ]
+}

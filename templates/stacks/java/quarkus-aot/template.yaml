@@ -1,0 +1,32 @@
+id: java-quarkus-aot-api
+stack: java-quarkus-aot
+language_version: "Java 25 LTS"
+framework_version: "Quarkus 3.37 (quarkus-rest)"
+app_type: api-rest
+architecture: "monolito modular: dominio puro + resource fino CDI"
+context: >
+  API REST Quarkus atual: quarkus-rest (reativo-first) com Jackson,
+  build-time init, CDI de baixo acoplamento (um unico produtor),
+  ExceptionMapper central, dominio identico aos outros sabores Java.
+  Perfil nativo documentado (build-time init favorece Native Image).
+prerequisites: "JDK 25, Maven 3.9+"
+dependencies: ["quarkus-rest-jackson (BOM 3.37.x)"]
+dev_dependencies: ["quarkus-junit5", "rest-assured", "quarkus-jacoco"]
+tests: "JUnit 5 unit + @QuarkusTest com RestAssured; gate >=90% via uniao per-classe dos relatorios jacoco (check-cobertura.py)"
+security_rules: "fragmento seguranca-input; validacao no VO; sem reflexao manual"
+observability: "quarkus smallrye-health adicionavel; logs estruturados"
+documentation: "README.md executavel"
+usage_example: "mvn -B verify && python3 check-cobertura.py"
+adrs: ["ADR-MITR-001", "ADR-MITR-006", "ADR-MITR-007"]
+update_rules: "patch da plataforma livre com suite verde; minor/major exige validacao"
+aot_compatible: "sim — build-time init; native via -Dnative (rodada dedicada)"
+components: [tratamento-erros, validacao-entrada, testes-unitarios, testes-integracao, ci, container]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, observabilidade-minima, object-calisthenics]
+anti_patterns:
+  - "logica no resource (borda gorda)"
+  - "injeção de campo espalhada (prefira construtor/produtor unico)"
+  - "runtime-init desnecessario que quebra o build nativo"
+checklist_revisao:
+  - "resource so orquestra? dominio sem import de jakarta/quarkus?"
+  - "ExceptionMapper central traduz ErroDeDominio?"
+  - "cobertura >=90 no gate?"

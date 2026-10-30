@@ -1,0 +1,180 @@
+# Contrato dirigido pelo consumidor — Pedidos (demo/serverless-pedidos, Python Lambda + HTTP API).
+# Caso de validação do C1 Python da skill contrato-reverso (runner Python + Gateway simulado).
+# Expectativas tiradas dos critérios de aceite da SPEC (docs/SPEC.md, CA1–CA9) — fonte independente
+# do código. O provedor NÃO publica OpenAPI: a camada A registra isso como risco.
+versao_formato: 1
+
+consumidor:
+  nome: checkout
+  tipo: servico
+  hipotetico: true
+  acesso_ao_codigo: false
+  trata_genericamente: ["5xx"]
+  leitor:
+    ignora_campos_desconhecidos: true
+    enums_fechados: [status]
+  limitacao: >-
+    Consumidor reconstruído da SPEC (CA1–CA9): não há cliente HTTP real no repositório.
+
+provedor:
+  nome: pedidos
+  raiz: demo/serverless-pedidos
+  gateway:
+    template: demo/serverless-pedidos/template.yaml
+    funcao: PedidosFunction
+  verificador_inprocess:
+    runner: python
+    fabrica: cdc_fabrica:criar_handler
+    pythonpath: [src, tests]
+    persistencia: adapters em memória (fábrica tests/cdc_fabrica.py)
+  suite_existente:
+    comando: [python3, -m, pytest, -q, -p, no:cacheprovider]
+    cwd: demo/serverless-pedidos
+
+ambientes:
+  local:
+    url_base_padrao: "http://127.0.0.1:3000"
+    producao: false
+
+interacoes:
+  - id: criar-pedido
+    risco: checkout não consegue abrir o pedido
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA1 (nasce RASCUNHO, total 0)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos
+      headers: {Content-Type: application/json, Idempotency-Key: chave-cdc-1}
+      corpo: {cliente_id: cliente-cdc}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos:
+        id: {tipo: string}
+        status: {tipo: string, enum: [RASCUNHO, CONFIRMADO, CANCELADO], igual: RASCUNHO}
+        total_centavos: {tipo: integer, igual: 0}
+        itens: {tipo: array}
+    capturar: {pedido: id}
+
+  - id: criar-pedido-idempotente
+    risco: retry do checkout duplica o pedido
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA8 (mesma Idempotency-Key → mesmo pedido)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos
+      headers: {Content-Type: application/json, Idempotency-Key: chave-cdc-1}
+      corpo: {cliente_id: cliente-cdc}
+    resposta:
+      status: [200, 201]
+      content_type: application/json
+      campos:
+        id: {tipo: string, igual: "{{pedido}}"}
+
+  - id: cliente-inexistente
+    risco: checkout não distingue cliente desconhecido de falha
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA2 (404)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos
+      headers: {Content-Type: application/json}
+      corpo: {cliente_id: nao-existe}
+    resposta:
+      status: 404
+      content_type: application/json
+
+  - id: confirmar-sem-itens
+    risco: pedido vazio é confirmado
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA5 (409)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/confirmar
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}"}
+    resposta:
+      status: 409
+      content_type: application/json
+
+  - id: adicionar-item
+    risco: total exibido no checkout diverge dos itens
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA3 (total = soma dos subtotais)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/itens
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}", descricao: Caneta, quantidade: 3, preco_unitario_centavos: 250}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        total_centavos: {tipo: integer, igual: 750}
+        itens:
+          tipo: array
+          itens:
+            quantidade: {tipo: integer}
+            preco_unitario_centavos: {tipo: integer}
+            subtotal_centavos: {tipo: integer}
+
+  - id: item-invalido
+    risco: entrada inválida vira erro genérico ou vaza detalhe interno
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA9 (400 sem stack)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/itens
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}", descricao: Caneta, quantidade: 0, preco_unitario_centavos: 250}
+    resposta:
+      status: 400
+      content_type: application/json
+
+  - id: confirmar
+    risco: compra não é registrada
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA4"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/confirmar
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}"}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        status: {tipo: string, enum: [RASCUNHO, CONFIRMADO, CANCELADO], igual: CONFIRMADO}
+
+  - id: item-apos-confirmar
+    risco: pedido confirmado muda de valor
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA6 (409)"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/itens
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}", descricao: Lapis, quantidade: 1, preco_unitario_centavos: 100}
+    resposta:
+      status: 409
+      content_type: application/json
+
+  - id: obter-pedido
+    risco: tela de acompanhamento mostra estado errado
+    origem: {tipo: documentacao, ref: "README.md > Endpoints (GET /pedidos/{id})"}
+    requisicao:
+      metodo: GET
+      caminho: /pedidos/{{pedido}}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        id: {tipo: string, igual: "{{pedido}}"}
+        status: {tipo: string, enum: [RASCUNHO, CONFIRMADO, CANCELADO], igual: CONFIRMADO}
+        total_centavos: {tipo: integer, igual: 750}
+
+  - id: cancelar
+    risco: cancelamento não é refletido
+    origem: {tipo: documentacao, ref: "docs/SPEC.md CA7"}
+    requisicao:
+      metodo: POST
+      caminho: /pedidos/cancelar
+      headers: {Content-Type: application/json}
+      corpo: {pedido_id: "{{pedido}}"}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        status: {tipo: string, enum: [RASCUNHO, CONFIRMADO, CANCELADO], igual: CANCELADO}

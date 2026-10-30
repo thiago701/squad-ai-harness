@@ -1,0 +1,20 @@
+{
+  "skill_name": "java-modern-expert",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "classificacao-status-structured-concurrency",
+      "prompt": "Posso usar Structured Concurrency em produção no Java 25? Ouvi que saiu final.",
+      "expected_output": "Não: Structured Concurrency segue PREVIEW (5ª rodada no Java 25, 7ª no 27, sem data de finalização — JEP 505/533). Produção exige --enable-preview + decisão humana explícita; preview pode ser removida sem aviso (precedente: String Templates, removido no 23). Scoped Values sim é FINAL no 25 (JEP 506). Citar versão + JEP + status em toda resposta.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "lts-e-migracao-27",
+      "prompt": "Vamos adotar Java 27 como próximo LTS da empresa. O que devo planejar?",
+      "expected_output": "Corrigir a premissa: Java 27 NÃO é LTS (roadmap Oracle 15/09/2026: 27/28 non-LTS; próxima LTS = Java 29, set/2027; cadência 21→25→29). Produção deve mirar 25 LTS agora e 29 depois; 27 serve como degrau tático com upgrade planejado. Migração exige jdeprscan --for-removal + jdeps --jdk-internals + varredura de padrões (setSecurityManager, sun.misc.Unsafe, finalize, flags experimentais) e quebrações 21→27 (JVMCI removido, -noverify, Applet, COH default, G1 flags renomeadas). Nunca afirmar 'não quebra nada' sem suite verde no alvo.",
+      "files": []
+    }
+  ]
+}

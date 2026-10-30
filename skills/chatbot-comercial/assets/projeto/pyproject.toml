@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{PROJETO}}"
+version = "0.1.0"
+description = "Chatbot comercial multi-tenant — vertical {{VERTICAL}} ({{ESTABELECIMENTO}})"
+requires-python = ">=3.10"
+# Núcleo sem dependência externa: HTTP e persistência são stdlib.
+# `n7-ai-core` entra por N7_AI_CORE_PATH (dev) ou pelo índice privado (produção).
+dependencies = []
+
+[project.optional-dependencies]
+pdf = ["pypdf==6.17.0"]
+xlsx = ["openpyxl==3.1.5"]
+dev = [
+    "pytest==8.3.5",
+    "pytest-cov==6.1.0",
+    "ruff==0.16.6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "gateway: exige o pacote llm-gateway instalado",
+    "golden: avaliação de retrieval sobre o golden set",
+]
+
+[tool.ruff]
+line-length = 96
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = ["app/main.py"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true

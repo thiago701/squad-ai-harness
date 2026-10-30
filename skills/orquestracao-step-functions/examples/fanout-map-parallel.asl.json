@@ -1,0 +1,167 @@
+{
+  "Comment": "Exemplo sintético: Map com concorrência limitada e Parallel com Catch.",
+  "StartAt": "ProcessarItens",
+  "States": {
+    "ProcessarItens": {
+      "Type": "Map",
+      "ItemsPath": "$.itens",
+      "MaxConcurrency": 10,
+      "ResultPath": "$.resultados",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "ProcessarItem",
+        "States": {
+          "ProcessarItem": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "${FuncaoItem}",
+              "Payload.$": "$"
+            },
+            "TimeoutSeconds": 20,
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "Lambda.ClientExecutionTimeoutException",
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException",
+                  "Lambda.TooManyRequestsException"
+                ],
+                "MaxAttempts": 4,
+                "BackoffRate": 2.0,
+                "JitterStrategy": "FULL"
+              }
+            ],
+            "Catch": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "ResultPath": "$.erro",
+                "Next": "ItemFalhou"
+              }
+            ],
+            "End": true
+          },
+          "ItemFalhou": {
+            "Type": "Pass",
+            "Result": {
+              "ok": false
+            },
+            "End": true
+          }
+        }
+      },
+      "Next": "Finalizar"
+    },
+    "Finalizar": {
+      "Type": "Parallel",
+      "ResultPath": "$.finalizacao",
+      "Branches": [
+        {
+          "StartAt": "Consolidar",
+          "States": {
+            "Consolidar": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${FuncaoConsolidar}",
+                "Payload.$": "$.resultados"
+              },
+              "TimeoutSeconds": 30,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ClientExecutionTimeoutException",
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException"
+                  ],
+                  "MaxAttempts": 2,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "ConsolidacaoFalhou"
+                }
+              ],
+              "End": true
+            },
+            "ConsolidacaoFalhou": {
+              "Type": "Fail",
+              "Error": "Lote.ConsolidacaoFalhou"
+            }
+          }
+        },
+        {
+          "StartAt": "Publicar",
+          "States": {
+            "Publicar": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::events:putEvents",
+              "Parameters": {
+                "Entries": [
+                  {
+                    "EventBusName": "${Barramento}",
+                    "Source": "exemplo.lotes",
+                    "DetailType": "LoteProcessado",
+                    "Detail": {
+                      "loteId.$": "$.loteId"
+                    }
+                  }
+                ]
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "EventBridge.FailedEntry"
+                  ],
+                  "MaxAttempts": 3,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "PublicacaoFalhou"
+                }
+              ],
+              "End": true,
+              "Comment": "Retry reenvia o lote INTEIRO (o Step Functions não remove as entradas que deram certo): só porque o consumidor deduplica por loteId."
+            },
+            "PublicacaoFalhou": {
+              "Type": "Fail",
+              "Error": "Lote.PublicacaoFalhou"
+            }
+          }
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "LoteComFalha"
+        }
+      ],
+      "Next": "Concluido"
+    },
+    "LoteComFalha": {
+      "Type": "Fail",
+      "Error": "Lote.Falhou"
+    },
+    "Concluido": {
+      "Type": "Succeed"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "skill": "spec-code-drift-detector",
+  "version": "1.1.0",
+  "scenarios": [
+    {
+      "id": "drift-req-sem-teste",
+      "description": "Uma feature tem um requisito (FR5) na SPEC e na matriz de rastreabilidade, mas sem teste associado. O código existe; o teste não.",
+      "input": "SPEC_FREEZE com FR1..FR6; traceability.md mapeia FR1..FR4 e FR6 a código+teste; FR5 só tem código.",
+      "with_skill_expected": "Veredito DRIFT-DETECTED; aponta FR5 como requisito sem teste rastreado; gera task 'cobrir FR5 com teste'; bloqueia o GATE B.",
+      "without_skill_expected": "Feature é fechada como pronta; FR5 vai para produção sem teste (drift silencioso); defeito potencial só aparece depois.",
+      "grader": "model",
+      "pass_criteria": "Resposta nomeia FR5 como órfão de teste E bloqueia o gate."
+    },
+    {
+      "id": "contrato-sem-teste-de-contrato",
+      "description": "O openapi.yaml define a operação 'deleteTask' (operationId) que não é referenciada por nenhum teste de contrato.",
+      "input": "openapi.yaml com 6 operationIds; suíte de testes referencia 5; deleteTask sem teste.",
+      "with_skill_expected": "DRIFT-DETECTED; lista deleteTask como operação sem teste de contrato; recomenda rodar OpenApiContractTest como prova; gera task.",
+      "without_skill_expected": "Contrato e código divergem em silêncio; a operação não testada pode quebrar o consumidor.",
+      "grader": "code",
+      "pass_criteria": "spec-drift-check.py retorna exit code 3 e cita deleteTask no drift-report."
+    },
+    {
+      "id": "convergencia-4-classes-backlog",
+      "description": "SPEC FR1..FR3; codigo cita FR1, FR2 e FR9; testes so FR1; tasks.md marca [x] T002 FR3.",
+      "input": "spec-drift-check.py --spec --src --tests --tasks --backlog (rodado 2x).",
+      "with_skill_expected": "FR2 parcial, FR3 ausente (inclusive a task [x] sem evidencia), FR9 nao-pedido; backlog recebe os itens 1 vez so.",
+      "without_skill_expected": "[x] aceito como prova; FR9 passa batido; rodadas repetidas duplicam o backlog.",
+      "grader": "code",
+      "pass_criteria": "evals/eval_convergencia.py: 11/11 passam."
+    }
+  ]
+}

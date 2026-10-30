@@ -1,0 +1,18 @@
+[project]
+name = "{{project_name}}"
+version = "0.1.0"
+description = "Aplicacao modular gerada pelo MITR (Squad AI)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[tool.coverage.run]
+source = ["src"]

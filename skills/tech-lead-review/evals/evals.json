@@ -1,0 +1,27 @@
+{
+  "skill_name": "tech-lead-review",
+  "descricao": "Evals do arbitro final (Ciclo 7). 4 severidades, Pre-Report Gate >80%, veredito READY/NOT READY, arbitragem P1>P2>P3.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "review-com-veredito-e-prova",
+      "prompt": "Esta pronto para subir? Segue o diff do PaymentService (toca cobranca e logging).",
+      "expected_output": "Code review com 4 severidades (🔴 bloqueante / 🟡 / 🔵 / ⚪). Pre-Report Gate: achados HIGH/CRITICAL exigem PROVA (arquivo:linha + evidencia), nao opiniao; >80% de confianca. Como o diff toca cobranca/dados, escalar engenheiro-seguranca. Veredito tipado READY/NOT READY — so READY com verificacao-loop PRONTO e zero 🔴/🟡 aberto. Veredito 'failure' vira trajetoria no ReasoningBank.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "arbitra-conflito-entre-especialistas",
+      "prompt": "O arquiteto-performance quer um cache Redis para baixar p95; o arquiteto-minimalista diz que e prematuro. Quem ganha?",
+      "expected_output": "Arbitrar por P1>P2>P3: P1-Simplicidade vence por padrao — adicionar Redis e complexidade acidental SEM dados de p95 que a justifiquem. Exigir evidencia (benchmark, SLA real) antes de aceitar a complexidade (P2). Propor cache em memoria do processo antes de Redis; reavaliar com gatilho quantitativo (ex.: p95 > 300ms apos 2 semanas). Consenso em <=3 rodadas; decisao registrada como ADR.",
+      "files": []
+    },
+    {
+      "name": "lente-clean-code-diff-misto",
+      "prompt": "Revise este PR: em handler.go a função Handle passou a ter complexidade cognitiva 22 e 8 parâmetros, há um //nolint:gocognit novo, o .golangci.yml subiu o gocognit de 15 para 25, e o mesmo diff renomeia 40 arquivos e muda a regra de cálculo de frete.",
+      "files": [],
+      "expected_output": "Aplicar a lente rev-clean: régua única da squad (cognitiva ≤ 15 = S3776, ciclomática ≤ 15 = S1541, parâmetros ≤ 7 = S107, zero supressão inline) no código tocado. Handle acima de 15 e com 8 parâmetros = 🟡 AGUARDANDO (guard clauses, extrair funções, agrupar parâmetros num tipo); //nolint novo = 🟡 (remover ou mover exceção para a configuração com motivo); subir o teto na configuração sem ADR com medição = 🔴 REQUER NOVO ROUND (catraca). Renomeação ampla misturada com mudança de regra de negócio: pedir separação — refatoração em commit/PR próprio antes, suíte verde antes e depois. Registrar o laudo 05d-clean.md (medido × teto, supressões) e o checklist P1.CLEAN; ferramenta ausente seria NAO_VERIFICADO, nunca verde.",
+      "id": 3
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "skill_name": "testes-infra-iac-aws",
+  "descricao": "Cenários qualitativos da skill testes-infra-iac-aws (with/without skill).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "testar-template-cdk",
+      "prompt": "Como testo a infraestrutura do meu projeto em CDK antes de fazer deploy?",
+      "expected_output": "Camadas: estático (cdk synth + cfn-lint), segurança/política (cdk-nag, cfn-guard), unitário com CDK assertions (Template.fromStack, hasResourceProperties; snapshot só como complemento), deploy real em conta de teste efêmera com teste de integração e limpeza, change set revisado antes de produção, e depois drift detection e AWS Config para conformidade contínua.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "terraform-test",
+      "prompt": "Usamos Terraform na AWS. Que testes de infraestrutura devo ter?",
+      "expected_output": "terraform fmt/validate e tflint no PR; scan de segurança (checkov ou similar) e política como código; terraform test com mocks/plan para unidade e com apply em conta de teste para integração, sempre com destroy; plan revisado e apply de produção gated; drift e conformidade com AWS Config. Ferramentas HashiCorp/terceiros sinalizadas como tais; ver também a skill engenheiro-iac.",
+      "files": []
+    }
+  ]
+}

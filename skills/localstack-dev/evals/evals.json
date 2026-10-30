@@ -1,0 +1,20 @@
+{
+  "skill_name": "localstack-dev",
+  "descricao": "Evals do AWS local (Ciclo 8). LocalStack 4 + docker-compose + Spring @Profile.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dynamodb-local-sem-custo",
+      "prompt": "Quero desenvolver e testar contra DynamoDB localmente, sem gastar na nuvem.",
+      "expected_output": "Configurar LocalStack 4 via docker-compose para emular DynamoDB; Spring @Profile dev apontando o endpoint para o LocalStack (e prod para a AWS real). Scripts de bootstrap/provisionamento local. Fluxo AWS reproduzivel localmente sem custo. Alertar sobre divergencias de comportamento LocalStack x AWS real.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "healthcheck-containers",
+      "prompt": "Como garanto que os containers do LocalStack subiram certo antes dos testes?",
+      "expected_output": "Definir healthchecks no docker-compose (LocalStack expoe /_localstack/health); aguardar healthy antes de rodar os testes de integracao. Verificar conectividade entre containers (app -> localstack). Criterio: healthchecks verdes antes do teste. Encaixa com o especialista-qualidade para E2E que validam a infra Docker.",
+      "files": []
+    }
+  ]
+}

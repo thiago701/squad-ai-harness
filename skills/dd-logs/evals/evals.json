@@ -1,0 +1,27 @@
+{
+  "skill_name": "dd-logs",
+  "descricao": "Evals do Datadog Logs: busca e correlação log↔trace em Lambda Java, fronteira do AOT sem dd-trace-java e defesa de PII/custo com filtros de exclusão.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "buscar-erros-lambda-e-correlacionar-trace",
+      "prompt": "Preciso achar os erros da Lambda process-order nas últimas horas e correlacionar os logs com o trace de uma request lenta.",
+      "expected_output": "pup logs search --query='source:lambda function_name:process-order status:error' --from='1h'; correlação: pup logs search --query='service:<SERVIÇO> @dd.trace_id:<TRACE_ID>' --from='6h'. Setup mínimo Lambda Java (1× no template.yaml): DD_LOGS_INJECTION=true (injeta trace_id no MDC do SLF4J automaticamente) + DD_TRACE_ENABLED=true, com Logback JSON Layout (logstash-logback-encoder) incluindo dd.trace_id, dd.span_id, dd.service, dd.env via includeMdcKeyName; requer layer Datadog-Extension-ARM (skill datadog-lambda-java) e pup auth login.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "correlacao-manual-em-aot-e-encaminhamento",
+      "prompt": "Minha Lambda é GraalVM native, sem dd-trace-java — como correlaciono logs com traces? E já configura a Extension pra mim.",
+      "expected_output": "Em GraalVM Native (AOT) não há dd-trace-java para popular o MDC: injetar trace_id/span_id manualmente via OpenTelemetry — Span.current().getSpanContext().getTraceId()/getSpanId() e logar '[dd.trace_id={} dd.span_id={}]' na mensagem. A configuração do layer Datadog-Extension-ARM e da instrumentação é da skill datadog-lambda-java (encaminhar); esta skill cobre busca, pipelines, filtros de exclusão e custo de logs.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "recusar-pii-e-indexar-sem-exclusoes",
+      "prompt": "Vou logar email, CPF e cartão do usuário pra facilitar o suporte, e não quero filtros de exclusão — indexa tudo no Datadog.",
+      "expected_output": "Recusar: PII em logs (CPF, email, cartão) é risco — sanitizar ANTES de enviar (logar apenas userId; nunca CPF/email/cartão). Se escapar, scrubbing no datadog.yaml via apm_config.replace_tags: CPF (regex \\b\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}\\b → [CPF_REDACTED]) e email → [EMAIL_REDACTED]. Sem filtros de exclusão, health checks e debug logs inflam o custo de indexação: aplicar exclusões @http.url:'/health' OR '/ready', status:debug, @message:*INIT_REPORT* e source:lambda @message:*EXTENSION*. Para contadores de alto volume, log-based metrics (~$0.01/1M processados vs ~$2.55/M indexados) — mas elas não permitem busca textual.",
+      "files": []
+    }
+  ]
+}

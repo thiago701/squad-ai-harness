@@ -1,0 +1,20 @@
+{
+  "skill_name": "spring-modern-expert",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "api-obsoleta-resttemplate",
+      "prompt": "Meu app usa RestTemplate em todo lugar e vou subir do Boot 3.5 para o 4.1. O que acontece?",
+      "expected_output": "No Boot 4 o RestTemplate perde a auto-configuração (deprecated formal no Framework 7.1, remoção no 8.0) — migrar para RestClient/@HttpExchange nos pontos tocados (P1: em legado, só onde houver ganho/necessidade). Outros breaking: Jackson 2→3 (JsonMapper.builder(), tools.jackson), @MockBean/@SpyBean removidos (@MockitoBean/@MockitoSpyBean), starters renomeados (starter-web→starter-webmvc, classic starters como etapa), Hibernate 7.x/JPA 3.2, Security 7. Sequência: 3.5.16 limpo com properties-migrator → OpenRewrite (recipes oficiais Boot 4) → suite verde por passo; SBM não suporta 3→4.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "virtual-threads-default",
+      "prompt": "Um blog disse que o Spring Boot 4 ativa virtual threads por padrão. Confere?",
+      "expected_output": "Não. Docs oficiais do Boot 4 (4.0.8) confirmam que Virtual Threads são OPT-IN via spring.threads.virtual.enabled=true (Java 21+); CDS também não é default. Blogs que afirmam o contrário estão incorretos (registrado na pesquisa como contradição conhecida). Para startup no Boot 4.1 + Java 25+, o recomendado é AOT Cache (JEP 483), não apostar em defaults.",
+      "files": []
+    }
+  ]
+}

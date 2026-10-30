@@ -1,0 +1,14 @@
+{
+  "name": "{{project_name}}",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && cd dist && node --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-exclude=test/**"
+  },
+  "devDependencies": {
+    "typescript": "7.0.0",
+    "@types/node": "22.15.22"
+  }
+}

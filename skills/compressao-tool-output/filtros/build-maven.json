@@ -1,0 +1,42 @@
+{
+  "id": "build-maven",
+  "label": "Maven",
+  "description": "Preserva [ERROR], veredito do build e a linha Tests run do Surefire/Failsafe.",
+  "category": "build",
+  "priority": 90,
+  "match": {
+    "commands": ["^(?:\\./)?mvnw?\\b", "\\bmaven\\b"],
+    "patterns": ["\\[INFO\\] BUILD (SUCCESS|FAILURE)", "^\\[ERROR\\]", "Tests run: \\d+"]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "replace": [{ "from": "\\[INFO\\] Downloading from [^\\n]*", "to": "" }],
+    "matchOutput": [
+      {
+        "when": "\\[INFO\\] BUILD SUCCESS",
+        "then": "maven: BUILD SUCCESS",
+        "unless": ["\\[ERROR\\]", "BUILD FAILURE", "Tests run:.*Failures: [1-9]", "Tests run:.*Errors: [1-9]"]
+      }
+    ],
+    "dropPatterns": ["^\\[INFO\\] ---", "^\\[INFO\\] $", "^\\[INFO\\] Downloading", "^\\[INFO\\] Downloaded", "^Progress \\(", "^\\s*$", "^\\[INFO\\] Copying \\d+ resource"],
+    "includePatterns": ["^\\[ERROR\\]", "^\\[WARNING\\].*(deprecat|unchecked)", "BUILD (SUCCESS|FAILURE)", "Tests run:", "^\\s+at [a-z]", "Caused by:", "<<< (FAILURE|ERROR)!"],
+    "deduplicate": true,
+    "truncateLineAt": 300,
+    "headLines": 12,
+    "tailLines": 70,
+    "maxLines": 150,
+    "onEmpty": "maven: saida suprimida (nenhuma linha acionavel)"
+  },
+  "preserve": {
+    "errorPatterns": ["^\\[ERROR\\]", "BUILD FAILURE", "Caused by:", "<<< (FAILURE|ERROR)!"],
+    "summaryPatterns": ["Tests run:", "BUILD (SUCCESS|FAILURE)", "Total time:"]
+  },
+  "tests": [
+    {
+      "name": "falha de teste sobrevive",
+      "input": "[INFO] Downloading from central: x\n[INFO] ---\nTests run: 12, Failures: 1, Errors: 0, Skipped: 0\n[ERROR] PedidoTest.deveCriar:42 expected true\n[INFO] BUILD FAILURE",
+      "expectedContains": ["Tests run: 12, Failures: 1", "[ERROR] PedidoTest", "BUILD FAILURE"],
+      "expectedNotContains": ["Downloading from central"]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "skill_name": "go-cloud-services",
+  "descricao": "Evals da v1.0.0. Cobrem shutdown/readiness, probes, GOMEMLIMIT/GOMAXPROCS em K8s, consumidor SQS idempotente, segredos e resiliência (retry/idempotência).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "deploy-derruba-requisicoes-shutdown",
+      "prompt": "A cada deploy no Kubernetes meu serviço Go devolve alguns 502/connection reset. Uso http.ListenAndServe e tenho /health que retorna 200 sempre. Como corrijo?",
+      "expected_output": "Falta shutdown gracioso e readiness real: signal.NotifyContext(SIGTERM/SIGINT); ao receber o sinal, readiness passa a falhar primeiro (/readyz distinto de /livez), aguardar janela curta de propagação (preStop sleep ou drain), depois srv.Shutdown(ctx) com prazo < terminationGracePeriodSeconds, depois fechar pool/clients e flush do tracer. Usar http.Server com timeouts (ReadHeaderTimeout etc.), não ListenAndServe direto. Liveness sem dependências; readiness com timeout curto. Rollout maxUnavailable:0 e PDB. Provar com teste de shutdown e smoke test (delete pod sob carga com 0 erros).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "k8s-memoria-cpu-go",
+      "prompt": "Meu pod Go (limit 1Gi de memória, 2 CPUs) sofre OOMKill e throttling. Preciso do automaxprocs e de algum ajuste de memória?",
+      "expected_output": "automaxprocs não é mais necessário: desde o Go 1.25 GOMAXPROCS é ciente de cgroup (respeita o limit de CPU e reajusta). Para memória definir GOMEMLIMIT absoluto ~90% do limit (ex.: 900MiB) — o runtime não deduz do cgroup e o K8s não calcula percentual; manter em sincronia com o limit; considerar memória fora do heap (cgo, pilhas, buffers). Medir heap vivo com runtime/metrics; reduzir alocações antes de subir GOGC; requests=limits de memória. Throttling: revisar limit de CPU/uso de GOMAXPROCS e avaliar remover limit de CPU com HPA, por medição.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "consumidor-sqs-idempotente",
+      "prompt": "Escreva um consumidor SQS em Go com aws-sdk-go-v2 que processe com concorrência e não perca nem duplique efeitos colaterais.",
+      "expected_output": "Consumidor at-least-once: long polling (WaitTimeSeconds 20, até 10 mensagens), concorrência limitada (errgroup SetLimit), VisibilityTimeout maior que o pior processamento, DeleteMessage somente após sucesso, falha não apaga (reaparece e vai à DLQ após maxReceiveCount), handler idempotente (deduplicação por id da mensagem/chave de idempotência; efeitos colaterais com escrita condicional), ctx em todas as chamadas, shutdown limpo em SIGTERM, backoff em falha de receive, validação/limite de tamanho do corpo, credenciais pela cadeia padrão e endpoint por AWS_ENDPOINT_URL para LocalStack. Mencionar DLQ com alarme e que 'exatamente uma vez' não existe sem idempotência.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "segredo-no-dockerfile-e-logs",
+      "prompt": "Meu Dockerfile Go tem ARG DATABASE_URL e ENV DATABASE_URL para o build e eu logo a config inteira com slog.Info(\"config\", \"cfg\", cfg) na inicialização. Tudo bem?",
+      "expected_output": "Não: segredo em ARG/ENV fica no histórico das camadas da imagem; e logar a config vaza a URL do banco. Injetar em runtime (K8s Secret/External Secrets/Secrets Manager), carregar no main com validação fail-fast, nunca logar valores secretos (logar só chaves/flags ou implementar LogValuer que redige); mensagens de erro não devem conter a URL. Imagem distroless nonroot, FS somente leitura; rotacionar o segredo exposto se já vazou; govulncheck e scan de imagem no CI.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "retry-sem-idempotencia",
+      "prompt": "Meu cliente HTTP faz retry de 5 tentativas imediatas em qualquer erro, inclusive POST /pagamentos. Há risco?",
+      "expected_output": "Sim: retry imediato amplifica falhas (retry storm) e em POST não idempotente duplica o efeito (cobrança em duplicidade). Corrigir: retry só em operações idempotentes ou com Idempotency-Key persistida no servidor; backoff exponencial com jitter e teto de tentativas/tempo total; respeitar Retry-After; não repetir 4xx (exceto 408/429); timeout por tentativa e ctx global; bulkhead/limite de concorrência por dependência; circuit breaker por destino; métricas de tentativas. Mencionar outbox quando há gravação + publicação.",
+      "files": []
+    }
+  ]
+}

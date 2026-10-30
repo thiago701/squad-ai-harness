@@ -1,0 +1,60 @@
+{
+  "package": "com.squadai.calendario.domain",
+  "value_objects": [
+    {
+      "name": "Pais",
+      "kind": "string_pattern",
+      "pattern": "^[A-Z]{2,3}$",
+      "normalize": "upper",
+      "message": "Pais deve ser um codigo ISO de 2 ou 3 letras"
+    },
+    {
+      "name": "Escopo",
+      "kind": "enum",
+      "values": ["NACIONAL", "INTERNACIONAL", "ESTADUAL"]
+    },
+    {
+      "name": "EventoId",
+      "kind": "identifier",
+      "max_length": 128
+    },
+    {
+      "name": "DataEvento",
+      "kind": "local_date"
+    },
+    {
+      "name": "Horario",
+      "kind": "time_range"
+    },
+    {
+      "name": "Descricao",
+      "kind": "bounded_string",
+      "min_length": 1,
+      "max_length": 500
+    }
+  ],
+  "aggregate": {
+    "name": "PagamentoCalendario",
+    "identity": ["EventoId id", "Pais pais", "Escopo escopo"],
+    "sort": "DataEvento data",
+    "mutable": ["Horario horario", "Descricao descricao"],
+    "timestamps": true,
+    "version": true
+  },
+  "single_table": {
+    "table_name": "calendario_pagamentos",
+    "type_discriminator": "PAGAMENTO",
+    "item_name": "PagamentoItem",
+    "mapper_name": "PagamentoItemMapper",
+    "pk": "{pais}#{escopo}#{id}",
+    "sk": {"field": "data", "attribute": "DATA"},
+    "gsi": {"name": "GSI1", "pk_attribute": "GSI1PK", "pk": "{pais}#{escopo}"},
+    "columns": {
+      "id": "ID",
+      "pais": "PAIS",
+      "escopo": "ESCOPO",
+      "horario": {"inicio": "HoraInicio", "fim": "HoraFim"},
+      "descricao": "Descricao"
+    }
+  }
+}

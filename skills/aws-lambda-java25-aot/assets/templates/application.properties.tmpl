@@ -1,0 +1,17 @@
+# Spring Boot 4 — Lambda Native runtime
+spring.main.web-application-type=none
+spring.main.banner-mode=off
+spring.threads.virtual.enabled=true
+
+# Spring Cloud Function — bean default invocado pelo FunctionInvoker
+spring.cloud.function.definition=apiGatewayHandler
+
+# Lambda PowerTools
+# PII: log-event=false por padrão — logar o evento completo vaza body/headers/imagens
+# do stream (dados pessoais) para o CloudWatch. Logue apenas campos não-sensíveis.
+powertools.logger.log-event=false
+powertools.metrics.namespace=${POWERTOOLS_METRICS_NAMESPACE:{{ stack_name }}}
+powertools.tracing.service=${POWERTOOLS_SERVICE_NAME:{{ stack_name }}}
+
+# AWS region
+aws.region=${AWS_REGION:us-east-1}

@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: '{{ domain_pascal }} — Lambda Java 25 + GraalVM Native + DynamoDB single-table'
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, stg, prd]
+
+Globals:
+  Function:
+    Runtime: provided.al2023
+    Architectures: [arm64]
+    MemorySize: 512
+    Timeout: 10
+    Tracing: Active
+    Environment:
+      Variables:
+        SINGLE_TABLE_NAME: !Ref SingleTable
+        AWS_REGION: !Ref AWS::Region
+        POWERTOOLS_SERVICE_NAME: !Ref AWS::StackName
+        POWERTOOLS_METRICS_NAMESPACE: !Ref AWS::StackName
+        POWERTOOLS_LOG_LEVEL: INFO
+        # PII: NÃO logar o evento completo em produção — body/headers do API Gateway e
+        # imagens do DynamoDB Stream contêm dados pessoais que vazariam para o CloudWatch.
+        # Mantenha false e logue seletivamente apenas campos não-sensíveis via LoggingUtils.appendKey.
+        POWERTOOLS_LOGGER_LOG_EVENT: false
+
+Resources:
+
+  # ───── DynamoDB Single Table ─────────────────────────────────────────────
+  SingleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-single-table
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+        - AttributeName: gsi2pk
+          AttributeType: S
+        - AttributeName: gsi2sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: gsi2pk
+              KeyType: HASH
+            - AttributeName: gsi2sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ───── API Gateway Function ──────────────────────────────────────────────
+  ApiGatewayFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-api
+      CodeUri: .
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: apiGatewayHandler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SingleTable
+        - !Sub
+          - |
+            { "Statement": [{
+              "Effect": "Allow",
+              "Action": ["dynamodb:Query", "dynamodb:GetItem"],
+              "Resource": "${TableArn}/index/*"
+            }] }
+          - TableArn: !GetAtt SingleTable.Arn
+      Events:
+{{#each endpoints}}
+        {{ handler }}:
+          Type: HttpApi
+          Properties:
+            Path: {{ path }}
+            Method: {{ method }}
+{{/each}}
+
+{{#if has_streams}}
+  # ───── DynamoDB Streams Function ─────────────────────────────────────────
+  StreamHandlerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-stream
+      CodeUri: .
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: streamHandler
+          IDEMPOTENCY_TABLE: !Ref IdempotencyTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - DynamoDBStreamReadPolicy:
+            TableName: !Ref SingleTable
+            StreamName: !Select [3, !Split ['/', !GetAtt SingleTable.StreamArn]]
+        # Permite ao event source mapping entregar o lote envenenado à DLQ.
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt StreamDLQ.QueueName
+      Events:
+        DDBStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt SingleTable.StreamArn
+            StartingPosition: LATEST
+            BatchSize: 100
+            MaximumBatchingWindowInSeconds: 5
+            FunctionResponseTypes: [ReportBatchItemFailures]
+            BisectBatchOnFunctionError: true
+            MaximumRetryAttempts: 3
+            # Sem DLQ, registros que falham após os retries são DESCARTADOS silenciosamente.
+            # OnFailure preserva o lote envenenado para inspeção/reprocessamento.
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt StreamDLQ.Arn
+
+  # DLQ do stream — recebe lotes que esgotaram os retries (poison pill).
+  StreamDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${AWS::StackName}-stream-dlq
+      MessageRetentionPeriod: 1209600  # 14 dias
+
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-idempotency
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expiration
+        Enabled: true
+{{/if}}
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the HTTP API
+    Value: !Sub https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com
+    Export:
+      Name: !Sub ${AWS::StackName}-api-url
+  SingleTableName:
+    Value: !Ref SingleTable
+    Export:
+      Name: !Sub ${AWS::StackName}-table-name
+  SingleTableArn:
+    Value: !GetAtt SingleTable.Arn

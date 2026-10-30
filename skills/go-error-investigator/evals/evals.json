@@ -1,0 +1,41 @@
+{
+  "skill_name": "go-error-investigator",
+  "descricao": "Evals da v1.0.0. Cobrem diagnóstico antes de corrigir, leitura de panic/stack, erros de módulo/toolchain, deadlock em teste e a armadilha do erro nil não nil.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "panic-nil-map-diagnostico",
+      "prompt": "Meu serviço Go caiu com: panic: assignment to entry in nil map / goroutine 17 [running]: main.(*Cache).Set(...) cache.go:23. Conserta aí.",
+      "expected_output": "Investigar antes de alterar: classificar como erro de runtime (panic), ler o frame do código próprio (cache.go:23), causa raiz = map nunca inicializado (zero value de struct com campo map). Não esconder com recover. Correção mínima: inicializar no construtor ou lazy no Set (if c.m == nil { c.m = make(map[K]V) }) — zero value útil — e, se acessado por várias goroutines, proteger com mutex (concurrent map writes é o próximo bug). Teste de regressão que falha sem a correção; rodar go test -race. Preencher o Diagnóstico Inicial (erro, tipo, causa raiz, evidências, hipóteses descartadas, risco, plano, testes) e parar no GATE.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "go-mod-toolchain-local-ci",
+      "prompt": "No CI falha com 'go: go.mod requires go >= 1.27 (running go 1.24.7; GOTOOLCHAIN=local)' mas na minha máquina compila.",
+      "expected_output": "Classificar como erro de módulo/toolchain (local × CI). Causa: o CI usa Go 1.24.7 (imagem/instalação antiga) com GOTOOLCHAIN=local, que impede o download do toolchain exigido pelo go.mod (go >= 1.27); localmente o go baixa o toolchain automaticamente. Evidência: go version, go env GOTOOLCHAIN, diretivas go/toolchain do go.mod. Correção: atualizar a imagem/ação de setup do Go para a versão do go.mod (ex.: setup-go com go-version-file: go.mod) ou GOTOOLCHAIN=auto; alinhar imagem golang:X ao go.mod. Não baixar o go.mod para uma versão menor só para passar sem avaliar o que usa. Provar rodando o mesmo comando do CI.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "teste-pendurado-timeout",
+      "prompt": "go test falha com 'panic: test timed out after 10m0s running tests: TestProcessa (10m0s)'. Posso só aumentar o -timeout?",
+      "expected_output": "Não: aumentar o timeout esconde um bloqueio. Ler as pilhas do dump: o teste nomeado e as goroutines em [chan receive]/[chan send]/[select]/semacquire/WaitGroup.Wait; identificar o par ausente (canal sem receptor, Done faltando, lock cíclico, ctx sem deadline). Reproduzir com -run '^TestProcessa$' -timeout 10s -race -count=1; tornar determinístico com synctest (deadlock total vira pânico claro); corrigir a causa (término/propriedade) e manter timeout curto como rede de segurança. Registrar evidência antes/depois.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "erro-nil-que-nao-e-nil",
+      "prompt": "Minha função devolve error e retorno 'var e *MyErr = nil; return e' quando deu certo, mas o chamador entra no 'if err != nil'. Por quê?",
+      "expected_output": "Armadilha da interface com tipo-ponteiro nulo: o valor da interface error tem tipo dinâmico *MyErr e valor nil, portanto err != nil é verdadeiro (interface só é nil quando tipo e valor são nil). Correção: retornar nil literal (return nil) nas ramificações de sucesso; declarar a função com retorno error e nunca devolver variável ponteiro tipada; teste de regressão cobrindo o caminho de sucesso. Mencionar que staticcheck/go vet ajudam e que o diagnóstico deve mostrar fmt.Printf('%T %v') do erro como evidência.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "checksum-mismatch-nao-contornar",
+      "prompt": "go build falha com 'verifying module: checksum mismatch ... SECURITY ERROR'. Vou setar GONOSUMDB e GOFLAGS=-insecure para passar.",
+      "expected_output": "Não contornar: checksum mismatch pode indicar adulteração/substituição do módulo ou proxy comprometido (supply chain). Investigar: go mod verify, comparar go.sum no git (alguém editou?), versão/tag reescrita no upstream, proxy interno inconsistente; limpar cache só depois de entender; usar GOPRIVATE apenas para módulos privados legítimos; reportar ao responsável de segurança (engenheiro-seguranca) e fixar a versão confiável. Desabilitar verificação é ação que reduz segurança — exigir confirmação humana (GATE).",
+      "files": []
+    }
+  ]
+}

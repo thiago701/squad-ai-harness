@@ -1,0 +1,20 @@
+{
+  "skill_name": "validador-navegador",
+  "descricao": "Evals do validador de navegador. Cenario 1: validacao ao vivo text-first com veredito e evidencia. Cenario 2: guard de escopo (mudanca nao observavel no browser).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "validar-fluxo-ao-vivo-text-first",
+      "prompt": "Sobe o app e confirma no navegador que o formulario de login funciona e nao quebra no mobile.",
+      "expected_output": "Usa preview_start (dev server do projeto), NAO Bash para subir. Le a estrutura com preview_snapshot (arvore de acessibilidade) ANTES de screenshot. Exerce a jornada com preview_fill/preview_click usando dados de TESTE (nunca credencial real). ASSERE text-first: novo preview_snapshot confirma mudanca de estado, preview_console_logs(level:error)=0, preview_network(filter:failed)=0; usa preview_inspect (nao screenshot) para estilo. Roda preview_resize preset mobile + colorScheme dark. Screenshot so como evidencia humana. Emite o veredito padronizado dos 8 eixos PRONTO/NAO PRONTO, cada 🔴 com prova (seletor/URL/status). Oferece codificar o fluxo critico em Playwright duravel e entregar ao especialista-qualidade. Nao corrige bug via preview_eval.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "guard-de-escopo-nao-observavel",
+      "prompt": "Testa no navegador essa refatoracao do handler Lambda Java que so muda o mapeamento interno do DynamoDB.",
+      "expected_output": "Reconhece que a mudanca NAO e observavel no navegador (backend/runtime sem superficie web). NAO sobe dev server (nao provaria nada). Explica que validacao ao vivo so vale para o que renderiza/serve/loga no browser e roteia para especialista-qualidade (teste de integracao/unit) e, se houver API HTTP, para teste de API sem navegador. Se houvesse um endpoint observavel, ofereceria validar via claude-in-chrome/preview. Fail-closed: nao emite PRONTO sem ter validado nada. Gated.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,836 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "python-api-modular",
+      "stack": "python",
+      "path": "templates/stacks/python/api-modular",
+      "maturity": "Published",
+      "integrity": "a03b8a1c19064092a208b52c785f3b3bba198035c53d0009be7931cb07a46558",
+      "validated_at": "2026-07-16T12:03:04.053118+00:00",
+      "spec": {
+        "language_version": "3.10+ (alvo 3.13)",
+        "framework_version": "stdlib (sem framework por padrao — P1)",
+        "app_type": "aplicacao-modular",
+        "architecture": "monolito-modular (dominio/aplicacao/adaptadores)",
+        "context": "Aplicacao Python modular com dominio isolado, value objects validados, colecao de primeira classe, servico de aplicacao, repositorio em memoria trocavel e CLI. Base para API REST (adicione FastAPI SOMENTE se a analise do requisito exigir servidor HTTP).\n",
+        "prerequisites": "python >= 3.10, pip, make",
+        "dependencies": [],
+        "dev_dependencies": [
+          "pytest",
+          "pytest-cov",
+          "ruff",
+          "mypy"
+        ],
+        "tests": "pytest com cobertura >=90% (gate no Makefile); unit por camada",
+        "security_rules": "fragmento seguranca-input; VOs validam na construcao; sem segredos",
+        "observability": "logging estruturado JSON (adaptadores/registro.py)",
+        "documentation": "README.md executavel (make test)",
+        "usage_example": "make install && make check",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "patch/minor de dev-deps livre; major exige rodada de validacao",
+        "aot_compatible": "n/a",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "logging-estruturado",
+          "testes-unitarios",
+          "container",
+          "ci"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "framework web por reflexo (sem requisito de HTTP)",
+          "dominio importando adaptadores",
+          "dict anemico circulando no lugar de VO"
+        ],
+        "checklist_revisao": [
+          "dominio sem dependencia externa?",
+          "erros de dominio tipados e testados?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 98.39,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "7 passed",
+          "gate": "make check (ruff+mypy strict+pytest)",
+          "fonte": "build real taskbox-py 2026-07-15"
+        }
+      }
+    },
+    {
+      "id": "go-servico-modular",
+      "stack": "go",
+      "path": "templates/stacks/go/servico-modular",
+      "maturity": "Published",
+      "integrity": "263b70faea9471b1045db23643c8b576ee3a3dd79b11e2bc0cf159a43cb3018b",
+      "validated_at": "2026-07-16T12:03:05.253065+00:00",
+      "spec": {
+        "language_version": "1.26",
+        "framework_version": "stdlib (sem framework — idioma Go)",
+        "app_type": "servico-modular",
+        "architecture": "pacotes por camada (dominio/aplicacao/adaptadores) + cmd/",
+        "context": "Servico Go idiomatico: dominio com value objects e erros sentinela, colecao de primeira classe, servico de aplicacao por interface pequena, repositorio em memoria seguro para concorrencia e CLI em cmd/. Base para worker/API (adicione net/http handler quando o requisito pedir).\n",
+        "prerequisites": "go >= 1.26",
+        "dependencies": [],
+        "dev_dependencies": [],
+        "tests": "table-driven por pacote; go vet; cobertura >=90% verificada no Makefile",
+        "security_rules": "fragmento seguranca-input; validacao na construcao; contexto propagado",
+        "observability": "log/slog JSON estruturado",
+        "documentation": "README.md executavel",
+        "usage_example": "make check",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "toolchain minor livre; major exige rodada de validacao",
+        "aot_compatible": "sim (binario nativo por padrao)",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "logging-estruturado",
+          "testes-unitarios",
+          "container",
+          "ci"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "interface gigante no produtor (defina no consumidor)",
+          "panic para erro de dominio",
+          "goroutine sem dono/cancelamento"
+        ],
+        "checklist_revisao": [
+          "erros com errors.Is/As e sentinelas?",
+          "concorrencia com dono claro e sync onde ha estado?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 96.2,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "4 pacotes ok (+httptest)",
+          "vet": "ok",
+          "binario": "2252962 bytes smoke ok",
+          "excecoes_oc": "3 justificadas (table-driven, ADR-MITR-006)",
+          "fonte": "build real taskbox-go 2026-07-15/16"
+        }
+      }
+    },
+    {
+      "id": "nodejs-api-rest",
+      "stack": "nodejs",
+      "path": "templates/stacks/nodejs/api-rest",
+      "maturity": "Published",
+      "integrity": "d91e4ece684b0c26ad59df2edcb4f241ddaa96c7912d1db86b9171b03ff9a30f",
+      "validated_at": "2026-07-16T12:03:05.790401+00:00",
+      "spec": {
+        "language_version": "22 LTS",
+        "framework_version": "node:http nativo (sem framework — P1)",
+        "app_type": "api-rest",
+        "architecture": "modular ESM (dominio/aplicacao/adaptadores)",
+        "context": "API REST Node.js sem dependencias: dominio com value objects congelados, colecao de primeira classe, servico de aplicacao e borda HTTP com handler central de erros. Event loop protegido: nada sincrono pesado na rota.\n",
+        "prerequisites": "node >= 22",
+        "dependencies": [],
+        "dev_dependencies": [],
+        "tests": "node:test nativo com gate de cobertura >=90% de linhas",
+        "security_rules": "fragmento seguranca-input; validacao na borda + VO; sem eval; JSON body limitado",
+        "observability": "logs JSON via console estruturado; health em GET /health",
+        "documentation": "README.md executavel",
+        "usage_example": "npm test && npm start",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "LTS para LTS com rodada de validacao",
+        "aot_compatible": "n/a",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "logging-estruturado",
+          "health-check",
+          "testes-unitarios",
+          "testes-integracao",
+          "container",
+          "ci"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "observabilidade-minima",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "express/fastify por reflexo em servico trivial",
+          "await dentro de loop quando ha Promise.all",
+          "trabalho sincrono pesado bloqueando o event loop"
+        ],
+        "checklist_revisao": [
+          "erros de dominio mapeados para status HTTP no unico handler?",
+          "body com limite de tamanho e JSON validado?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 97.42,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "6 pass",
+          "gate": "node --test --test-coverage-lines=90",
+          "fonte": "build real taskbox-node 2026-07-15"
+        }
+      }
+    },
+    {
+      "id": "typescript-biblioteca-modular",
+      "stack": "typescript",
+      "path": "templates/stacks/typescript/biblioteca-modular",
+      "maturity": "Published",
+      "integrity": "8aedb3bfcaae1105ae50b1b73bfc6fffabb05b7558d547be6d9d0d3e5f676ca9",
+      "validated_at": "2026-07-16T12:03:06.976324+00:00",
+      "spec": {
+        "language_version": "TypeScript 7 (strict)",
+        "framework_version": "NodeNext ESM, sem framework",
+        "app_type": "biblioteca-modular",
+        "architecture": "modular (dominio/aplicacao/adaptadores) com contratos explicitos",
+        "context": "Biblioteca TypeScript estrita: branded types para primitivos do dominio, Resultado como union discriminada (sem excecao para fluxo esperado), colecao de primeira classe, validacao em runtime na borda e zero any.\n",
+        "prerequisites": "node >= 22, npm",
+        "dependencies": [],
+        "dev_dependencies": [
+          "typescript",
+          "@types/node"
+        ],
+        "tests": "node:test sobre dist compilado; gate de cobertura >=90% de linhas",
+        "security_rules": "fragmento seguranca-input; entrada unknown validada em runtime na borda",
+        "observability": "logs JSON no adaptador CLI",
+        "documentation": "README.md executavel",
+        "usage_example": "npm install && npm test",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "minor de typescript livre; major exige rodada de validacao",
+        "aot_compatible": "n/a",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "testes-unitarios",
+          "ci",
+          "container"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "any/as para calar o compilador",
+          "excecao para fluxo esperado (use Resultado)",
+          "generics decorativos sem restricao"
+        ],
+        "checklist_revisao": [
+          "zero any? zero @ts-ignore?",
+          "borda valida unknown antes de virar tipo de dominio?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 100.0,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "5 pass",
+          "tsc": "7.0.2 strict",
+          "fonte": "build real taskbox-ts 2026-07-15"
+        }
+      }
+    },
+    {
+      "id": "dotnet-biblioteca-modular",
+      "stack": "dotnet",
+      "path": "templates/stacks/dotnet/biblioteca-modular",
+      "maturity": "Published",
+      "integrity": "aefcf5ff4fae2b3e1b506dfe2731dd232893e5e06e581a44601fc87e60388c98",
+      "validated_at": "2026-07-16T12:03:07.489908+00:00",
+      "spec": {
+        "language_version": "C# 13 / .NET 10 LTS",
+        "framework_version": ".NET 10 (Native AOT compativel no dominio)",
+        "app_type": "biblioteca-modular",
+        "architecture": "modular (Dominio isolado + Testes); borda minimal API adicionavel",
+        "context": "Dominio .NET com records imutaveis, validacao na construcao, colecao de primeira classe, nullable habilitado e warnings como erro. Base para minimal API ou worker — adicione a borda somente quando o requisito pedir.\n",
+        "prerequisites": "dotnet SDK >= 10",
+        "dependencies": [],
+        "dev_dependencies": [
+          "xunit",
+          "Microsoft.NET.Test.Sdk",
+          "coverlet.collector"
+        ],
+        "tests": "xUnit + coverlet (cobertura-XML); gate >=90% via check.sh",
+        "security_rules": "fragmento seguranca-input; VOs validam; TreatWarningsAsErrors",
+        "observability": "logging estruturado via abstracao (ILogger) na borda",
+        "documentation": "README.md executavel",
+        "usage_example": "./check.sh",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "patch livre; major do SDK exige rodada de validacao",
+        "aot_compatible": "sim (dominio puro; borda exige análise de reflexao)",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "testes-unitarios",
+          "ci",
+          "container"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "propriedade { get; set; } mutavel em classe de comportamento",
+          "excecao generica (Exception) para regra de negocio",
+          "servico anemico com logica vazando para a borda"
+        ],
+        "checklist_revisao": [
+          "records para dados, metodos para comportamento?",
+          "nullable sem supressoes (!) injustificadas?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 100.0,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "6 passed",
+          "sdk": "10.0.302",
+          "cobertura": "line-rate=1 (coverlet)",
+          "fonte": "build real taskbox-dotnet 2026-07-15"
+        }
+      }
+    },
+    {
+      "id": "java-graalvm-aot-cli",
+      "stack": "java-graalvm-aot",
+      "path": "templates/stacks/java/graalvm-aot",
+      "maturity": "Published",
+      "integrity": "b6972f4ae28c59c04e72d4856013403242c49f42ad3938f358cd89deb74634be",
+      "validated_at": "2026-07-16T12:03:08.339340+00:00",
+      "spec": {
+        "language_version": "Java 25 LTS",
+        "framework_version": "sem framework (GraalVM Native Image 25)",
+        "app_type": "cli-nativa",
+        "architecture": "modular por pacote; dominio puro; borda CLI minima",
+        "context": "Aplicacao Java 25 sem framework preparada para Native Image: records e compact constructors para VOs, colecao de primeira classe, zero reflexao, zero recursos dinamicos — nativo compila sem configuracao extra. Startup em milissegundos e memoria minima.\n",
+        "prerequisites": "GraalVM JDK 25 + native-image, Maven 3.9+",
+        "dependencies": [],
+        "dev_dependencies": [
+          "junit-jupiter 5.x",
+          "jacoco 0.8.13+",
+          "native-maven-plugin"
+        ],
+        "tests": "JUnit 5 + jacoco check >=90% (gate no pom); smoke do binario nativo",
+        "security_rules": "fragmento seguranca-input; validacao em compact constructor; sem reflexao",
+        "observability": "java.util.logging JSON simples na borda (nativo-friendly)",
+        "documentation": "README.md executavel",
+        "usage_example": "mvn -B verify && mvn -Pnative package",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006"
+        ],
+        "update_rules": "patch de plugins livre; JDK major exige rodada nativa completa",
+        "aot_compatible": "sim — objetivo primario do template",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "testes-unitarios",
+          "ci",
+          "container"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "reflexao/Class.forName sem reachability-metadata",
+          "inicializacao estatica pesada (quebra build-time init)",
+          "dependencia com agente/bytecode dinamico"
+        ],
+        "checklist_revisao": [
+          "native-image compila sem --initialize-at-run-time extra?",
+          "startup e RSS medidos e registrados?",
+          "cobertura >=90 no gate jacoco?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 93.33,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "7 (surefire)",
+          "jacoco": "All coverage checks met",
+          "native": "binario 14MB em 7m01s; startup ~0.00s; RSS 10.5MB; rc de dominio=2 ok",
+          "fonte": "build real taskbox-java-native 2026-07-15/16"
+        }
+      }
+    },
+    {
+      "id": "python-api-rest-fastapi",
+      "stack": "python",
+      "path": "templates/stacks/python/api-rest-fastapi",
+      "maturity": "Published",
+      "integrity": "45f0b92131908c6190a85271b5d64f52a0649e1407f2ca29b5d31465e07fd232",
+      "validated_at": "2026-07-16T12:03:04.671410+00:00",
+      "spec": {
+        "language_version": "3.10+ (alvo 3.13)",
+        "framework_version": "FastAPI 0.139+ / Pydantic v2",
+        "app_type": "api-rest",
+        "architecture": "monolito-modular (dominio puro + borda FastAPI fina)",
+        "context": "API REST Python moderna: FastAPI com Pydantic v2 (validacao declarativa na borda), dominio puro reutilizado do padrao modular, handler central de excecoes de dominio -> HTTP, OpenAPI automatica, health check. A borda e fina: rota chama servico, servico fala com dominio.\n",
+        "prerequisites": "python >= 3.10, pip",
+        "dependencies": [
+          "fastapi>=0.139",
+          "pydantic>=2"
+        ],
+        "dev_dependencies": [
+          "pytest",
+          "pytest-cov",
+          "httpx",
+          "ruff",
+          "mypy"
+        ],
+        "tests": "pytest + TestClient (httpx) cobrindo rotas e erros; cobertura >=90% (gate)",
+        "security_rules": "fragmento seguranca-input; Pydantic valida na borda + VO no dominio; sem segredos",
+        "observability": "logging estruturado JSON; GET /health para liveness",
+        "documentation": "README.md executavel; OpenAPI em /docs",
+        "usage_example": "make install && make check && make run",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006",
+          "ADR-MITR-007"
+        ],
+        "update_rules": "minor de fastapi/pydantic livre com suite verde; major exige rodada de validacao",
+        "aot_compatible": "n/a",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "logging-estruturado",
+          "health-check",
+          "documentacao-api",
+          "testes-unitarios",
+          "testes-integracao",
+          "container",
+          "ci"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "observabilidade-minima",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "logica de negocio dentro da rota (borda gorda)",
+          "Pydantic model circulando como entidade de dominio",
+          "excecao HTTP lancada de dentro do dominio"
+        ],
+        "checklist_revisao": [
+          "rota so orquestra? dominio nao importa fastapi?",
+          "erros de dominio mapeados no exception handler central?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 99.09,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "4 passed",
+          "gate": "make check",
+          "fastapi": "0.139.0/pydantic 2.13.4",
+          "fonte": "build real taskbox-fastapi 2026-07-15"
+        }
+      }
+    },
+    {
+      "id": "java-spring-boot-4-api",
+      "stack": "java-spring-boot-4",
+      "path": "templates/stacks/java/spring-boot-4",
+      "maturity": "Published",
+      "integrity": "417a9dd93e50865c362d9c4f8f5e89bef9acf3d8641d13efbd97b4ea8298c632",
+      "validated_at": "2026-07-16T12:03:09.275794+00:00",
+      "spec": {
+        "language_version": "Java 25 LTS",
+        "framework_version": "Spring Boot 4.1 / Spring Framework 7",
+        "app_type": "api-rest",
+        "architecture": "monolito modular: dominio puro + borda web fina (@RestController)",
+        "context": "API REST Spring Boot 4 atual: starter-webmvc (nomenclatura SB4), ProblemDetail (RFC 9457) no @RestControllerAdvice central, dominio identico ao template nativo (portavel entre os tres sabores Java), testes @WebMvcTest com contexto minimo e jacoco >=90% no gate.\n",
+        "prerequisites": "JDK 25, Maven 3.9+",
+        "dependencies": [
+          "spring-boot-starter-webmvc 4.1.x"
+        ],
+        "dev_dependencies": [
+          "spring-boot-starter-test",
+          "jacoco 0.8.13"
+        ],
+        "tests": "JUnit 5 + @WebMvcTest (contexto minimo); jacoco check >=90% (gate)",
+        "security_rules": "fragmento seguranca-input; Bean Validation na borda; dominio valida VOs",
+        "observability": "actuator adicionavel; logs estruturados; ProblemDetail padronizado",
+        "documentation": "README.md executavel",
+        "usage_example": "mvn -B verify",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006",
+          "ADR-MITR-007"
+        ],
+        "update_rules": "patch SB livre com suite verde; minor/major exige rodada de validacao",
+        "aot_compatible": "parcial — Spring AOT processa beans; native exige rodada dedicada",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "documentacao-api",
+          "testes-unitarios",
+          "testes-integracao",
+          "ci",
+          "container"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "observabilidade-minima",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "logica de negocio no controlador (borda gorda)",
+          "@SpringBootTest para testar regra de dominio pura",
+          "entidade de dominio como DTO da API"
+        ],
+        "checklist_revisao": [
+          "controlador so orquestra? dominio sem import de spring?",
+          "erros viram ProblemDetail no advice central?",
+          "cobertura >=90 no gate jacoco?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 95.38,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "8 (unit+@WebMvcTest)",
+          "sb": "4.1.0 starter-webmvc",
+          "licoes": "webmvc-test module + composition root na raiz (L2)",
+          "fonte": "build real taskbox-sb4 2026-07-16"
+        }
+      }
+    },
+    {
+      "id": "java-quarkus-aot-api",
+      "stack": "java-quarkus-aot",
+      "path": "templates/stacks/java/quarkus-aot",
+      "maturity": "Published",
+      "integrity": "e260d21ad73f219b4f1a8792eb54b11400c082fdc31eb8cf2d9988f889b28a4b",
+      "validated_at": "2026-07-16T12:03:10.164816+00:00",
+      "spec": {
+        "language_version": "Java 25 LTS",
+        "framework_version": "Quarkus 3.37 (quarkus-rest)",
+        "app_type": "api-rest",
+        "architecture": "monolito modular: dominio puro + resource fino CDI",
+        "context": "API REST Quarkus atual: quarkus-rest (reativo-first) com Jackson, build-time init, CDI de baixo acoplamento (um unico produtor), ExceptionMapper central, dominio identico aos outros sabores Java. Perfil nativo documentado (build-time init favorece Native Image).\n",
+        "prerequisites": "JDK 25, Maven 3.9+",
+        "dependencies": [
+          "quarkus-rest-jackson (BOM 3.37.x)"
+        ],
+        "dev_dependencies": [
+          "quarkus-junit5",
+          "rest-assured",
+          "quarkus-jacoco"
+        ],
+        "tests": "JUnit 5 unit + @QuarkusTest com RestAssured; jacoco combinado >=90% (gate)",
+        "security_rules": "fragmento seguranca-input; validacao no VO; sem reflexao manual",
+        "observability": "quarkus smallrye-health adicionavel; logs estruturados",
+        "documentation": "README.md executavel",
+        "usage_example": "mvn -B verify",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006",
+          "ADR-MITR-007"
+        ],
+        "update_rules": "patch da plataforma livre com suite verde; minor/major exige validacao",
+        "aot_compatible": "sim — build-time init; native via -Dnative (rodada dedicada)",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "testes-unitarios",
+          "testes-integracao",
+          "ci",
+          "container"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "observabilidade-minima",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "logica no resource (borda gorda)",
+          "injeção de campo espalhada (prefira construtor/produtor unico)",
+          "runtime-init desnecessario que quebra o build nativo"
+        ],
+        "checklist_revisao": [
+          "resource so orquestra? dominio sem import de jakarta/quarkus?",
+          "ExceptionMapper central traduz ErroDeDominio?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 98.28,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "8 (unit+@QuarkusTest)",
+          "quarkus": "3.37.3",
+          "cobertura": "uniao per-classe 57/58 (check-cobertura.py)",
+          "fonte": "build real taskbox-quarkus 2026-07-16"
+        }
+      }
+    },
+    {
+      "id": "nodejs-api-rest-fastify",
+      "stack": "nodejs",
+      "path": "templates/stacks/nodejs/api-rest-fastify",
+      "maturity": "Published",
+      "integrity": "f0f89b013859404a6ca5afd62f4c1711b7c551eb4778ca9fe0a4bff1e3ff57b9",
+      "validated_at": "2026-07-16T12:03:06.349524+00:00",
+      "spec": {
+        "language_version": "22 LTS",
+        "framework_version": "Fastify 5",
+        "app_type": "api-rest",
+        "architecture": "modular ESM (dominio/aplicacao/adaptadores) com plugin Fastify",
+        "context": "API REST Node.js moderna com Fastify 5: validacao por JSON Schema na rota (ajv embutido), logger pino integrado, handler central de erros de dominio, dominio identico ao template zero-dep (portavel). Use esta variante quando precisar de validacao declarativa, plugins e throughput; use nodejs-api-rest (node:http) quando zero dependencia for requisito.\n",
+        "prerequisites": "node >= 22, npm",
+        "dependencies": [
+          "fastify ^5"
+        ],
+        "dev_dependencies": [],
+        "tests": "node:test com fastify.inject (sem porta real); cobertura >=90% (gate)",
+        "security_rules": "fragmento seguranca-input; JSON Schema na borda + VO no dominio; bodyLimit configurado",
+        "observability": "pino estruturado (logger do Fastify); GET /health",
+        "documentation": "README.md executavel; schemas viram OpenAPI via @fastify/swagger (adicionavel)",
+        "usage_example": "npm install && npm test",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006",
+          "ADR-MITR-007"
+        ],
+        "update_rules": "minor de fastify livre com suite verde; major exige rodada",
+        "aot_compatible": "n/a",
+        "components": [
+          "tratamento-erros",
+          "validacao-entrada",
+          "logging-estruturado",
+          "health-check",
+          "testes-unitarios",
+          "testes-integracao",
+          "container",
+          "ci"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "tratamento-erros",
+          "observabilidade-minima",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "validar na mao o que o JSON Schema da rota ja valida",
+          "logica de negocio dentro do handler da rota",
+          "criar servidor global mutavel em vez de factory"
+        ],
+        "checklist_revisao": [
+          "toda rota com schema de entrada/saida?",
+          "erros de dominio no setErrorHandler central?",
+          "cobertura >=90 no gate?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 98.39,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "6 pass",
+          "fastify": "^5 via inject()",
+          "fonte": "build real taskbox-fastify 2026-07-16"
+        }
+      }
+    },
+    {
+      "id": "angular-feature-tarefas",
+      "stack": "angular",
+      "path": "templates/stacks/angular/feature-tarefas",
+      "maturity": "Published",
+      "integrity": "63ffb90d3d880473fe6aa244dcdb88fd9563299d928a262a39bf5e9db2964cdc",
+      "validated_at": "2026-07-16T12:41:54.407020+00:00",
+      "spec": {
+        "language_version": "TypeScript 5.9+ (workspace Angular)",
+        "framework_version": "Angular 22 (standalone + signals)",
+        "app_type": "frontend-spa",
+        "architecture": "feature folder standalone sobre workspace ng new (template overlay)",
+        "context": "Feature Angular atual como OVERLAY: componente standalone com OnPush, estado em signals (store de feature), computed para derivacoes, template com control flow novo (@for/@if), acessibilidade basica e specs unitarias. Compoe sobre um workspace `ng new` — exemplo de composicao de templates.\n",
+        "prerequisites": "node >= 22, @angular/cli >= 22, workspace ng new existente",
+        "dependencies": [
+          "@angular/core ^22"
+        ],
+        "dev_dependencies": [],
+        "tests": "specs unitarias da store e do componente (runner do workspace); build de producao",
+        "security_rules": "fragmento seguranca-input; sem innerHTML; sanitizacao padrao do Angular",
+        "observability": "console estruturado apenas em erro de borda; hooks para APM adicionaveis",
+        "documentation": "README.md com passos de composicao",
+        "usage_example": "copiar src/app/tarefas para o workspace e rotear o componente",
+        "adrs": [
+          "ADR-MITR-001",
+          "ADR-MITR-006",
+          "ADR-MITR-007"
+        ],
+        "update_rules": "acompanhar major do Angular com rodada de validacao do workspace",
+        "aot_compatible": "sim (build Angular e AOT por padrao)",
+        "components": [
+          "validacao-entrada",
+          "tratamento-erros",
+          "testes-unitarios",
+          "design-tokens"
+        ],
+        "fragments": [
+          "linha-defesa-prompt",
+          "prioridades-squad",
+          "testes-minimos",
+          "seguranca-input",
+          "object-calisthenics"
+        ],
+        "anti_patterns": [
+          "NgModule para feature nova (standalone e o padrao)",
+          "subscribe manual onde signal/computed resolve",
+          "logica de dominio dentro do componente (mora na store)"
+        ],
+        "checklist_revisao": [
+          "OnPush + signals em toda a feature?",
+          "control flow novo (@for com track)?",
+          "specs verdes e build de producao ok?"
+        ]
+      },
+      "evidence": {
+        "build_ok": true,
+        "tests_ok": true,
+        "coverage": 100.0,
+        "oc_criticals": 0,
+        "security_ok": true,
+        "docs_ok": true,
+        "example_ok": true,
+        "tokens_measured": true,
+        "details": {
+          "testes": "6 pass (vitest, builder @angular/build:unit-test)",
+          "cobertura": "100% linhas / 97,46% stmts (v8)",
+          "build": "producao AOT 200.28kB inicial (54.99kB gzip) em 14.1s",
+          "workspace": "ng new (Angular CLI 22.0.7) + overlay",
+          "fonte": "build real taskbox-angular 2026-07-16"
+        }
+      }
+    }
+  ]
+}

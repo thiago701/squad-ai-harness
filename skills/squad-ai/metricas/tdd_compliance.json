@@ -1,0 +1,14 @@
+{
+  "user_stories": [
+    {
+      "id": "US-001",
+      "ciclos_tdd": 12,
+      "commits_red": 12,
+      "commits_green": 12,
+      "commits_refactor": 8,
+      "cobertura_mutacao": 87,
+      "violacoes": []
+    }
+  ],
+  "compliance_global": 100
+}

@@ -1,0 +1,2 @@
+## Object Calisthenics (9 regras)
+1 nível de indentação por método · sem `else` (early return/polimorfismo) · primitivos do domínio encapsulados em VOs · coleções de primeira classe · 1 chamada encadeada por linha · sem abreviações · entidades pequenas · ≤2 atributos de instância em classes de comportamento · sem getters/setters (Tell, don't ask). Equivalências por linguagem: `scripts/oc_validator/oc_matrix.json` (ADR-MITR-006). Validação: `python3 -m scripts.oc_validator --paths <dir>`.

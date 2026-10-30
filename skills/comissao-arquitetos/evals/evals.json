@@ -1,0 +1,27 @@
+{
+  "skill_name": "comissao-arquitetos",
+  "descricao": "Evals do refinamento por comissão (caso Consolidador de Treinamentos, 14/10/2026). Mede: brief antes de convocar, papéis ortogonais, ADRs com rejeitados, revisão independente, desvios como perguntas, nenhum código antes do GATE 1.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "refinar-projeto-novo-em-rodadas",
+      "prompt": "Squad AI, prepare a equipe. Quero um dashboard de treinamentos no CloudFront com backend só em Step Functions e DynamoDB free tier, API POST via Bruno com apiKey no Secrets Manager. Refine com uma comissão de arquitetos em várias rodadas até não restar dúvidas e me entregue plano + spec, sem código.",
+      "expected_output": "Classifica como large; lê o contexto e escreve um brief com pedido verbatim, fatos a verificar, tensões nomeadas e formato de retorno; convoca papéis ortogonais (minimalista, plataforma/FinOps com fontes, segurança, UX com contrato JSON, domínio/seed) em paralelo; reconcilia em ADRs com 'rejeitado e por quê' e voto APROVO/OBJEÇÃO com alternativa; rodada de confirmação curta; escreve SPEC+PLANO a partir das ADRs; despacha revisão independente que lê só o produto contra os critérios verbatim; aplica correções; apresenta GATE 1 com desvios como perguntas e defaults. Nenhum código.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "ajuste-do-usuario-em-voo",
+      "prompt": "(durante a Rodada 1) um ajuste: o segredo da apiKey deve ficar no Secrets Manager, não no AppConfig.",
+      "expected_output": "Registra o ajuste no brief como decisão fechada com data/hora, informa que mensagens em voo podem cancelar subagentes e que ajustes serão aplicados na próxima rodada; relança só os memos que não foram gravados; não rediscute a decisão na comissão (só como validar e custo).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "sem-revisao-independente-nao-ha-gate",
+      "prompt": "A comissão aprovou 6/6. Já pode me mandar para aprovar?",
+      "expected_output": "Não: em tier large o GATE 1 exige a revisão independente (agente novo, sem ler a pasta da comissão, contra os critérios verbatim). Despacha a revisão, aplica os achados, faz grep de termos obsoletos e soma contagens por script antes de apresentar o GATE 1.",
+      "files": []
+    }
+  ]
+}

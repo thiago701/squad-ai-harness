@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>{{ group_id }}</groupId>
+    <artifactId>{{ artifact_id }}</artifactId>
+    <version>{{ version }}</version>
+    <packaging>jar</packaging>
+    <name>{{ artifact_id }}</name>
+    <description>AWS Lambda Java 25 + Spring Boot 4 + GraalVM Native + DynamoDB single-table</description>
+
+    <properties>
+        <java.version>{{ java_version }}</java.version>
+        <maven.compiler.source>{{ java_version }}</maven.compiler.source>
+        <maven.compiler.target>{{ java_version }}</maven.compiler.target>
+
+        <spring-cloud-function.version>4.3.0</spring-cloud-function.version>
+        <aws-lambda-events.version>3.13.0</aws-lambda-events.version>
+        <aws-lambda-core.version>1.2.3</aws-lambda-core.version>
+        <aws-sdk.version>2.30.0</aws-sdk.version>
+        <!-- ⚠️ Powertools 1.x (v1). A v2 (GA jul/2025) é onde está o suporte GraalVM native de TODAS
+             as utilities e mudou a API (@Metrics→@FlushMetrics, Log4j→SLF4J+MDC, powertools-core→
+             powertools-common, powertools-logging→powertools-logging-log4j, idempotency split -core/-dynamodb;
+             exige org.aspectj:aspectjrt explícito). Migrar para 2.x ao gerar native — ver o backlog em
+             aws-lambda-java25-aot/references/graalvm-native-java25-sota.md §8. -->
+        <powertools.version>1.20.0</powertools.version>
+        <aspectj.version>1.9.22</aspectj.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot 4 + Cloud Function adapter for AWS -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-adapter-aws</artifactId>
+            <version>${spring-cloud-function.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-context</artifactId>
+            <version>${spring-cloud-function.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+
+        <!-- AWS Lambda runtime + events -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>${aws-lambda-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>${aws-lambda-events.version}</version>
+        </dependency>
+
+        <!-- AWS SDK v2 — DynamoDB Enhanced Client -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>dynamodb-enhanced</artifactId>
+            <version>${aws-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+            <version>${aws-sdk.version}</version>
+        </dependency>
+
+        <!-- Lambda PowerTools -->
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-logging</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-metrics</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-tracing</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+        {{#if has_streams}}
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-idempotency-dynamodb</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+        {{/if}}
+
+        <!-- Test deps -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>localstack</artifactId>
+            <version>1.20.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>{{ artifact_id }}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- AspectJ — necessário para PowerTools annotations -->
+            <plugin>
+                <groupId>dev.aspectj</groupId>
+                <artifactId>aspectj-maven-plugin</artifactId>
+                <version>1.14</version>
+                <configuration>
+                    <complianceLevel>${java.version}</complianceLevel>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <aspectLibraries>
+                        <aspectLibrary>
+                            <groupId>software.amazon.lambda</groupId>
+                            <artifactId>powertools-logging</artifactId>
+                        </aspectLibrary>
+                        <aspectLibrary>
+                            <groupId>software.amazon.lambda</groupId>
+                            <artifactId>powertools-metrics</artifactId>
+                        </aspectLibrary>
+                        <aspectLibrary>
+                            <groupId>software.amazon.lambda</groupId>
+                            <artifactId>powertools-tracing</artifactId>
+                        </aspectLibrary>
+                    </aspectLibraries>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <configuration>
+                            <imageName>bootstrap</imageName>
+                            <buildArgs>
+                                <buildArg>--no-fallback</buildArg>
+                                <buildArg>--enable-url-protocols=http,https</buildArg>
+                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <!-- ⚠️ init de logging em build-time pode CONFLITAR com a stack log4j2
+                                     deste template — validar caso-a-caso; muitas stacks exigem
+                                     --initialize-at-run-time p/ SLF4J/Log4j (ver SOTA ref §4). Plugin:
+                                     Spring Boot 4 gerencia a versão do native-maven-plugin (série 1.x). -->
+                                <buildArg>--initialize-at-build-time=org.slf4j.LoggerFactory</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

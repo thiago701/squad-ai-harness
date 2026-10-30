@@ -1,0 +1,32 @@
+id: java-graalvm-aot-cli
+stack: java-graalvm-aot
+language_version: "Java 25 LTS"
+framework_version: "sem framework (GraalVM Native Image 25)"
+app_type: cli-nativa
+architecture: "modular por pacote; dominio puro; borda CLI minima"
+context: >
+  Aplicacao Java 25 sem framework preparada para Native Image: records e
+  compact constructors para VOs, colecao de primeira classe, zero reflexao,
+  zero recursos dinamicos — nativo compila sem configuracao extra.
+  Startup em milissegundos e memoria minima.
+prerequisites: "GraalVM JDK 25 + native-image, Maven 3.9+"
+dependencies: []
+dev_dependencies: ["junit-jupiter 5.x", "jacoco 0.8.13+", "native-maven-plugin"]
+tests: "JUnit 5 + jacoco check >=90% (gate no pom); smoke do binario nativo"
+security_rules: "fragmento seguranca-input; validacao em compact constructor; sem reflexao"
+observability: "java.util.logging JSON simples na borda (nativo-friendly)"
+documentation: "README.md executavel"
+usage_example: "mvn -B verify && mvn -Pnative package"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "patch de plugins livre; JDK major exige rodada nativa completa"
+aot_compatible: "sim — objetivo primario do template"
+components: [tratamento-erros, validacao-entrada, testes-unitarios, ci, container]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, object-calisthenics]
+anti_patterns:
+  - "reflexao/Class.forName sem reachability-metadata"
+  - "inicializacao estatica pesada (quebra build-time init)"
+  - "dependencia com agente/bytecode dinamico"
+checklist_revisao:
+  - "native-image compila sem --initialize-at-run-time extra?"
+  - "startup e RSS medidos e registrados?"
+  - "cobertura >=90 no gate jacoco?"

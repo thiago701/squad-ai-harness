@@ -1,0 +1,20 @@
+{
+  "skill_name": "testes-carga-desempenho-aws",
+  "descricao": "Cenários qualitativos da skill testes-carga-desempenho-aws (with/without skill).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "carga-black-friday",
+      "prompt": "Preciso provar que minha API em Lambda aguenta 5x o pico da Black Friday. Como faço o teste de carga?",
+      "expected_output": "Meta derivada do SLO (RPS, p99, taxa de erro) e do pico medido; checar quotas antes (concorrência da Lambda, throttling do API Gateway, capacidade do DynamoDB) e pedir aumento se preciso; rodar em pré-produção que espelha produção, com dados sintéticos; usar Distributed Load Testing on AWS (ou k6/JMeter) com rampa, patamar, pico e soak; observar com CloudWatch/X-Ray; condição de parada e limite de custo; resultado comparado à linha de base. Respeitar a política da AWS para testes de carga/simulados e avisar quem opera.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "memoria-lambda",
+      "prompt": "Qual memória devo configurar na minha Lambda Java? Estou chutando 512 MB.",
+      "expected_output": "Não chutar: medir com AWS Lambda Power Tuning (Step Functions) executando a função em várias memórias e escolhendo o ponto de custo×latência; avaliar cold start (SnapStart, inicialização fora do handler) e p99 com X-Ray/CloudWatch; repetir a medição a cada mudança relevante e registrar a linha de base.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "{{ stack_name }}-dev"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=dev"
+resolve_s3 = true
+
+[stg.deploy.parameters]
+stack_name = "{{ stack_name }}-stg"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=stg"
+resolve_s3 = true
+
+[prd.deploy.parameters]
+stack_name = "{{ stack_name }}-prd"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=prd"
+resolve_s3 = true

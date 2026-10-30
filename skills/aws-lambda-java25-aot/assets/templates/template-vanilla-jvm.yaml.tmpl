@@ -1,0 +1,190 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  {{ entity }} — vanilla Java 25 AWS Lambda (managed java25 runtime + SnapStart)
+  behind an HTTP API, over a single-table DynamoDB design.
+
+# Vanilla JVM / SnapStart SAM template. Auth is ON BY DEFAULT (S3): a Cognito
+# JWT authorizer guards every route and the handler derives the owner from the
+# `sub` claim — tenancy is never client-supplied. This closes the BOLA/IDOR class
+# of bug at the template level, where the Squad eval first missed it.
+#
+# Placeholders (simple `{{ name }}` substitution, no whitespace-control needed):
+#   {{ entity }}        PascalCase aggregate, e.g. Task
+#   {{ function_name }} kebab function name, e.g. task-manager
+#   {{ handler_class }} FQN, e.g. com.acme.task.api.TaskApiGatewayHandler
+#   {{ table_name }}    single-table logical id/name, e.g. TaskManagerSingleTable
+#   {{ table_env_var }} env var the code reads, e.g. TASKS_TABLE_NAME
+#   {{ resource_path }} plural collection path, e.g. tasks
+#   {{ id_path }}       path-parameter segment WITH braces, e.g. {taskId}
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+    Runtime: java25
+    Architectures:
+      - arm64
+    Tracing: Active
+
+Resources:
+
+  # Identity provider for the API. Callers authenticate against this pool; the
+  # HTTP API JWT authorizer (below) validates the issued token and the handler
+  # derives the owner from the `sub` claim — tenancy is never client-supplied.
+  {{ entity }}UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: {{ function_name }}-users
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+
+  {{ entity }}UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: {{ function_name }}-client
+      UserPoolId: !Ref {{ entity }}UserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  {{ table_name }}:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: {{ table_name }}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  {{ entity }}Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: {{ function_name }}
+      CodeUri: .
+      Handler: {{ handler_class }}::handleRequest
+      # SnapStart on the managed java25 runtime: sub-second cold start, zero
+      # build change. Native Image is the documented future path, not built here.
+      SnapStart:
+        ApplyOn: PublishedVersions
+      AutoPublishAlias: live
+      Environment:
+        Variables:
+          {{ table_env_var }}: !Ref {{ table_name }}
+      Policies:
+        # Least privilege: only the item-level actions this service performs,
+        # scoped to the table and its GSI. No CreateTable/DescribeTable — that is
+        # LocalDdbBootstrap territory, never the production role.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt {{ table_name }}.Arn
+                - !Sub
+                  - '${TableArn}/index/GSI1'
+                  - TableArn: !GetAtt {{ table_name }}.Arn
+      Events:
+        Create{{ entity }}:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref {{ entity }}HttpApi
+            Path: /{{ resource_path }}
+            Method: POST
+        List{{ entity }}:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref {{ entity }}HttpApi
+            Path: /{{ resource_path }}
+            Method: GET
+        Get{{ entity }}:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref {{ entity }}HttpApi
+            Path: /{{ resource_path }}/{{ id_path }}
+            Method: GET
+        Update{{ entity }}:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref {{ entity }}HttpApi
+            Path: /{{ resource_path }}/{{ id_path }}
+            Method: PATCH
+        Delete{{ entity }}:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref {{ entity }}HttpApi
+            Path: /{{ resource_path }}/{{ id_path }}
+            Method: DELETE
+
+  {{ entity }}HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      # Every route requires a valid Cognito JWT. `DefaultAuthorizer` applies the
+      # authorizer to all routes, so there is no anonymous access path; the handler
+      # then enforces per-item ownership from the `sub` claim. The gateway rejects
+      # a missing/invalid token with 401 before the function runs.
+      Auth:
+        DefaultAuthorizer: CognitoJwt
+        Authorizers:
+          CognitoJwt:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub
+                - 'https://cognito-idp.${AWS::Region}.amazonaws.com/${PoolId}'
+                - PoolId: !Ref {{ entity }}UserPool
+              audience:
+                - !Ref {{ entity }}UserPoolClient
+      # Cap request volume on this public, pay-per-request API so a burst cannot
+      # run up cost or pollute the keyspace unbounded. Tune to expected traffic.
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 50
+        ThrottlingRateLimit: 100
+
+Outputs:
+  ApiBaseUrl:
+    Description: Base URL of the {{ entity }} HTTP API
+    Value: !Sub
+      - 'https://${ApiId}.execute-api.${AWS::Region}.amazonaws.com/prod'
+      - ApiId: !Ref {{ entity }}HttpApi
+  TableName:
+    Description: DynamoDB single table
+    Value: !Ref {{ table_name }}
+  UserPoolId:
+    Description: Cognito User Pool that issues the JWTs the API trusts
+    Value: !Ref {{ entity }}UserPool
+  UserPoolClientId:
+    Description: Cognito app client (the JWT audience)
+    Value: !Ref {{ entity }}UserPoolClient

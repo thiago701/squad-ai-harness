@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do atendimento</title>
+<style>
+  :root {
+    --fundo: #0f1720; --cartao: #17212b; --linha: #24313d;
+    --texto: #e8eef4; --suave: #93a4b5; --acento: #4ea1ff;
+    --ok: #3ecf8e; --alerta: #ffb454; --erro: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--texto);
+         font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { padding: 18px 24px; border-bottom: 1px solid var(--linha);
+           display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; }
+  .sub { color: var(--suave); font-size: 13px; }
+  main { padding: 20px 24px 60px; display: grid; gap: 20px; max-width: 1200px; }
+  .kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .kpi { background: var(--cartao); border: 1px solid var(--linha); border-radius: 10px; padding: 14px; }
+  .kpi b { display: block; font-size: 24px; font-weight: 650; }
+  .kpi span { color: var(--suave); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  section { background: var(--cartao); border: 1px solid var(--linha); border-radius: 10px; padding: 16px 18px; }
+  section h2 { font-size: 14px; margin: 0 0 12px; text-transform: uppercase;
+               letter-spacing: .06em; color: var(--suave); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  th { color: var(--suave); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+  .quente { background: rgba(255,107,107,.16); color: var(--erro); }
+  .morno  { background: rgba(255,180,84,.16); color: var(--alerta); }
+  .frio   { background: rgba(147,164,181,.16); color: var(--suave); }
+  button { background: var(--acento); color: #071018; border: 0; border-radius: 7px;
+           padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  button.claro { background: transparent; color: var(--acento); border: 1px solid var(--linha); }
+  input, textarea { background: #0e161e; color: var(--texto); border: 1px solid var(--linha);
+                    border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 13px; width: 100%; }
+  .barra { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .vazio { color: var(--suave); font-size: 13px; padding: 6px 0; }
+  a { color: var(--acento); }
+  details summary { cursor: pointer; color: var(--acento); font-size: 13px; }
+  pre { white-space: pre-wrap; font-size: 12px; color: var(--suave); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel do atendimento</h1>
+  <span class="sub" id="contexto">carregando…</span>
+  <span class="sub" style="margin-left:auto">
+    <input id="token" placeholder="token do painel (se configurado)" style="width:230px">
+  </span>
+  <button class="claro" onclick="carregar()">atualizar</button>
+</header>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <h2>Leads</h2>
+    <div class="barra">
+      <button class="claro" onclick="baixarCsv()">exportar CSV</button>
+      <span class="sub">contato mascarado — o hash permite reconciliar no CRM</span>
+    </div>
+    <table><thead><tr>
+      <th>quando</th><th>nome</th><th>contato</th><th>canal</th>
+      <th>intenção</th><th>qualificação</th><th>conversa</th>
+    </tr></thead><tbody id="leads"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Perguntas sem resposta boa (fila de curadoria)</h2>
+    <table><thead><tr>
+      <th>pergunta</th><th>vezes</th><th>última</th><th></th>
+    </tr></thead><tbody id="semResposta"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Curadoria — nada é reindexado sem aprovação humana</h2>
+    <table><thead><tr>
+      <th>#</th><th>pergunta</th><th>status</th><th>proposta</th><th>ações</th>
+    </tr></thead><tbody id="curadoria"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Conversa</h2>
+    <div class="barra">
+      <input id="sessao" placeholder="id da sessão (ex.: wa:5511999999999)" style="max-width:320px">
+      <button onclick="verSessao()">abrir</button>
+    </div>
+    <div id="timeline" class="vazio">informe uma sessão para ver a conversa completa e as fontes usadas.</div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let dados = null;
+
+function cabecalhos() {
+  const t = $("token").value.trim();
+  return t ? { "X-Painel-Token": t } : {};
+}
+
+async function pegar(url) {
+  const r = await fetch(url, { headers: cabecalhos() });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || r.status);
+  return r.json();
+}
+
+async function enviar(url, corpo) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...cabecalhos() },
+    body: JSON.stringify(corpo || {}),
+  });
+  const dado = await r.json().catch(() => ({}));
+  if (!r.ok) { alert(dado.erro || ("erro " + r.status)); return null; }
+  return dado;
+}
+
+function kpi(rotulo, valor) {
+  return `<div class="kpi"><span>${rotulo}</span><b>${valor}</b></div>`;
+}
+
+async function carregar() {
+  try {
+    dados = await pegar("/api/painel");
+  } catch (e) {
+    $("contexto").textContent = "não autorizado — informe o token do painel";
+    return;
+  }
+  const m = dados.metricas;
+  $("contexto").textContent =
+    `${dados.vertical} · tenant ${dados.tenant} · ${dados.chunks_indexados} trechos indexados · últimos ${m.janela_dias} dias`;
+  $("kpis").innerHTML = [
+    kpi("conversas", m.conversas),
+    kpi("taxa de contenção", (m.taxa_contencao * 100).toFixed(0) + "%"),
+    kpi("leads", `${m.leads} <small style="font-size:13px;color:var(--suave)">(${m.leads_quentes} quentes)</small>`),
+    kpi("custo por conversa", "R$ " + m.custo_por_conversa_brl.toFixed(4)),
+    kpi("custo total", "R$ " + m.custo_total_brl.toFixed(2)),
+    kpi("sem fonte", (m.taxa_sem_fonte * 100).toFixed(0) + "%"),
+    kpi("latência média", m.latencia_media_ms.toFixed(0) + " ms"),
+  ].join("");
+
+  $("leads").innerHTML = dados.leads.length ? dados.leads.map((l) => `
+    <tr>
+      <td>${(l.atualizado_em || "").slice(0, 16).replace("T", " ")}</td>
+      <td>${l.nome || "—"}</td>
+      <td>${l.contato_mask || "—"}</td>
+      <td>${l.canal}</td>
+      <td>${l.intencao || "—"}</td>
+      <td><span class="tag ${l.qualificacao}">${l.qualificacao}</span></td>
+      <td><a href="#" onclick="verSessao('${l.sessao}');return false">abrir</a></td>
+    </tr>`).join("") : `<tr><td colspan="7" class="vazio">nenhum lead ainda.</td></tr>`;
+
+  $("semResposta").innerHTML = dados.top_sem_resposta.length ? dados.top_sem_resposta.map((p) => `
+    <tr>
+      <td>${p.pergunta}</td>
+      <td>${p.ocorrencias}</td>
+      <td>${(p.ultima || "").slice(0, 16).replace("T", " ")}</td>
+      <td><button class="claro" onclick='paraCuradoria(${JSON.stringify(p.pergunta)}, ${p.interacao_id})'>enviar para curadoria</button></td>
+    </tr>`).join("") : `<tr><td colspan="4" class="vazio">nenhuma pergunta sem resposta na janela.</td></tr>`;
+
+  $("curadoria").innerHTML = dados.curadoria_pendente.length ? dados.curadoria_pendente.map((c) => `
+    <tr>
+      <td>${c.id}</td>
+      <td>${c.pergunta}</td>
+      <td>${c.status}</td>
+      <td>
+        <input id="fonte-${c.id}" placeholder="fonte-alvo (ex.: estrutura)" value="${c.fonte_alvo || ""}">
+        <textarea id="texto-${c.id}" rows="2" placeholder="texto correto para entrar na base">${c.texto_proposto || ""}</textarea>
+      </td>
+      <td style="white-space:nowrap">
+        <button class="claro" onclick="propor(${c.id})">propor</button>
+        <button onclick="aprovar(${c.id})">aprovar</button>
+        <button class="claro" onclick="aplicar(${c.id})">aplicar</button>
+      </td>
+    </tr>`).join("") : `<tr><td colspan="5" class="vazio">fila de curadoria vazia.</td></tr>`;
+}
+
+async function paraCuradoria(pergunta, interacaoId) {
+  await enviar("/api/curadoria", { pergunta, interacao_id: interacaoId, motivo: "sem_fonte" });
+  carregar();
+}
+async function propor(id) {
+  await enviar(`/api/curadoria/${id}/propor`, {
+    fonte_alvo: $(`fonte-${id}`).value, texto_proposto: $(`texto-${id}`).value,
+  });
+  carregar();
+}
+async function aprovar(id) {
+  const quem = prompt("Quem está aprovando? (fica na trilha de auditoria)");
+  if (!quem) return;
+  await enviar(`/api/curadoria/${id}/aprovar`, { aprovado_por: quem });
+  carregar();
+}
+async function aplicar(id) {
+  if (!confirm("Aplicar na base e reindexar?")) return;
+  const r = await enviar(`/api/curadoria/${id}/aplicar`, {});
+  if (r) alert("aplicado — versão " + r.versao_id);
+  carregar();
+}
+
+async function verSessao(id) {
+  const sessao = id || $("sessao").value.trim();
+  if (!sessao) return;
+  $("sessao").value = sessao;
+  const ctx = await pegar("/api/sessao/" + encodeURIComponent(sessao));
+  $("timeline").className = "";
+  $("timeline").innerHTML = `
+    <p class="sub">${ctx.turnos} turnos · intenções: ${ctx.intencoes.join(", ") || "—"} ·
+       fontes: ${ctx.fontes_usadas.join(", ") || "—"} ${ctx.houve_recusa ? "· houve recusa" : ""}</p>
+    ${ctx.historico.map((t) => `
+      <div style="border-left:2px solid var(--linha);padding:6px 0 6px 12px;margin:8px 0">
+        <div class="sub">${(t.ts || "").slice(0, 16).replace("T", " ")} · ${t.canal} · ${t.intencao || "—"}
+          ${t.escalonado ? '· <span class="tag quente">escalado</span>' : ""}
+          ${t.sem_fonte ? '· <span class="tag morno">sem fonte</span>' : ""}</div>
+        <div><b>cliente:</b> ${t.pergunta}</div>
+        <div><b>bot:</b> ${t.resposta}</div>
+        <div class="sub">fontes: ${t.fontes || "—"} · modelo: ${t.modelo}</div>
+      </div>`).join("")}`;
+}
+
+function baixarCsv() {
+  fetch("/api/leads.csv", { headers: cabecalhos() })
+    .then((r) => r.text())
+    .then((csv) => {
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = "leads.csv"; a.click();
+      URL.revokeObjectURL(url);
+    });
+}
+
+carregar();
+</script>
+</body>
+</html>

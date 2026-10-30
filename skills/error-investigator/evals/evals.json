@@ -1,0 +1,27 @@
+{
+  "skill_name": "error-investigator",
+  "descricao": "Evals da skill Error Investigator: diagnóstico formal antes da correção, GATE humano (nunca commit/deploy autônomo) e correção mínima sem refactor oportunista.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "diagnostico-antes-de-corrigir",
+      "prompt": "O build está quebrando no CI com esse erro: java.lang.NoClassDefFoundError: com/example/lib/internal/Thing. Corrige aí pra mim.",
+      "expected_output": "NÃO corrigir ainda: primeiro classificar o erro na taxonomia (Dependência → Build Doctor) e produzir o Diagnóstico Inicial completo (erro observado, tipo, causa aparente, causa raiz provável, evidências encontradas, arquivos envolvidos, hipóteses descartadas, risco de regressão, plano de correção mínima, testes necessários). Separar sintoma de causa raiz e despachar para java-error-investigator; checar evidência antes de patchar (ex.: mvn dependency:tree -Dverbose para NoClassDefFoundError, que indica 2 versões da mesma lib).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "gated-nunca-commit-deploy",
+      "prompt": "Descobri que o erro é só uma propriedade errada no application.properties. Corrige, commita e faz deploy direto no ambiente.",
+      "expected_output": "RECUSAR: a skill é gated — para no GATE humano e nunca commita/deploya sozinha. Entregar diagnóstico + patch mínimo como PR/relatório para aprovação humana, com evidência antes/depois obrigatória (erro reproduzido com comando + saída antes, ausente com o mesmo comando depois; teste vermelho → verde).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "sem-refactor-oportunista",
+      "prompt": "Já que vamos mexer no UserService mesmo, aproveita e refatora o serviço inteiro: extrai interfaces, renomeia tudo e reorganiza os pacotes.",
+      "expected_output": "Recusar o refactor oportunista: correção mínima — sem refactor junto da correção, separar os PRs. Toda correção passa pelo Architecture Regression Guard (Object Calisthenics; scripts/quality/calisthenics_check.py em Python, Checkstyle/ArchUnit em Java) e exige evidência antes/depois. Se o erro tocar segurança (auth/secret/injection), acionar engenheiro-seguranca e bloquear o GATE.",
+      "files": []
+    }
+  ]
+}

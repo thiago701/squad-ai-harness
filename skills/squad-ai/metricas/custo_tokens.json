@@ -1,0 +1,53 @@
+{
+  "_comment": "Custo de tokens por tarefa/ciclo (R3/R12). Alimenta /squad-cost e /squad-status. IMPORTANTE: tokens de LLM nao sao mensuraveis com precisao pelo agente — os valores 'real_estimado' sao ESTIMATIVAS por volume de trabalho (arquivos tocados, commits, linhas, profundidade). Servem para calibracao DIRECIONAL dos tetos, nao como medicao exata.",
+  "schema_versao": "1.2",
+  "ciclo": "2026-06",
+  "metodo_estimativa": "Proxy por esforco observavel: arquivos x commits x linhas x profundidade de raciocinio. Calibrado em 2026-06-16 (Ciclo 5 #3) com os Ciclos 2-4 como n>=3 entre tiers.",
+  "tarefas": [
+    {
+      "slug": "ciclo2-ruflo-R1-R12",
+      "tier": "large",
+      "orcamento": 500000,
+      "real_estimado": 320000,
+      "veredito": "dentro",
+      "fonte": "real (Ciclo 2): analise cruzada + 12 propostas + impl; 27 arquivos, +1155 linhas, 3 commits",
+      "evidence": "docs/propostas/evolucao-ruflo-inspired.md; commits 72c97d2/87c9564/b80d30c"
+    },
+    {
+      "slug": "ciclo3-followups",
+      "tier": "standard",
+      "orcamento": 150000,
+      "real_estimado": 70000,
+      "veredito": "dentro",
+      "fonte": "real (Ciclo 3): frontend O12 + juiz O11 + spec-driven + registry; 5 commits",
+      "evidence": "docs/retrospectivas/2026-06-16-ciclo-2-ruflo.md (§5)"
+    },
+    {
+      "slug": "ciclo4-deferidas",
+      "tier": "standard",
+      "orcamento": 150000,
+      "real_estimado": 85000,
+      "veredito": "dentro",
+      "fonte": "real (Ciclo 4): validacao Java + worktree + hooks + /squad-judge; 5 commits, 11 arquivos",
+      "evidence": "docs/retrospectivas/2026-06-16-ciclo-4.md"
+    },
+    {
+      "slug": "validacao-cpf-vo",
+      "tier": "small",
+      "orcamento": 40000,
+      "real_estimado": 18000,
+      "veredito": "dentro",
+      "fonte": "real (Ciclo 4 #2): VO Cpf RED->GREEN com javac/java",
+      "evidence": "docs/validacoes/2026-06-16-ciclo4-pipeline-java25.md"
+    }
+  ],
+  "tetos_calibrados": {
+    "_nota": "Ciclo 5 #3: calibracao DIRECIONAL com n>=3 entre tiers (small=1, standard=2, large=1; trivial ainda sem dado). Estimativas, nao medicao exata. Reabrir quando houver mensuracao real de tokens ou >=3 por tier.",
+    "trivial":  { "teto": 10000,  "observado_real_estimado": null,   "n": 0, "status": "sem dado — manter referencia" },
+    "small":    { "teto": 40000,  "observado_real_estimado": 18000,  "n": 1, "status": "ok (folga ~2x)" },
+    "standard": { "teto": 150000, "observado_real_estimado": 78000,  "n": 2, "status": "ok (real ~media 78k < teto; teto poderia cair p/ ~120k)" },
+    "large":    { "teto": 500000, "observado_real_estimado": 320000, "n": 1, "status": "ok (folga ~1.5x)" }
+  },
+  "total_estimado_ciclos_2_4": 493000,
+  "economia_roteamento_estimada": "haiku (pesquisa) + sonnet (impl) vs tudo-opus: ~60-70% (heuristica; sem medicao exata de tokens por modelo)"
+}

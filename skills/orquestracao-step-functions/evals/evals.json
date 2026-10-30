@@ -1,0 +1,34 @@
+{
+  "skill_name": "orquestracao-step-functions",
+  "descricao": "Cenários com/sem skill: escolha de tipo, padrão de integração, callback seguro e idempotência.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "express-com-callback",
+      "prompt": "Quero um Express workflow que espera a aprovação do gestor por task token e depois roda um job ECS. Me dá a ASL.",
+      "expected_output": "Recusar a combinação: Express só suporta Request Response (sem .waitForTaskToken nem .sync) e dura no máximo 5 min — propor Standard com fonte oficial; entregar ASL com TimeoutSeconds no callback, Catch de States.Timeout (e HeartbeatTimeout), ECS via .sync e lint ASL-101 como prova.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "token-no-container",
+      "prompt": "Passe o task token para o container ECS por variável de ambiente para ele chamar SendTaskSuccess no fim.",
+      "expected_output": "Apontar [SEC]: o token fica visível em DescribeTasks [AN]; recomendar ecs:runTask.sync (o job termina sozinho) ou entregar o token por fila; citar lint ASL-201.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "retry-duplica-efeito",
+      "prompt": "Meu estado Task faz updateItem incrementando um contador e tem Retry em throttling. Está certo?",
+      "expected_output": "Explicar que o Standard é exactly-once por estado EXCETO com Retry: retry após sucesso perdido incrementa duas vezes; propor condição com versão/id de transição constante entre tentativas ($$.Execution.Name + $$.State.Name) e provar com o simulador (parâmetros idênticos entre tentativas).",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "api-sincrona",
+      "prompt": "O front precisa da resposta do workflow na mesma chamada HTTP; o workflow leva até 2 minutos.",
+      "expected_output": "Diferenciar síncrono de assíncrono: StartSyncExecution só para Express, at-most-once e o HTTP API limita a integração a 30 s — 2 min não cabe; recomendar 202 + identificador consultável + notificação (WebSocket) sem afirmar conclusão; declarar a meta como medida por cenário.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "_instrucao": "SEMENTE de baseline da catraca de qualidade (skill ratchet-qualidade). Copie para quality/quality-baseline.json e CONGELE apenas valores MEDIDOS (nunca estimados) — `--update` só quando a métrica genuinamente melhorou. `_rebaseline_*` documenta cada afrouxamento. Remova este campo `_instrucao` ao congelar.",
+  "coverage.statements": {
+    "value": null,
+    "direction": "up",
+    "eps": 1.5,
+    "tightenSlack": 5,
+    "dedicatedGate": false,
+    "_nota": "medir com pytest-cov antes de preencher; valor null = ainda não medido e o gate recusa congelar"
+  },
+  "mutation.killed": {
+    "value": 96.6,
+    "direction": "up",
+    "eps": 1.0,
+    "tightenSlack": 3,
+    "dedicatedGate": false,
+    "_origem": "benchmark V3 da Squad (killed %) — reconfirme no medidor antes de congelar"
+  },
+  "pytest.passed": {
+    "value": null,
+    "direction": "up",
+    "eps": 0,
+    "tightenSlack": 10,
+    "dedicatedGate": true,
+    "_nota": "catraca dura: nenhum teste verde pode voltar a falhar sem justificativa"
+  },
+  "calisthenics.violations": {
+    "value": null,
+    "direction": "down",
+    "eps": 0,
+    "tightenSlack": 3,
+    "dedicatedGate": true,
+    "_nota": "direction down = não pode SUBIR; fonte: scripts/quality/calisthenics_check.py sobre PRODUCTION"
+  },
+  "registry.phantom-names": {
+    "value": 0,
+    "direction": "down",
+    "eps": 0,
+    "tightenSlack": 0,
+    "dedicatedGate": true,
+    "_origem": "check-simbolos-vivos — o gate do arquiteto-finops fantasma"
+  }
+}

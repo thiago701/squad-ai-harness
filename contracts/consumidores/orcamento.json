@@ -1,0 +1,13 @@
+{
+  "_doc": "Orçamentos de duração (s) por nível da verificação reversa (skill contrato-reverso). Medidos no baseline de 17/10/2026 (2 vCPU, Maven quente, -o). Estourar o orçamento NÃO reprova: vira achado ORCAMENTO-EXCEDIDO, que exige justificar a proteção extra ou compensar. Rever a cada bench (cr.py bench).",
+  "segundos": {
+    "rapido": 2.0,
+    "direcionado": 30.0,
+    "ampliado": 300.0
+  },
+  "metas_de_feedback": {
+    "rapido_p90_s": 1.0,
+    "direcionado_p90_s": 15.0,
+    "_nota": "rápido = camadas estáticas A+B (sem JVM). direcionado é dominado pela partida do Maven (~7 s para uma única classe no baseline); abaixo disso só com daemon/Maven mvnd — não prometido."
+  }
+}

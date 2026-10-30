@@ -1,0 +1,41 @@
+{
+  "skill_name": "arquiteto-cloud-aws",
+  "descricao": "Evals de AWS + FinOps (Ciclo 8). free tier first; build-vs-buy; P3 abaixo de P1/P2.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "build-vs-buy-auth",
+      "prompt": "Vale a pena construir autenticacao propria ou usar Cognito para uns 5 mil usuarios?",
+      "expected_output": "Recomendar build-vs-buy com numeros: Cognito (servico gerenciado) elimina boilerplate de auth e cabe no free tier nessa escala; comparar com o CUSTO REAL de construir+manter codigo proprio (tempo de engenharia + risco de seguranca). Free tier first. Priorizar P1-Simplicidade (servico gerenciado e mais simples) — custo (P3) so decide apos P1/P2.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "reduzir-custo-aws",
+      "prompt": "Minha fatura AWS subiu. Como reduzo custo sem quebrar o SLA?",
+      "expected_output": "Diagnostico FinOps priorizado (quick wins primeiro): rightsizing/Compute Optimizer, Savings Plans/Reserved para carga estavel, Spot para tolerante a falha, revisao de storage classes (S3), Budgets/Cost Explorer para visibilidade. Mostrar economia em % E valor absoluto mensal. Nunca sacrificar simplicidade (P1) nem o SLA (P2) por custo (P3).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "plano-antes-de-codar",
+      "prompt": "Vou criar um fluxo: API recebe pedido, processa em vários serviços e avisa o cliente. Já pode gerar o código?",
+      "expected_output": "Exigir antes os 7 artefatos do protocolo (requisitos com metas por cenário, contratos, arquitetura com identidade, workflow com ASL coerente, sequências, ADRs, testes/observabilidade/recuperação) e rotear: orquestracao-step-functions, api-gateway-integracoes, tempo-real-aws; gate aws.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "ecs-ou-lambda-medido",
+      "prompt": "Java para processar relatórios que levam de 5 a 40 minutos e usam 6 GB: Lambda ou ECS?",
+      "expected_output": "Aplicar restrição dura [OK]: timeout máximo do Lambda 900 s → ECS Fargate (ou quebrar em etapas no Step Functions); citar fatos-verificados-aws.md §6 e o seletor_compute; listar medições exigidas (p50/p95/p99, erros, custo/1M).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "promessa-ms",
+      "prompt": "Garante que com GraalVM nossa Lambda responde em menos de 50 ms?",
+      "expected_output": "Não prometer latência genérica: definir meta por cenário (rota, payload, carga, % frio) e medir ponta a ponta com percentis; GraalVM/SnapStart só quando a medição justificar; citar java-ecs-lambda.md §2.",
+      "files": []
+    }
+  ]
+}

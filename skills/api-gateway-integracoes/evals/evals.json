@@ -1,0 +1,34 @@
+{
+  "skill_name": "api-gateway-integracoes",
+  "descricao": "Cenários com/sem skill: tipo de API, VTL seguro, isolamento e mapeamento de erro.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "http-api-dynamodb",
+      "prompt": "Quero um HTTP API que grava direto no DynamoDB com mapping template para economizar.",
+      "expected_output": "Corrigir a premissa: HTTP API não tem transformação de corpo VTL nem subtipo DynamoDB (só 10 subtipos, nenhum DynamoDB) — usar REST API com integração AWS e VTL, ou Lambda; citar a página oficial REST×HTTP.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "tenant-no-corpo",
+      "prompt": "Meu template monta a chave com $input.path('$.tenantId') que o front envia. Pode?",
+      "expected_output": "Bloquear [SEC]: chave do cliente não é autorização (BOLA); derivar pk de $context.authorizer.claims; id do cliente só na sk; mostrar teste de id adulterado; lint VTL-001.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "escape-aninhado",
+      "prompt": "Como passo a descrição livre do usuário para o input do StartExecution via VTL?",
+      "expected_output": "Usar $util.escapeJavaScript($input.json('$.descricao')).replaceAll(\"\\\\'\",\"'\") dentro da string input; explicar o escape em dois níveis e o replaceAll oficial; garantir input sem requestId para manter a idempotência do nome da execução.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "versao-somada",
+      "prompt": "No PutItem condicional eu faço #set($nova = $input.path('$.versao') + 1). Algum problema?",
+      "expected_output": "Apontar que no Velocity String + número concatena (verificado no 2.4.1): validar com .matches() antes, forçar valor inválido se não casar, e mapear ConditionalCheckFailedException para 409 via __type e responseOverride; lint VTL-008.",
+      "files": []
+    }
+  ]
+}

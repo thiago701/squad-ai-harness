@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Task Manager atrás de um REST API (v1) — fixture de paridade do leitor SAM REST.
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: java25
+
+Resources:
+  TaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.squadai.taskmanager.api.TaskRestHandler::handleRequest
+      CodeUri: .
+      Events:
+        CreateTask: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: /tasks, Method: POST}}
+        ListTasks: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: /tasks, Method: GET}}
+        GetTask: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: "/tasks/{taskId}", Method: GET}}
+        UpdateTask: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: "/tasks/{taskId}", Method: PATCH}}
+        DeleteTask: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: "/tasks/{taskId}", Method: DELETE}}
+        TransitionTask: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: "/tasks/{taskId}/transitions", Method: POST}}
+        TaskSummary: {Type: Api, Properties: {RestApiId: !Ref TaskRestApi, Path: /tasks/summary, Method: GET}}
+
+  TaskRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowOrigin: "'https://painel.exemplo.local'"
+        AllowMethods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+        AllowHeaders: "'authorization,content-type'"
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !GetAtt TaskUserPool.Arn
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 50
+          ThrottlingRateLimit: 100

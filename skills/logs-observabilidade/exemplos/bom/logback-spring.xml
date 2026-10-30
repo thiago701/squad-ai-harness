@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Versão CORRETA do ../ruim/logback-spring.xml — JSON estruturado (logstash-logback-encoder),
+     correlação (trace_id/span_id/correlation_id via MDC), rede de segurança de mascaramento
+     (templates/java/MascaraJsonDecorator.java) e perfil local em texto legível com CRLF neutralizado. -->
+<configuration>
+  <springProperty scope="context" name="app" source="spring.application.name" defaultValue="app"/>
+  <springProperty scope="context" name="env" source="app.env" defaultValue="local"/>
+  <springProperty scope="context" name="versao" source="app.version" defaultValue="dev"/>
+
+  <!-- Produção/homolog: JSON, um evento por linha, pronto para CloudWatch Logs Insights e Datadog -->
+  <springProfile name="!local">
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>{"service":"${app}","env":"${env}","version":"${versao}"}</customFields>
+        <fieldNames><timestamp>timestamp</timestamp><message>message</message><logger>logger</logger></fieldNames>
+        <includeMdcKeyName>trace_id</includeMdcKeyName>
+        <includeMdcKeyName>span_id</includeMdcKeyName>
+        <includeMdcKeyName>correlation_id</includeMdcKeyName>
+        <includeMdcKeyName>dd.trace_id</includeMdcKeyName>
+        <includeMdcKeyName>dd.span_id</includeMdcKeyName>
+        <!-- rede de segurança: mascara CPF/PAN/e-mail/JWT/segredo=valor em QUALQUER campo do JSON -->
+        <jsonGeneratorDecorator class="exemplo.observabilidade.MascaraJsonDecorator"/>
+        <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+          <maxDepthPerThrowable>30</maxDepthPerThrowable>
+          <rootCauseFirst>true</rootCauseFirst>
+        </throwableConverter>
+      </encoder>
+    </appender>
+    <root level="INFO"><appender-ref ref="JSON"/></root>
+  </springProfile>
+
+  <!-- Local: texto legível, mas ainda com correlação e sem log forging -->
+  <springProfile name="local">
+    <conversionRule conversionWord="mascara" converterClass="exemplo.observabilidade.MascaraConverter"/>
+    <appender name="TEXTO" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%d{HH:mm:ss.SSS} %-5level [%X{trace_id:-},%X{span_id:-}] %logger{30} - %replace(%mascara){'[\r\n]', '_'}%n%ex</pattern>
+      </encoder>
+    </appender>
+    <root level="DEBUG"><appender-ref ref="TEXTO"/></root>
+  </springProfile>
+
+  <!-- loggers barulhentos/perigosos nunca abaixo de INFO fora do local -->
+  <logger name="org.apache.http.wire" level="OFF"/>
+  <logger name="org.springframework.security" level="INFO"/>
+  <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+</configuration>

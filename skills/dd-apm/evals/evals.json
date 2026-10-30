@@ -1,0 +1,27 @@
+{
+  "skill_name": "dd-apm",
+  "descricao": "Evals do Datadog APM: investigação de traces com pup CLI, encaminhamento de setup para a skill certa e defesa contra alta cardinalidade/amostragem excessiva.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "investigar-erros-e-latencia-com-pup",
+      "prompt": "A API order-service está com erros e lentidão em prod. Por onde começo a investigar no Datadog APM?",
+      "expected_output": "Confirmar SEMPRE o env com o usuário (não assumir prod) e ter pup CLI autenticado (pup auth login/status). Começar pelos erros: pup traces search --query 'service:order-service status:error' --from 1h; lentos: pup traces search --query 'service:order-service @duration:>500ms' --from 1h; ranking de latência: pup apm services stats --env prod --from 1h --to now (p50/p95/p99, throughput, error rate); dependências: pup apm flow-map --query 'service:order-service' --env prod --limit 10; trace específico: pup traces search --query 'trace_id:<TRACE_ID>' --from 1h.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "encaminhar-setup-de-agente",
+      "prompt": "Minha Lambda Java não está enviando traces pro Datadog. Configura o agente pra mim agora.",
+      "expected_output": "Encaminhar, não configurar: esta skill cobre a análise de traces JÁ enviados — o setup do agente em Lambda Java (JVM/SnapStart ou GraalVM Native/AOT) é da skill datadog-lambda-java (tabela de roteamento). Kubernetes → seção Kubernetes SSI (helm com apm.instrumentation.enabled=true; armadilha: helm install datadog/datadog padrão NÃO suporta SSI via DatadogAgent CR). Sem sessão pup autenticada, não rodar comandos pup.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "recusar-tags-de-alta-cardinalidade",
+      "prompt": "Vou adicionar user_id, order_id e request_id como tags em todos os spans, e subir sample_rate 1.0 em prod pra não perder nenhum trace.",
+      "expected_output": "Recusar: tags de alta cardinalidade (user_id, order_id, request_id) explodem o custo de APM. Em prod manter DD_TRACE_SAMPLING_RULES=[{\"sample_rate\":0.1}] (10%) — desabilitar amostragem com 1.0 em prod é anti-padrão de custo; usar DD_TRACE_SAMPLING_RULES, não DD_TRACE_SAMPLE_RATE (deprecated). DD_SERVICE deve ser nome único e descritivo — nome genérico ('app', 'service', 'lambda') impossibilita filtrar no Service Catalog, e nome errado aparece lá permanentemente. Env tag obrigatória (dev/staging/prod).",
+      "files": []
+    }
+  ]
+}

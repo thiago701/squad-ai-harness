@@ -1,0 +1,70 @@
+# Config do gitleaks — estende as regras padrão e isenta arquivos que contêm
+# PADRÕES de detecção (regex) e exemplos de segredo, não credenciais reais.
+title = "SquadAI Harness — gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documentação de segurança com regex/exemplos de segredo (não são credenciais reais)."
+paths = [
+  '''security/security-policy\.md''',
+  '''security/skillspector-policy\.md''',
+  '''security/skill-audit-report\.(md|json)''',
+  '''scripts/security/skill_prescreen\.py''',
+  '''skills/auditoria-skill-externa/.*''',
+  '''docs/cerebro-cognicao/.*''',
+
+  # NB: o gitleaks varre o HISTÓRICO (não só a árvore atual), então os padrões
+  # precisam casar os caminhos ANTIGOS também. A skill de segurança vivia em
+  # `engenheiro-seguranca/` antes de migrar p/ `skills/engenheiro-seguranca/`;
+  # o padrão sem âncora cobre os dois (substitui a entrada `skills/...` antiga).
+  # Conteúdo: exemplos de token/X-API-Key em docs que ENSINAM a não vazar segredo.
+  '''engenheiro-seguranca/.*''',
+
+  # Corpora de prompt gerados (agentes Java): trazem exemplos de código de segurança
+  # com placeholders explícitos (ex.: "sk-prod-abcd1234efgh5678", seguido de asserção
+  # de que o log sai [REDACTED]). Aparece como `copilot-studio/` e `.agents/copilot-studio/`.
+  '''copilot-studio/.*''',
+
+  # Manifests selados do benchmark: mapeiam arquivo -> sha256 do CONTEÚDO. O hash de
+  # 64 hex é lido como "api key" quando o nome do arquivo casa api/secrets (ex.:
+  # "…/auth-e-api.md": "bc793ad8…"). São hashes de integridade, não credenciais.
+  # Escopo estreito de propósito: NÃO alistar docs/relatorios/benchmarks/ inteiro
+  # (há transcripts lá que devem continuar sendo varridos).
+  '''docs/relatorios/benchmarks/.*context-manifest.*\.json''',
+
+  # hooks/README.md: documenta o procedimento de TESTE do próprio hook com uma
+  # senha temporária de exemplo (password="abcdef12") — doc de operação, não segredo.
+  # Ancorado na raiz (08/10/2026, revisão independente): sem âncora, `hooks/.*` isentava QUALQUER diretório
+  # `*/hooks/` do repositório (ex.: `ops/hooks/`, `labs/x/hooks/`). Só o hooks/ da raiz documenta o teste.
+  '''^hooks/.*''',
+
+  # Fixtures SINTÉTICAS de detecção de segredo (triagem da release v0.6.0, 01/10/2026).
+  # Testes e benchs que semeiam chave falsa de propósito para provar que o scanner a
+  # pega (o experimento_ab usa formato real porque a chave do manual da AWS já está
+  # alistada — semear com ela mediria a allowlist, não o gate), dataset de code review
+  # com vulnerabilidade plantada, e model_cards.py, que guarda o sha256 do
+  # tokenizer.json de cada modelo (hash de integridade lido como "token"). Caminho
+  # exato, um por arquivo: nada de pasta inteira.
+  '''bench/ciclo-2026-09-14/experimento_ab\.py''',
+  '''labs/jev-code-review/dataset/_gen_cases_b\.py''',
+  '''labs/jev-code-review/tests/test_docs10\.py''',
+  '''tests/test_hooks_scan_secrets\.py''',
+  '''tests/test_mitr_security_benchmark\.py''',
+  '''scripts/accel/model_cards\.py''',
+
+  # Lente de logs (skill logs-observabilidade, 28/10/2026): fixtures SINTÉTICAS que a lente PRECISA
+  # reprovar (exemplos/ruim: JWT, AKIA do manual da AWS, senha=, credencial em URL, CPF/PAN de teste)
+  # e a bateria que prova os formatos canônicos de mascaramento. Caminho exato, um por arquivo.
+  # exemplos/bom NÃO está aqui de propósito: ele deve passar limpo em QUALQUER scanner.
+  '''skills/logs-observabilidade/exemplos/ruim/PedidoService\.java''',
+  '''skills/logs-observabilidade/exemplos/ruim/pagamento_worker\.py''',
+  '''skills/logs-observabilidade/exemplos/ruim/handler\.ts''',
+  '''skills/logs-observabilidade/exemplos/ruim/app-2026-10-27\.log\.txt''',
+  '''skills/logs-observabilidade/scripts/logs_obs/mascara\.py''',
+  '''skills/logs-observabilidade/templates/java/FiltroSegredos\.java''',
+  '''skills/logs-observabilidade/templates/python/logging_json\.py''',
+  '''skills/logs-observabilidade/references/filtro-segredos\.md''',
+  '''tests/test_logs_observabilidade\.py''',
+]

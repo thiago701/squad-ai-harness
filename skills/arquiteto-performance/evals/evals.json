@@ -1,0 +1,20 @@
+{
+  "skill_name": "arquiteto-performance",
+  "descricao": "Evals de performance (Ciclo 8). Medir antes de otimizar; SLA com numeros.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "diagnostico-por-evidencia",
+      "prompt": "Minha API esta lenta. O que faco?",
+      "expected_output": "NAO otimizar por achismo. Medir primeiro: profiling (JFR/Flight Recorder), identificar o gargalo com EVIDENCIA (CPU, GC pressure, N+1 queries, pool de conexoes, I/O externo). So entao propor a correcao do gargalo real. Definir baseline antes/depois. Evitar otimizacao que aumenta complexidade sem ganho medido (conflito P1xP2 — minimalista arbitra).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "definir-sla-com-numeros",
+      "prompt": "Como defino a meta de performance desse endpoint?",
+      "expected_output": "SLA com NUMEROS, nao adjetivos: latencia p95/p99 alvo, throughput (req/s), perfil de carga esperado. Validar sob carga real (k6/Gatling). Sem meta definida, nao ha o que otimizar (otimizacao prematura e anti-padrao). A meta vira oraculo deterministico no gate de Test (Pilar 5).",
+      "files": []
+    }
+  ]
+}

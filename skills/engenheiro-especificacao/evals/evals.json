@@ -1,0 +1,27 @@
+{
+  "skill_name": "engenheiro-especificacao",
+  "descricao": "Evals de especificacao/Discovery (Ciclo 8). User stories BDD, dominio DDD, criterios testaveis.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "especificar-feature-com-criterios-testaveis",
+      "prompt": "O cliente quer 'um carrinho de compras com cupom'. Como especifico isso pra o time?",
+      "expected_output": "Traduzir em user stories com criterios de aceite BDD (Dado/Quando/Entao) testaveis; >=3 cenarios por story (happy, bordas, erros). Regras de negocio classificadas, NFRs com numeros. Modelar o dominio (DDD estrategico): bounded contexts, linguagem ubiqua, eventos de dominio. Marcar [PRECISA-CLARIFICAR] onde houver ambiguidade (max. 3). Insumo do GATE 1.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "modelar-dominio-bounded-context",
+      "prompt": "Como modelo o dominio de um sistema de pedidos + pagamentos + estoque?",
+      "expected_output": "Identificar bounded contexts (Pedidos, Pagamentos, Estoque) com linguagem ubiqua propria por contexto; mapear relacoes (eventos de dominio / Anti-Corruption Layer); EventStorming para descobrir eventos; diagramas C4 (contexto/container). Cada contexto com seu modelo — evitar modelo canonico unico. Saida alimenta os arquitetos no Design.",
+      "files": []
+    },
+    {
+      "name": "spec-pronta-exige-rastro-da-resposta",
+      "prompt": "O dono aprovou a spec de um agente que responde 'quais projetos usam DynamoDB?' lendo o Terraform dos repos. Alguns repos nomeiam as tabelas via local.* vindo de um serviço de configuração. Podemos começar a implementar?",
+      "expected_output": "Ainda não: escrever antes o cenário e2e com o comando real + oráculo + gabarito feito à mão (independente do parser) e declarar a ORIGEM de cada dado da resposta. Nomes vindos de local.*/config não são visíveis ao parser estático: definir rota alternativa (ex.: descoberta por tag repositorio=<repo> no Resource Explorer, confiabilidade 'aws') como decisão D-E2E numerada para o dono aprovar. Atributo omitido = padrão do provedor deve aparecer como tal (origem padrao_aws). Feature não implementada responde contrato estável (exit 2 'chega na Onda N') para o e2e real pular, não falhar. Item termina em ✅/❓ com o que só o dono decide.",
+      "id": 3,
+      "files": []
+    }
+  ]
+}

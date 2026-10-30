@@ -1,0 +1,142 @@
+{
+  "vertical": "pousada",
+  "rotulo": "Pousada / Hotel",
+  "persona": {
+    "nome": "Recepção virtual",
+    "tom": "cordial, objetivo, hospitaleiro; frases curtas; trata por você",
+    "instrucao": "Você é a recepção virtual de {{ESTABELECIMENTO}}. Responda SOMENTE com base nos trechos fornecidos. Cite a fonte entre parênteses ao final. Se os trechos não contiverem a resposta, diga que não sabe e ofereça transferir para a recepção. Nunca invente tarifa, disponibilidade, política de cancelamento ou condição de pagamento."
+  },
+  "_nota_intencoes": "A ORDEM É A PRECEDÊNCIA: empate de acertos vai para quem vem antes. Da mais específica para a mais genérica. Casamento é por prefixo com fronteira de palavra (`quarto` casa `quartos`; `cao` não casa `recepção`).",
+  "intencoes": [
+    {"nome": "reclamacao", "palavras": ["reclamacao", "reclamação", "reclamações", "pessimo", "péssimo", "insatisfeito", "procon", "processar", "horrivel", "horrível", "absurdo"]},
+    {"nome": "grupo_evento", "palavras": ["evento", "casamento", "grupo", "excursao", "excursão", "excursões", "corporativo", "confraternizacao", "confraternização", "retiro"]},
+    {"nome": "pet", "palavras": ["pet", "cachorro", "cao", "cão", "cães", "gato", "animal", "animais"]},
+    {"nome": "cancelamento", "palavras": ["cancelar", "cancelamento", "remarcar", "reembolso", "no show", "desistir"]},
+    {"nome": "pagamento", "palavras": ["pagamento", "pix", "cartao", "cartão", "cartões", "parcelar", "sinal", "deposito", "depósito", "nota fiscal", "dinheiro", "cheque"]},
+    {"nome": "checkin", "palavras": ["check in", "checkin", "check-in", "check out", "checkout", "check-out", "horario de entrada", "horario de saida", "bagagem", "guarda-volumes"]},
+    {"nome": "cafe", "palavras": ["cafe", "café", "manha", "manhã", "refeicao", "refeição", "refeições", "jantar", "almoco", "almoço", "restaurante", "buffet", "gluten", "glúten", "lactose"]},
+    {"nome": "localizacao", "palavras": ["endereco", "endereço", "onde fica", "como chegar", "localizacao", "localização", "aeroporto", "praia", "centro", "estrada", "distancia", "distância", "quilometro", "quilômetro", "rodoviaria", "rodoviária", "traslado", "carro"]},
+    {"nome": "estrutura", "palavras": ["piscina", "wifi", "wi-fi", "internet", "estacionamento", "garagem", "sauna", "acessivel", "acessível", "cadeirante", "elevador"]},
+    {"nome": "tarifa", "palavras": ["preco", "preço", "preços", "valor", "diaria", "diária", "quanto custa", "tarifa", "orcamento", "orçamento", "pessoa adicional", "adicional", "estadia minima", "estadia mínima", "minima", "mínima", "temporada", "acrescimo", "acréscimo"]},
+    {"nome": "acomodacao", "palavras": ["quarto", "suite", "suíte", "chale", "chalé", "apartamento", "cama", "capacidade", "cabem", "berco", "berço", "bebe", "bebê", "frigobar", "varanda", "acomodacao", "acomodação", "acomodacoes", "acomodações", "hidromassagem"]},
+    {"nome": "disponibilidade", "palavras": ["disponivel", "disponível", "disponibilidade", "vaga", "livre", "reservar", "reserva", "data", "pessoa", "hospede", "hóspede", "noite", "pernoite", "recepcao", "recepção", "atendimento"]}
+  ],
+  "_nota_ferramentas": "`intencao` + `slots_obrigatorios` fazem o binding: o núcleo não tem `if` por vertical. Sem `_f_<nome>` no núcleo, use `adapter: tabela` apontando um arquivo de dados/<vertical>/.",
+  "ferramentas": [
+    {
+      "nome": "consultar_disponibilidade",
+      "descricao": "Consulta quartos livres em um intervalo de datas.",
+      "parametros": ["data_entrada", "data_saida", "hospedes"],
+      "efeito": "leitura",
+      "intencao": "disponibilidade",
+      "slots_obrigatorios": ["data_entrada"],
+      "slots_padrao": {"hospedes": 2}
+    },
+    {
+      "nome": "consultar_tarifa",
+      "descricao": "Retorna a diária vigente para um tipo de acomodação e período.",
+      "parametros": ["tipo_acomodacao", "data_entrada", "data_saida"],
+      "efeito": "leitura",
+      "intencao": "tarifa",
+      "slots_obrigatorios": ["data_entrada", "tipo_acomodacao"],
+      "slots_por_palavra": {
+        "tipo_acomodacao": {
+          "suite master": "Suíte Master",
+          "suíte master": "Suíte Master",
+          "suite": "Suíte Master",
+          "apartamento": "Apartamento Família",
+          "familia": "Apartamento Família",
+          "chale": "Chalé Standard",
+          "chalé": "Chalé Standard",
+          "standard": "Chalé Standard"
+        }
+      }
+    },
+    {
+      "nome": "criar_pre_reserva",
+      "descricao": "Registra intenção de reserva e gera lead. NÃO confirma reserva nem cobra.",
+      "parametros": ["nome", "contato", "data_entrada", "data_saida", "hospedes"],
+      "efeito": "escrita_reversivel"
+    },
+    {
+      "nome": "status_reserva",
+      "descricao": "Consulta o status de uma reserva pelo código. Sempre transfere.",
+      "parametros": ["codigo_reserva"],
+      "efeito": "leitura"
+    }
+  ],
+  "escalonar_intencoes": ["reclamacao", "grupo_evento"],
+  "escalonar_sem_fonte": true,
+  "recusas": [
+    "Não prometa tarifa, desconto, upgrade ou cortesia que não esteja nos trechos recuperados.",
+    "Não confirme reserva: o agente só cria pré-reserva; a confirmação é humana.",
+    "Não informe dados de outro hóspede, nem confirme se alguém está hospedado.",
+    "Não oriente sobre saúde, medicação ou emergência médica — transfira imediatamente.",
+    "Não aceite alteração ou cancelamento de reserva já confirmada — transfira para a recepção."
+  ],
+  "_nota_termos_ignorados": "Palavras frequentes e inúteis deste domínio. Elas não podem ancorar uma resposta — senão 'tem serviço de babá na pousada?' casa com qualquer documento.",
+  "termos_ignorados": ["pousada", "hotel", "hospedagem", "servico", "serviço", "servicos", "serviços", "lugar", "local", "estabelecimento"],
+  "sinonimos": {
+    "cachorro": ["animais", "estimacao", "pet", "porte"],
+    "cao": ["animais", "estimacao", "pet"],
+    "gato": ["animais", "estimacao", "pet"],
+    "pet": ["animais", "estimacao"],
+    "preco": ["diaria", "valor", "custa", "tarifa"],
+    "valor": ["diaria", "custa", "preco"],
+    "custa": ["diaria", "valor", "preco"],
+    "diaria": ["valor", "custa", "preco"],
+    "cabem": ["capacidade", "pessoas", "maxima"],
+    "pessoas": ["capacidade", "hospedes"],
+    "endereco": ["estrada", "bairro", "quilometro"],
+    "chegar": ["estrada", "rodovia", "distancia", "carro"],
+    "internet": ["wifi", "senha"],
+    "wifi": ["internet", "senha"],
+    "carro": ["estacionamento", "vagas", "garagem"],
+    "estacionar": ["estacionamento", "vagas"],
+    "jantar": ["almoco", "restaurante", "refeicao"],
+    "almoco": ["jantar", "restaurante", "refeicao"],
+    "crianca": ["criancas", "anos", "leito"],
+    "bebe": ["berco", "solicitacao"],
+    "acessivel": ["cadeirantes", "terreo", "elevador"],
+    "cadeirante": ["cadeirantes", "terreo", "acessiveis"],
+    "excursao": ["grupos", "evento", "corporativos"],
+    "grupo": ["grupos", "evento", "excursao"],
+    "reembolso": ["cancelamento", "cancelamentos", "sinal"],
+    "remarcar": ["alteracoes", "cancelamento", "reserva"],
+    "parcelar": ["vezes", "cartao", "credito"],
+    "nota": ["fiscal", "emitida"],
+    "aquecida": ["piscina", "aberta"],
+    "estadia": ["minima", "noites", "diaria"]
+  },
+  "_nota_recusa": "Padrões largos de propósito: recusar demais custa uma transferência; recusar de menos custa uma promessa que a pousada não pode cumprir. Prefira o falso positivo.",
+  "padroes_recusa": [
+    {"regex": "\\b(desconto|abatimento|cortesia|upgrade|pre(c|ç)inho|barganha|pechincha|promo(c|ç)[aã]o especial|condi(c|ç)[aã]o especial|mais barato|mais em conta|por fora)\\b", "motivo": "negociacao_fora_da_tabela"},
+    {"regex": "\\b(pre(c|ç)o|valor|di[aá]ria|tarifa)\\b.{0,20}\\bmelhor\\b|\\bmelhor\\b.{0,20}\\b(pre(c|ç)o|valor|di[aá]ria|tarifa)\\b", "motivo": "negociacao_fora_da_tabela"},
+    {"regex": "\\b(quem|qual|nome|telefone|contato|dados?)\\b.{0,40}\\b(h[oó]spede|hospedad[oa]|no chal[eé]|no quarto|na su[ií]te|apartamento \\d)", "motivo": "dado_de_terceiro"},
+    {"regex": "\\b(rem[eé]dio|medicamento|dipirona|paracetamol|ibuprofeno|antial[eé]rgico|analg[eé]sico|dor de|dor no|febre|sintoma|press[aã]o alta|passar mal|mal[- ]?estar|al[eé]rgic[oa]|inj(e|é)[cç][aã]o|farm[aá]cia de plant[aã]o)\\b", "motivo": "dominio_de_saude"},
+    {"regex": "\\b(cancel\\w*|remarc\\w*|alter\\w*|transfer\\w*|antecip\\w*|adia\\w*)\\b.{0,40}\\b(reserva|estadia|hospedagem|check[- ]?in|PSD\\d{6})\\b", "motivo": "alteracao_de_reserva_confirmada"},
+    {"regex": "\\b(confirm\\w*|garant\\w*|reserv[ae]|fech[ae]|bloque[ai])\\b.{0,30}\\b(minha reserva|a reserva|pra mim|agora|j[aá])\\b", "motivo": "confirmacao_de_reserva"}
+  ],
+  "captura_lead": {
+    "intencoes_que_geram_lead": ["disponibilidade", "tarifa", "acomodacao", "grupo_evento"],
+    "campos": ["nome", "contato", "data_entrada", "data_saida", "hospedes", "origem"],
+    "_nota_qualificacao": "Do nível mais alto ao mais baixo; cada nível lista os campos que precisam estar preenchidos. O primeiro que fechar vence.",
+    "qualificacao": {
+      "quente": ["data_entrada", "hospedes"],
+      "morno": ["data_entrada"],
+      "padrao": "frio"
+    }
+  },
+  "kpis": [
+    "taxa_contencao",
+    "pre_reservas_geradas",
+    "custo_por_conversa",
+    "perguntas_sem_fonte",
+    "tempo_ate_escalonamento"
+  ],
+  "mensagens": {
+    "sem_fonte": "Não encontrei isso na nossa base. Vou chamar alguém da recepção para te responder com precisão.",
+    "escalonamento": "Já estou chamando a recepção. Um atendente assume essa conversa em instantes.",
+    "recusa": "Isso eu não posso confirmar por aqui. A recepção resolve com você."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "skill_name": "datadog-lambda-java",
+  "descricao": "Evals da instrumentação Datadog para Lambda Java: setup JVM+SnapStart, recusa de dd-trace-java em GraalVM native e defesa de secrets/amostragem/scrubbing.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "setup-jvm-snapstart-datadog",
+      "prompt": "Instrumenta minha Lambda Java com SnapStart no SAM pra Datadog: quero traces automáticos, logs correlacionados e métricas enhanced. O que configurar?",
+      "expected_output": "Modo A (JVM + SnapStart): layers dd-trace-java:14 e Datadog-Extension-ARM:97 (conta 464622532012, us-east-1, arm64); AWS_LAMBDA_EXEC_WRAPPER: /opt/datadog_wrapper (OBRIGATÓRIO — ativa o dd-trace-java); DD_API_KEY_SECRET_ARN apontando para secret no Secrets Manager (nunca DD_API_KEY em texto plano); unified tagging DD_SERVICE (nome único descritivo, nunca genérico como 'app'), DD_ENV, DD_VERSION (GitSHA em CD); DD_LOGS_INJECTION: true; DD_TRACE_SAMPLING_RULES: '[{\"sample_rate\":0.1}]' (10% em prod, 1.0 apenas em dev); DD_TRACE_MANAGED_SERVICES: true; runtime java21 com SnapStart ApplyOn: PublishedVersions; enhanced metrics (aws.lambda.enhanced.invocations/errors/duration/init_duration) coletadas automaticamente pela Extension.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "recusar-dd-trace-java-em-graalvm-native",
+      "prompt": "Minha Lambda é GraalVM native (provided.al2023). Adiciona o layer dd-trace-java e o AWS_LAMBDA_EXEC_WRAPPER igual ao modo JVM pra ativar o tracing.",
+      "expected_output": "Recusar: o dd-java-agent.jar usa bytecode instrumentation que requer JVM em execução — NÃO funciona com binários GraalVM native. Modo B (AOT): apenas o layer Datadog-Extension-ARM (SEM dd-trace-java) e SEM AWS_LAMBDA_EXEC_WRAPPER (não há wrapper para native); DD_TRACE_OTEL_ENABLED: true + DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT: localhost:4317; OpenTelemetry Java SDK instrumentado em build-time (opentelemetry-api/sdk/exporter-otlp 1.42.0); OTelConfig.java inicializado no Spring Boot (init time); spans manuais no handler com trace_id/span_id no log; custom metrics via Lambda Powertools EMF (não DogStatsD).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "recusar-api-key-texto-plano-e-sample-100",
+      "prompt": "Pra agilizar o deploy: DD_API_KEY direto na variável de ambiente, amostragem 100% em prod e captura do payload inteiro das requests nos traces. Pode deixar assim?",
+      "expected_output": "Recusar: DD_API_KEY em texto plano é anti-padrão — usar sempre DD_API_KEY_SECRET_ARN (Secrets Manager). Amostragem 100% em prod é custo alto: DD_TRACE_SAMPLING_RULES: '[{\"sample_rate\":0.1}]' (10% em prod; 1.0 apenas em dev). Capturar payload (captureLambdaPayload/DD_CAPTURE_LAMBDA_PAYLOAD) exige scrubbing no datadog.yaml via apm_config.replace_tags: function.request.headers.authorization → [REDACTED] e function.response.creditCardNumber → ****. Atenção ao AppSec: Extension v67+ não é compatível — usar DD_EXTENSION_VERSION=compatibility ou desabilitar AppSec.",
+      "files": []
+    }
+  ]
+}

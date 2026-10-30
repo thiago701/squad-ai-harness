@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 220" width="100%" height="220">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070B14"/>
+      <stop offset="50%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#091526"/>
+    </linearGradient>
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <stop offset="100%" stop-color="#4FACFE"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="220" rx="16" fill="url(#bg)" stroke="#1E293B" stroke-width="2"/>
+  <g transform="translate(115, 110)">
+    <polygon points="0,-72 62,-36 62,36 0,72 -62,36 -62,-36" fill="#0B1325" stroke="url(#cyanGlow)" stroke-width="3.5"/>
+    <polygon points="0,-52 45,-26 45,26 0,52 -45,26 -45,-26" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <line x1="-26" y1="-16" x2="0" y2="-32" stroke="#38BDF8" stroke-width="2"/>
+    <line x1="26" y1="-16" x2="0" y2="-32" stroke="#38BDF8" stroke-width="2"/>
+    <line x1="-26" y1="-16" x2="0" y2="10" stroke="#00F2FE" stroke-width="2"/>
+    <line x1="26" y1="-16" x2="0" y2="10" stroke="#00F2FE" stroke-width="2"/>
+    <line x1="0" y1="10" x2="0" y2="34" stroke="#00F2FE" stroke-width="2.5"/>
+    <circle cx="0" cy="-32" r="6" fill="#00F2FE"/>
+    <circle cx="-26" cy="-16" r="5" fill="#38BDF8"/>
+    <circle cx="26" cy="-16" r="5" fill="#38BDF8"/>
+    <circle cx="0" cy="10" r="8" fill="url(#cyanGlow)"/>
+    <circle cx="0" cy="34" r="5" fill="#38BDF8"/>
+  </g>
+  <text x="215" y="92" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="44" font-weight="800" fill="#F8FAFC" letter-spacing="0.5">SquadAI <tspan fill="url(#cyanGlow)">Harness</tspan></text>
+  <rect x="615" y="62" width="76" height="30" rx="8" fill="#0EA5E9" fill-opacity="0.18" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="653" y="83" font-family="Consolas, monospace" font-size="16" font-weight="700" fill="#38BDF8" text-anchor="middle">v0.8.0</text>
+  <text x="215" y="132" font-family="Consolas, SFMono-Regular, monospace" font-size="15" font-weight="600" fill="#94A3B8" letter-spacing="1.8">GATED AUTONOMOUS SOFTWARE ENGINEERING · GO 1.24.3 RUNTIME</text>
+  <text x="215" y="168" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="14" fill="#64748B">106 Canonical Skills · 25 JEV Deterministic Specialists · SEKG + GraphRAG · C0/C1/C2 Compute Router</text>
+</svg>

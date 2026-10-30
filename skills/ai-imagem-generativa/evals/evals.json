@@ -1,0 +1,20 @@
+{
+  "skill_name": "ai-imagem-generativa",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a triagem de técnica por custo e a preservação de identidade — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "triagem-antes-do-modelo",
+      "prompt": "Quero 8 efeitos no meu totem: vintage, preto e branco, moldura do evento, 'na praia', 'no espaço', estilo pintura a óleo, super-herói e polaroid. Qual modelo generativo eu uso para todos?",
+      "expected_output": "Não use modelo generativo para todos — classifique cada tema por técnica antes de escolher modelo. Vintage, P&B, polaroid e moldura são LUT/filtro determinístico: 50–200 ms e custo ~zero; usar difusão neles é desperdício de ~10 s e de dinheiro por foto. 'Na praia' e 'no espaço' são candidatos a segmentação + troca de fundo (0,3–1,5 s local, identidade preservada por construção, pois o rosto não é regenerado). Só 'pintura a óleo' e 'super-herói' exigem edição por instrução (4–15 s, US$0,01–0,08) ou adaptador de identidade em GPU. A resposta deve aplicar a arbitragem P1 (a técnica mais simples que satisfaz o efeito vence), exigir ficha por tema com técnica, SLA e `fallback_theme` determinístico, e lembrar que prompt vem do catálogo versionado — nunca texto livre do público em produção.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "identidade-e-custo-de-evento",
+      "prompt": "As fotos ficam lindas mas as pessoas dizem que não parecem com elas. E o custo do último evento estourou. Como resolvo os dois?",
+      "expected_output": "São dois problemas distintos, ambos com causa conhecida. Identidade: (a) mova o tema para uma técnica mais conservadora na escada — não tocar no rosto (segmentação) > edição instrucional com escopo restrito > inpaint fora da máscara facial > adaptador de identidade; (b) o prompt precisa dizer o que PRESERVAR antes do que mudar e amarrar a luz ao original; (c) negativo com mãos, olhos e texto; (d) pare de julgar por 'ficou bonito' — meça similaridade facial por embedding e correlacione com nota humana antes de confiar no limiar (skills `visao-computacional` e `ai-evaluation`). Custo: registre `cost_usd` realizado por imagem (incluindo retries e descartes — o preço de tabela subestima em 10–30%), implemente teto por evento com alerta em 80% e degradação automática para o caminho barato, e trava dura em 100% caindo para filtro local. Nenhum dos dois se resolve trocando de modelo às cegas.",
+      "files": []
+    }
+  ]
+}

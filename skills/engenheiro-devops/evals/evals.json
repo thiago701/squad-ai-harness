@@ -1,0 +1,90 @@
+{
+  "skill_name": "engenheiro-devops",
+  "descricao": "Evals de CI/CD e deploy (Ciclo 8) + v2 (I17, 11/10/2026): AIOps, chaos, DevSecOps/Veracode, ChatOps, Lean, frameworks de TI, cultura, DORA, State of DevOps, CI/CT/CD maduros — contexto de banco.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "pipeline-ci-cd-seguro",
+      "prompt": "Monta um pipeline de CI/CD pro projeto Java 25 que faz deploy na AWS.",
+      "expected_output": "GitHub Actions com estagios build->test->lint->deploy->rollback; autenticacao na AWS via OIDC/Workload Identity Federation (zero chaves long-lived); Actions pinadas por SHA (supply chain); SBOM (CycloneDX) + Trivy. Dockerfile multi-stage, non-root, healthcheck. PR so mergeia verde. Secrets via OIDC/KMS, nunca em texto.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "rollback-seguro",
+      "prompt": "Como faco deploy em producao com rollback seguro?",
+      "expected_output": "Estrategia canary/blue-green com gates (staging->canary->prod); rollback triggers QUANTITATIVOS (error rate > 2x baseline, p95 > 3x baseline, 5xx > 1% por 5 min); smoke tests pos-deploy; rollback testado e automatizado. Observabilidade (logs/metricas/alertas) ativa antes de promover. Nada destrutivo sem confirmacao.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "aiops-triagem-sem-dado-sensivel",
+      "prompt": "Nosso Lambda de calendário de pagamentos disparou 40 alertas em 10 minutos. Quero usar IA para triar. Como faço isso no banco sem vazar dado?",
+      "expected_output": "Correlação de alertas antes da triagem (agrupar por correlation id/recurso/janela); agente lê alerta + logs + runbook e devolve hipótese RANQUEADA em JSON validável; humano decide e executa; LLM só via gateway aprovado, prompt sem dado pessoal/transacional (mascarar), nenhuma chamada externa a partir da estação; precision/recall da detecção medidos contra incidentes rotulados (nunca prometidos); runbook executável com dry-run e kill switch. Carrega references/ia-devops-aiops.md.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "chaos-pre-producao-banco",
+      "prompt": "Quero rodar chaos engineering na nossa API de pagamentos para provar que ela aguenta a queda de uma AZ.",
+      "expected_output": "Hipótese de estado estável com métrica medida ANTES (ex.: p95 e taxa de erro do endpoint); experimento com raio de impacto mínimo (uma AZ, um ambiente); critério de abortar e kill switch TESTADO antes; no banco só em pré-produção/sandbox com janela declarada e dados sintéticos; ferramenta por nome (AWS FIS/Chaos Toolkit/LitmusChaos); relatório antes/durante/depois; lição registrada em memory/error_ledger.jsonl. Recusa rodar em produção sem política explícita. Carrega references/chaos-engineering.md.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "devsecops-gate-por-severidade",
+      "prompt": "O Veracode achou uma CVE alta numa dependência transitiva e o time quer liberar o deploy mesmo assim. O que o pipeline faz?",
+      "expected_output": "Gate reprova por severidade (CVSS alto bloqueia), não por opinião; exceção só com dono nominal, prazo e registro no artefato 05b-veracode.md (skill validacao-veracode); alternativas: atualizar/pinar versão corrigida, exclusão com justificativa; SBOM (CycloneDX) do build como evidência; supply chain (Actions pinadas por SHA, deps pinadas); segredos nunca no repo (OIDC/WIF). Carrega references/devsecops.md.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "chatops-deploy-pelo-teams",
+      "prompt": "Quero que o time faça deploy em produção digitando um comando no Teams.",
+      "expected_output": "Comando dispara PEDIDO de aprovação no canal (Adaptive Card), aprovador nominal ≠ solicitante aprova, só então o bot executa a transição da máquina de estados do pipeline (produção exige aprovacao_humana); evidência de volta no canal com correlation id; trilha de auditoria (quem/quando/o quê/resultado); payload sem credencial (token via cofre); comando destrutivo em duas etapas; modo somente-leitura em incidente. Carrega references/chatops.md.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "lean-gargalo-do-fluxo",
+      "prompt": "Nossas entregas demoram semanas e ninguém sabe onde o tempo vai. Por onde começo?",
+      "expected_output": "Mapa de fluxo de valor com tempos MEDIDOS (timestamps de PR aberto/aprovado/merge/deploy via API do GitHub e logs do pipeline), separando processamento de espera; limite de WIP explícito; lead time vs tempo de ciclo definidos; os 7 desperdícios com sinal observável; kaizen semanal com uma melhoria, dono, prazo e medição antes/depois; python ops/run.py relatorio-custo como custo por entrega. Nenhum número estimado. Carrega references/lean-management.md.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "itil-cab-mudanca-padrao",
+      "prompt": "O CAB do banco exige aprovação de toda mudança. Como ter deploy frequente sem furar o ITIL?",
+      "expected_output": "Pipeline gated vira mudança PADRÃO (pré-aprovada) com evidência reproduzível: plano (GATE 1), testes e verificação (GATE 2), relatório 05b-veracode.md, plano de rollback, aprovador nominal e janela; mudança normal/emergencial quando sai do padrão; segregação de funções (quem codifica ≠ quem aprova produção) e de ambientes; SLI/SLO/error budget como ponte entre controle e velocidade; trilha e retenção de evidência para auditoria. Carrega references/frameworks-ti.md.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "postmortem-sem-culpa",
+      "prompt": "Tivemos um incidente em produção causado por um deploy do João. Como conduzo o postmortem?",
+      "expected_output": "Blameless: linha do tempo, fatores contribuintes (sistema, processo, informação), o que funcionou, ações com dono e prazo; NENHUM nome de pessoa como causa (o nome do deployer não entra na ata como causa); 45 minutos, facilitador; lição no memory/error_ledger.jsonl no formato do ledger; promoção a instinto só pelo rito gated do aprendizado-continuo; cita Three Ways/Westrum (cultura generativa) sem números. Carrega references/cultura-devops-aprendizagem.md.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "dora-medir-no-repo",
+      "prompt": "A liderança quer saber se somos Elite no DORA. Me dá os números.",
+      "expected_output": "Recusa dar número sem medição: define as 4 métricas (+ confiabilidade) e mostra COMO extrair cada uma de log/SLI/API do GitHub (deploy = evento com timestamp; lead time = commit→deploy; CFR = deploys com rollback/incidente ÷ deploys; recovery = abertura→fechamento do incidente) com a consulta registrada; baseline de ≥ 4 semanas antes de qualquer meta; limiares das faixas só da edição do relatório citada (relatório, editor, ano), nunca de memória. Carrega references/dora-metrics.md.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "state-of-devops-sem-cargo-cult",
+      "prompt": "Li no State of DevOps que empresas de alto desempenho fazem X. Vamos copiar tudo?",
+      "expected_output": "Cita a fonte com (relatório, editor, ano/edição) e marca qualquer número não lido na edição como <ler na edição citada>; localiza o time nos estágios de evolução da Puppet pelos nomes; explica platform engineering (não é time de DevOps central); recorte de indústria regulada; recomenda medir a própria linha de base e escolher 1–2 capacidades por trimestre em vez de copiar tudo. Carrega references/state-of-devops.md.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "ci-ct-cd-trunk-based-com-flags",
+      "prompt": "Queremos ir de releases quinzenais para deploy contínuo no serviço de operações de calendário. Como fica o pipeline?",
+      "expected_output": "Trunk-based com branches curtas e proteção de branch; trabalho incompleto atrás de feature flag (ciclo de vida da flag até remoção); pirâmide + testes de contrato (Pact/Spring Cloud Contract) + mutation (PIT) — impactado no PR e completo no nightly (verificacao-loop, GATE 2 em dois tamanhos); tempo-alvo por estágio medido no log; flaky em quarentena com prazo; progressive delivery (canary) com critérios QUANTITATIVOS de promoção e rollback automático exercitado em pré-produção; produção só com aprovação humana (GATE 2 + 05b-veracode.md); diferença delivery vs deployment. Carrega references/ci-ct-cd-maduros.md.",
+      "files": []
+    }
+  ]
+}

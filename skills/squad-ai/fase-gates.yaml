@@ -1,0 +1,69 @@
+# squad-ai/fase-gates.yaml — Critérios de saída por fase (SPARC-adaptado) · R1
+#
+# Fonte ÚNICA dos critérios de saída de cada fase do ciclo Squad AI.
+# Mapeia as 5 fases SPARC do Ruflo nas 6 fases da Squad — SEM criar metodologia
+# paralela: é o mesmo método, com gates *contáveis* em vez de prosa.
+#
+# Como o squad-pipeline usa este arquivo:
+#   - tipo: auto    → o motor roda `comando`, lê o exit code; falha = transição BLOQUEADA
+#                     (volta para a fase com o critério violado). O oráculo decide, não o modelo.
+#   - tipo: manual  → entra no checklist do GATE humano (GATE 1 após Plan, GATE 2 antes do Commit).
+#                     O humano marca; sem marca, não passa.
+#
+# Rastreabilidade: o artefato de handoff de cada fase (NN-*.md) cita os IDs satisfeitos
+# (ex.: "G1.1 ✓, G1.2 ✓"). Critério SPARC → ID → artefato → commit.
+# Os IDs RF-/RNF-/RN-/CS-/US/T### dos templates spec-driven (templates/spec-driven/, aplicados no
+# Ciclo 3) ALIMENTAM os critérios G1.x: spec.md → GATE 1; tasks.md (T### → RF-/US) rastreia → GATE 2.
+versao: 1.0
+fases:
+  discovery:
+    sparc: Specification
+    dono: engenheiro-especificacao
+    # IDs spec-driven (templates/spec-driven/spec-template.md) entre parênteses.
+    criterios:
+      - { id: G1.1, tipo: manual, desc: "≥3 cenários BDD (Dado/Quando/Então) por user story (US + CS-)" }
+      - { id: G1.2, tipo: manual, desc: "Aggregates e invariantes (I1..In) + regras de negócio (RN-) identificados e listados" }
+      - { id: G1.3, tipo: manual, desc: "NFRs com números (RNF-: p95/p99, throughput, RTO) — não adjetivos" }
+      - { id: G1.4, tipo: manual, desc: "Zero [PRECISA-CLARIFICAR] bloqueante restante (máx. 3 no spec)" }
+      - { id: G1.5, tipo: manual, desc: "Rastreabilidade: cada tarefa (T### no tasks.md) aponta para um RF-/US" }
+  design:
+    sparc: Architecture
+    dono: arquiteto-minimalista
+    criterios:
+      - { id: G2.1, tipo: manual, desc: "Contratos tipados: sealed interfaces + records como DTOs de fronteira" }
+      - { id: G2.2, tipo: manual, desc: "Mapa AI-Native completo (todo pilar com mecanismo + oráculo)" }
+      - { id: G2.3, tipo: manual, desc: "Cada ADR aprovado com 4 perguntas do Advogado do Diabo respondidas" }
+      - { id: G2.4, tipo: auto,   desc: "ArchUnit: 0 dependência circular entre módulos", comando: "mvn -q test -Dtest=ArchitectureTest" }
+  plan:
+    sparc: Pseudocode
+    dono: arquiteto-minimalista
+    criterios:
+      - { id: G3.1, tipo: manual, desc: "Esboço de fluxo cobre todos os ACs do Intake + caminhos de erro" }
+      - { id: G3.2, tipo: manual, desc: "Lista explícita de arquivos a tocar e deps novas (justificadas em P1)" }
+      - { id: G3.3, tipo: manual, desc: "Solução mais simples que funciona venceu (P1 documentado)" }
+      - { id: G3.4, tipo: auto, desc: "Plano standard/large com oráculo executável em todo passo (passo → alvo → oráculo; arquitetura só smoke/ArchUnit/ADR executável)", comando: "python -X utf8 scripts/gate1_plano.py --slug <slug>" }
+      - { id: G3.5, tipo: manual, desc: "Dependências externas de banco/infra levantadas por `python -m scripts.gates verificar --checkpoint planejamento` estão no plano com ordem de execução (o achado não reprova o plano; reprova o push)" }
+  build_test:
+    sparc: Refinement
+    dono: especialista-qualidade
+    criterios:
+      - { id: G4.1, tipo: auto, desc: "Build verde", comando: "mvn -q clean compile" }
+      - { id: G4.2, tipo: auto, desc: "Cobertura ≥80% linhas (domínio ≥90%)", comando: "mvn -q verify" }
+      - { id: G4.3, tipo: auto, desc: "ArchUnit camadas OK (domain sem jakarta/spring)", comando: "mvn -q test -Dtest=ArchitectureTest" }
+      - { id: G4.4, tipo: manual, desc: "Todo AC tem ao menos 1 teste que falha sem a implementação (RED→GREEN)" }
+  review_deliver:
+    sparc: Completion
+    dono: tech-lead-review
+    criterios:
+      - { id: G5.1, tipo: auto, desc: "verificacao-loop = PRONTO (cadeia impactada em trivial/small/standard; completa em large — tier vem do 00-preflight.md; mutação só por gatilho D5)", comando: "<skill verificacao-loop>" }
+      - { id: G5.2, tipo: manual, desc: "Zero 🔴 e zero 🟡 aberto no review" }
+      - { id: G5.3, tipo: manual, desc: "Runbook + plano de rollback + checklist de deploy presentes" }
+      - { id: G5.4, tipo: auto, desc: "Sem secret no diff", comando: "<scan de secrets do verificacao-loop>" }
+      - { id: G5.5, tipo: auto, desc: "Gates de entrega = LIBERADO (database-schema-gate + environment-infrastructure-gate; só PASS válido autoriza)", comando: "python -m scripts.gates verificar --checkpoint review --monitor 300" }
+      - { id: G5.6, tipo: auto, desc: "Revisão observável sem nó obrigatório reprovado, cancelado ou em timeout (monitor ASCII 300 s + watchdog)", comando: "python -m scripts.revisao executar --monitor 300" }
+
+# Notas de adaptação Java 25 + AWS (por que estes critérios e não os genéricos do SPARC):
+#   G2.1 "typed API contracts" do SPARC → na Squad são sealed interfaces + records (Pattern Matching exaustivo).
+#   G2.4 "no circular deps" do SPARC    → regra ArchUnit já existente (oráculo determinístico, não opinião).
+#   G4.2 "coverage ≥80%" do SPARC       → gate JaCoCo que JÁ roda no `mvn verify` (não é trabalho novo).
+#   G5.1 "all tests green" do SPARC      → delegado ao verificacao-loop (PRONTO/NÃO PRONTO), já canônico.

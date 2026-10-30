@@ -1,0 +1,2 @@
+{"cmd": "pytest -q", "filtro": "test-pytest", "linhas_antes": 5, "linhas_depois": 1}
+{"cmd": "pytest -q", "filtro": "test-pytest", "linhas_antes": 6, "linhas_depois": 3}

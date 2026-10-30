@@ -1,0 +1,27 @@
+{
+  "skill_name": "aprendizado-continuo",
+  "descricao": "Evals de instintos manuais (Ciclo 8). YAML auditavel, sem daemon; anti-poisoning.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "aprender-cria-instinto-atomico",
+      "prompt": "/aprender — de novo tive que trocar FetchType.EAGER por LAZY numa entidade JPA. Anota pra nao repetir.",
+      "expected_output": "Destilar um instinto YAML atomico com trigger ('ao mapear @OneToMany em entidade JPA'), rule ('usar FetchType.LAZY por padrao'), confidence (0.6-0.8 — visto 2-3x), domain ('java/jpa'), scope (projeto), e evidence factual obrigatoria. Gravar em .claude/instintos/projeto.yaml; se ja existe instinto com mesmo trigger+domain, REFORCAR (subir confidence, anexar evidencia) em vez de duplicar. SEM daemon.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "evoluir-promove-com-evidencia",
+      "prompt": "/evoluir — consolida os instintos do mes.",
+      "expected_output": "Agrupar instintos maduros: promover projeto->global SO quando reaparece em 2+ projetos com confidence >=0.8; incorporar instintos firmes (>=0.8) ao reference da skill do domain; podar instintos de confianca baixa estagnada sem evidencia. Instinto de alto impacto (>0.7) NAO auto-aplica sem revisao humana (anti-poisoning). Sem observer daemon.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "regra-de-promocao-barra-palpite-confiante",
+      "prompt": "/evoluir — o instinto 'usar --legacy-peer-deps no npm install deste repo' esta com confidence 0.85 (apareceu em 4 sessoes). Promove para a skill do especialista-frontend?",
+      "expected_output": "NAO promover ainda: confidence alta mede frequencia, nao verificacao. Exigir as 3 condicoes da Regra de Promocao: (1) check aprovado registrado (qual comando/teste confirmou o caminho — 'pareceu funcionar' nao conta), (2) padrao de falha nomeado (qual erro concreto o flag evita), (3) >=1 beco sem saida eliminado com o porque. Faltando qualquer uma, manter como instinto marcado unverified. Se passar, seguir a colheita gated: dedupe no registry, preencher assets/GOLDEN-PATH.template.md com status proposta, e submeter ao tech-lead-review (ADR-010) — nunca ativar sozinho, nunca gravar valor de segredo.",
+      "files": []
+    }
+  ]
+}

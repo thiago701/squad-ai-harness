@@ -1,0 +1,20 @@
+{
+  "skill_name": "inferencia-gpu-local",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a decisão local×nuvem e o orçamento real de VRAM/térmico — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "gpu-local-nao-e-automaticamente-barato",
+      "prompt": "Pagar US$0,04 por imagem é caro demais. Vou comprar uma GPU e rodar local, sai de graça. Concorda?",
+      "expected_output": "Não sai de graça: é trocar custo variável por custo fixo mais risco operacional. Faça a conta de ponto de equilíbrio (preço da máquina amortizado + energia ÷ preço por imagem na nuvem) com o volume real de imagens por mês — em volume baixo ou médio a nuvem costuma vencer, e vence em simplicidade (P1). Some o que a planilha esquece: latência local pode ser PIOR (8–40 s conforme GPU e técnica), a GPU vira ponto único de falha sem SLA de fornecedor às 23h de sábado, e não há elasticidade em pico. O argumento realmente decisivo em favor do local costuma ser conectividade (Wi-Fi de hotel), privacidade contratual ou volume alto — não preço. Recomendação padrão: comece na nuvem, meça, e alugue GPU por hora na Fase 0 para gerar números reais sem imobilizar capital antes do GO. Registre a decisão em ADR.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "vram-pico-e-termico",
+      "prompt": "O checkpoint do modelo tem X GB e minha GPU tem VRAM suficiente com folga. Rodei 10 minutos e ficou ótimo. Posso fechar o gabinete do totem e considerar validado?",
+      "expected_output": "Não. Dois erros. (1) VRAM: o tamanho do checkpoint é o piso, não o pico — some ativações (crescem com resolução²), encoder de texto, VAE/decoder (pico curto e alto no final, causa clássica de OOM 'misterioso' no último passo), adaptadores e upscaler, mais ~10–15% de fragmentação. Meça com `torch.cuda.max_memory_allocated()` no PIOR caso, com o kiosk aberto (compositor e navegador também consomem), e trabalhe com no máximo 85% da VRAM. (2) Térmico: 10 minutos não provam nada sobre a quarta hora. Rode um teste de resistência de 60 min contínuos registrando latência e temperatura por minuto; se o p95 sobe > 20% da primeira para a quarta dezena de minutos, o gabinete não dissipa e o evento vai piorando sozinho. Valide também: driver/CUDA fixados por versão, suspensão desligada, pasta de pesos fora da varredura do antivírus, restart automático do worker e recuperação em < 2 min.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "Records": [
+    {
+      "eventID": "stream-event-001",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1735689600,
+        "Keys": {
+          "pk": { "S": "USER#42" },
+          "sk": { "S": "ORDER#2026-01-01T00:00:00Z#abc-123" }
+        },
+        "NewImage": {
+          "pk": { "S": "USER#42" },
+          "sk": { "S": "ORDER#2026-01-01T00:00:00Z#abc-123" },
+          "_type": { "S": "ORDER" },
+          "id": { "S": "abc-123" },
+          "userId": { "S": "42" },
+          "total": { "N": "59.80" },
+          "status": { "S": "PENDING" },
+          "createdAt": { "S": "2026-01-01T00:00:00Z" }
+        },
+        "SequenceNumber": "100000000000000000001",
+        "SizeBytes": 200,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/{{ stack_name }}-single-table/stream/2026-01-01T00:00:00.000"
+    }
+  ]
+}

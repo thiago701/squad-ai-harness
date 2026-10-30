@@ -1,0 +1,33 @@
+id: nodejs-api-rest-fastify
+stack: nodejs
+language_version: "22 LTS"
+framework_version: "Fastify 5"
+app_type: api-rest
+architecture: "modular ESM (dominio/aplicacao/adaptadores) com plugin Fastify"
+context: >
+  API REST Node.js moderna com Fastify 5: validacao por JSON Schema na rota
+  (ajv embutido), logger pino integrado, handler central de erros de dominio,
+  dominio identico ao template zero-dep (portavel). Use esta variante quando
+  precisar de validacao declarativa, plugins e throughput; use nodejs-api-rest
+  (node:http) quando zero dependencia for requisito.
+prerequisites: "node >= 22, npm"
+dependencies: ["fastify ^5"]
+dev_dependencies: []
+tests: "node:test com fastify.inject (sem porta real); cobertura >=90% (gate)"
+security_rules: "fragmento seguranca-input; JSON Schema na borda + VO no dominio; bodyLimit configurado"
+observability: "pino estruturado (logger do Fastify); GET /health"
+documentation: "README.md executavel; schemas viram OpenAPI via @fastify/swagger (adicionavel)"
+usage_example: "npm install && npm test"
+adrs: ["ADR-MITR-001", "ADR-MITR-006", "ADR-MITR-007"]
+update_rules: "minor de fastify livre com suite verde; major exige rodada"
+aot_compatible: "n/a"
+components: [tratamento-erros, validacao-entrada, logging-estruturado, health-check, testes-unitarios, testes-integracao, container, ci]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, observabilidade-minima, object-calisthenics]
+anti_patterns:
+  - "validar na mao o que o JSON Schema da rota ja valida"
+  - "logica de negocio dentro do handler da rota"
+  - "criar servidor global mutavel em vez de factory"
+checklist_revisao:
+  - "toda rota com schema de entrada/saida?"
+  - "erros de dominio no setErrorHandler central?"
+  - "cobertura >=90 no gate?"

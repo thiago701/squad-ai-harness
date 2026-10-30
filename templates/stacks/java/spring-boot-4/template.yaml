@@ -1,0 +1,32 @@
+id: java-spring-boot-4-api
+stack: java-spring-boot-4
+language_version: "Java 25 LTS"
+framework_version: "Spring Boot 4.1 / Spring Framework 7"
+app_type: api-rest
+architecture: "monolito modular: dominio puro + borda web fina (@RestController)"
+context: >
+  API REST Spring Boot 4 atual: starter-webmvc (nomenclatura SB4),
+  ProblemDetail (RFC 9457) no @RestControllerAdvice central, dominio
+  identico ao template nativo (portavel entre os tres sabores Java),
+  testes @WebMvcTest com contexto minimo e jacoco >=90% no gate.
+prerequisites: "JDK 25, Maven 3.9+"
+dependencies: ["spring-boot-starter-webmvc 4.1.x"]
+dev_dependencies: ["spring-boot-starter-test", "jacoco 0.8.13"]
+tests: "JUnit 5 + @WebMvcTest (contexto minimo); jacoco check >=90% (gate)"
+security_rules: "fragmento seguranca-input; Bean Validation na borda; dominio valida VOs"
+observability: "actuator adicionavel; logs estruturados; ProblemDetail padronizado"
+documentation: "README.md executavel"
+usage_example: "mvn -B verify"
+adrs: ["ADR-MITR-001", "ADR-MITR-006", "ADR-MITR-007"]
+update_rules: "patch SB livre com suite verde; minor/major exige rodada de validacao"
+aot_compatible: "parcial — Spring AOT processa beans; native exige rodada dedicada"
+components: [tratamento-erros, validacao-entrada, documentacao-api, testes-unitarios, testes-integracao, ci, container]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, observabilidade-minima, object-calisthenics]
+anti_patterns:
+  - "logica de negocio no controlador (borda gorda)"
+  - "@SpringBootTest para testar regra de dominio pura"
+  - "entidade de dominio como DTO da API"
+checklist_revisao:
+  - "controlador so orquestra? dominio sem import de spring?"
+  - "erros viram ProblemDetail no advice central?"
+  - "cobertura >=90 no gate jacoco?"

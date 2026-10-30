@@ -1,0 +1,55 @@
+{
+  "skill_name": "rust-unsafe-security",
+  "descricao": "Evals da v1.0.0. Cobrem a escada de decisão contra unsafe/transmute, soundness de função segura com ponteiro, pânico em extern \"C\", política de exceção do cargo-deny, path traversal com Path::join, segredos (secrecy/subtle) e fuzzing de parser.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "transmute-para-ganhar-performance",
+      "prompt": "Preciso converter &[u8] em &[u32] no parser do meu protocolo e a cópia está lenta. Vou usar std::mem::transmute no slice. Pode me dar o código?",
+      "expected_output": "Aplicar a escada de decisão antes de qualquer unsafe: (1) a lentidão foi medida? (benchmark/perfil — rust-performance-engineer; sem medição, recusar unsafe por 'performance'); (2) alternativa segura: u32::from_le_bytes/from_be_bytes por chunks_exact(4) (o compilador vetoriza), ou crate auditada (bytemuck::cast_slice / zerocopy) que verifica alinhamento e tamanho. Explicar por que transmute de &[u8] para &[u32] é UB/unsound: alinhamento (u8 pode estar desalinhado para u32), tamanho que não é múltiplo de 4, endianness e o tipo do slice (transmute de referência com fat pointer mantém o len em bytes — leria além da alocação). Se ainda assim for preciso unsafe: módulo isolado, verificar align_to/alinhamento e len % 4, // SAFETY: por bloco, teste sob Miri, fuzz do parser. Não entregar o transmute cru.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "funcao-segura-desreferencia-ponteiro",
+      "prompt": "Revise este código Rust: pub fn ler(p: *const u8) -> u8 { unsafe { *p } } — está dando um warning do clippy mas o código funciona nos meus testes. Posso só adicionar #[allow]?",
+      "expected_output": "Recusar o #[allow]. Explicar que é um problema de SOUNDNESS: função segura e pública que desreferencia ponteiro arbitrário permite UB a partir de código 100% seguro (nulo, pendente, desalinhado) — 'funciona nos testes' não prova nada. Correções em ordem: (a) receber referência/slice (&u8 / &[u8] com get) e eliminar o unsafe; (b) se o ponteiro é inevitável (FFI), tornar a função `unsafe fn` com seção `# Safety` descrevendo o contrato (não nulo, alinhado, válido para leitura, vivo) e bloco `unsafe {}` interno com `// SAFETY:`; (c) lints no Cargo.toml: unsafe_op_in_unsafe_fn=deny, clippy::undocumented_unsafe_blocks, missing_safety_doc. Mencionar clippy::not_unsafe_ptr_arg_deref e validar com `cargo +nightly miri test`.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "panico-atravessando-extern-c",
+      "prompt": "Estou expondo uma função Rust para o nosso código C via #[no_mangle] pub extern \"C\" fn processa(...). Dentro dela uso unwrap() em alguns pontos. Quando dá erro o processo C simplesmente morre com 'Aborted'. Por quê e como resolvo?",
+      "expected_output": "Explicar que pânico não pode atravessar extern \"C\": o runtime aborta o processo ('panic in a function that cannot unwind' → SIGABRT/exit 134), comportamento verificado em 1.99. Corrigir: remover unwrap/expect do caminho; devolver códigos de erro (i32/enum repr(C)) e/ou usar std::panic::catch_unwind na fronteira convertendo pânico em código de erro (ex.: -2), checar ponteiros nulos antes de desreferenciar, não devolver tipos Rust (String/Vec/&T) — só escalares/repr(C)/ponteiros opacos com função *_free correspondente. Na edição 2024 o atributo é #[unsafe(no_mangle)] e a função exportada com ponteiros deve ser `unsafe extern \"C\" fn` com `# Safety`. Mencionar alternativa panic = \"abort\" (decisão consciente) e extern \"C-unwind\" só se os dois lados suportam unwinding (não exercitado). Incluir teste (inclusive para nulos) e rodar sob Miri.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "cargo-deny-advisory-ignorar",
+      "prompt": "O cargo deny está falhando no CI por causa do RUSTSEC-2020-0071 na crate time 0.1.45 que vem de uma dependência antiga. Não tenho tempo agora, só quero o CI verde. Coloco o ignore e pronto?",
+      "expected_output": "Não aceitar o 'ignore' silencioso. Investigar primeiro: `cargo tree -i time` (quem traz), verificar se as funções afetadas (time::now/at/at_utc/tzset em 0.1) são alcançáveis, tentar `cargo update -p`/subir a dependência direta, ou migrar para time 0.3/0.2.23+. Se o upgrade não couber agora, permitir o ignore SOMENTE com id + motivo técnico + prazo + dono: `ignore = [{ id = \"RUSTSEC-2020-0071\", reason = \"não alcançável: só usamos Duration; migrar para time 0.3 até <data>\" }]`, registrar issue de acompanhamento e aprovação no PR. Explicar o risco (setenv sem sincronização → possível segfault em programa multithread Unix) e que o CI deve continuar rodando o deny em agenda (o banco RustSec muda sem o código mudar). Mostrar a sintaxe `cargo deny --config deny.toml check advisories` (opções globais antes de `check`).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "upload-de-arquivo-path-traversal",
+      "prompt": "No meu serviço Rust o usuário envia um nome de arquivo e eu salvo com base.join(nome_do_cliente). Já testei com 'foto.png' e funciona. Tem algum problema?",
+      "expected_output": "Sim — path traversal. Path::join com caminho ABSOLUTO descarta a base ('/etc/passwd' vira /etc/passwd) e '..' escapa do diretório; demonstrar com teste. Correção: não usar o nome do cliente (gerar nome próprio, p.ex. UUID, e guardar o original como metadado) ou validar componentes (Component::Normal/CurDir apenas; rejeitar ParentDir/RootDir/Prefix) e então juntar; explicar que a validação léxica não cobre links simbólicos nem TOCTOU — defesa em profundidade: canonicalize + starts_with após abrir, abrir relativo a diretório já aberto (openat-style/cap-std, não verificada), usuário/FS de privilégio mínimo. Aplicar também limite de tamanho do corpo antes de ler tudo e allow-list de extensão/tipo. Incluir testes (absoluto, '..', normal) e acionar o gatilho de segurança do pipeline (input/queries) → engenheiro-seguranca.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "segredo-em-log-e-comparacao",
+      "prompt": "Tenho struct Config { api_token: String } com #[derive(Debug)] e faço tracing::info!(?config) na inicialização; para validar o token de entrada uso if recebido == config.api_token. Está ok?",
+      "expected_output": "Dois problemas de segurança. (1) Vazamento: Debug imprime o token no log. Trocar por secrecy::SecretString (Debug redigido: `SecretBox<str>([REDACTED])`, verificado), acessar só com expose_secret(), apagar ao descartar via zeroize; #[instrument(skip(...))]; revisar mensagens de erro. Ressalvar que zeroize não apaga cópias anteriores (clone, realocação) — criar o segredo já no tipo protegido. (2) Comparação por == sai no primeiro byte diferente (timing attack): usar subtle::ConstantTimeEq (`ct_eq(...).into()`), citando que tamanhos diferentes retornam falso imediatamente (comprimento não é segredo). Mostrar código compilável com teste (Debug não contém o segredo; confere certo/errado/curto) e clippy -D warnings. Não prometer criptografia: escolha de mecanismo de autenticação → engenheiro-seguranca.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "fuzzing-de-parser-binario",
+      "prompt": "Escrevi um parser de formato binário em Rust (1 byte de tamanho + payload). Está com testes unitários passando. Como garanto que ele não derruba o serviço com entrada maliciosa?",
+      "expected_output": "Propor fuzzing além dos testes unitários: cargo-fuzz (nightly) — `cargo +nightly fuzz init`, alvo com propriedade 'nunca entra em pânico' (e invariantes, ex.: payload.len() <= dados.len()), executar `cargo +nightly fuzz run <alvo>`, ler o artifact crash-*, reproduzir passando o arquivo, corrigir (usar `get`/split_first em vez de indexar com o tamanho vindo do dado: `&dados[1..=n]` entra em pânico com 'range end index N out of range for slice of length M'), converter o crash em teste de regressão e commitar corpus/artifacts. Mencionar tempo curto no PR e longo no noturno, limites -rss_limit_mb/-timeout para DoS, proptest como complemento rápido, lints indexing_slicing/arithmetic_side_effects/unwrap_used e limite de tamanho antes do parse. Não declarar 'seguro' sem rodar o fuzz; ferramentas não executadas devem ser ditas como tal.",
+      "files": []
+    }
+  ]
+}

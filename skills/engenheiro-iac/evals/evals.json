@@ -1,0 +1,27 @@
+{
+  "skill_name": "engenheiro-iac",
+  "descricao": "Evals da skill de IaC/Terraform (Deliver). Paridade com o catálogo — gap pego no review-2026-06-18-b.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "provisionar-lambda-ddb-terraform",
+      "prompt": "Preciso provisionar uma Lambda + DynamoDB na AWS com Terraform. Como estruturo o projeto?",
+      "expected_output": "Raiz fina por ambiente (envs/dev|prod) + módulos reutilizáveis; backend S3 com lock NATIVO (use_lockfile, Terraform 1.10+ — DynamoDB lock deprecado), cifrado e versionado; provider AWS v6 pinado + .terraform.lock.hcl commitado; for_each > count; plan revisado antes do apply e APPLY DE PRODUÇÃO GATED (aprovação humana); CI: fmt -> validate -> scan (Checkov/Trivy) -> plan -> policy-as-code (Sentinel/OPA) -> apply; segredos via Secrets Manager/SSM, nunca em state/.tfvars. Credenciais por OIDC/role, não chave estática.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "state-local-para-remoto-seguro",
+      "prompt": "Meu time usa state local do Terraform e dá conflito de merge. Como compartilhar com segurança?",
+      "expected_output": "Migrar para backend S3: encrypt (idealmente SSE-KMS), versionamento (recupera state corrompido), bloqueio de acesso público, CloudTrail auditando Put/Get/Delete, IAM por ambiente. Lock NATIVO via use_lockfile (Terraform 1.10+) — dispensa a tabela DynamoDB (deprecada). NUNCA commitar terraform.tfstate (vaza segredo e corrompe em merge). force-unlock só em emergência. Para times maiores, considerar HCP Terraform (state + runs remotos + policies).",
+      "files": []
+    },
+    {
+      "name": "poc-descartavel-destroy-limpo",
+      "prompt": "Quero subir a POC na minha conta, testar, apagar tudo e subir de novo várias vezes. O que preciso no Terraform?",
+      "expected_output": "Separar conta-base persistente (bucket do state, agregador do Resource Explorer por causa do cooldown de 24 h, provider OIDC singleton) da stack descartável. default_tags: projeto, ambiente, gerenciado-por, stack, repositorio, cenario (+ terraform test garantindo). Destroy: conferir conta (sts) + frase digitada, preparar (AppConfig: parar deployments, apagar versões, DeletionProtectionCheck=BYPASS; force_detach_policies), destroy, órfãos (log groups do runtime por nome exato), varredura por Tag API + nomes com dedupe. Segredos com value_wo (sensitive não tira do state). O apply/destroy na conta é do dono via runbook.",
+      "id": 3,
+      "files": []
+    }
+  ]
+}

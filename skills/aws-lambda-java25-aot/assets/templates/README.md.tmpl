@@ -1,0 +1,141 @@
+# {{ artifact_id }}
+
+Lambda Java 25 + Spring Boot 4 + GraalVM Native Image + DynamoDB single-table.
+
+Gerado pela skill `aws-lambda-java25-aot` a partir do schema do domínio
+**{{ domain }}**.
+
+## Stack
+
+- **Java**: 25 (LTS)
+- **Framework**: Spring Boot 4 + Spring Cloud Function adapter for AWS
+- **Runtime AWS**: Custom Runtime al2023, ARM64 (Graviton)
+- **Persistência**: DynamoDB single-table via AWS SDK v2 Enhanced Client
+- **Triggers**: API Gateway HTTP API{{#if has_streams}} + DynamoDB Streams{{/if}}
+- **IaC**: AWS SAM (`template.yaml`)
+- **Observabilidade**: Lambda PowerTools (logging + EMF metrics + X-Ray tracing)
+
+## Pré-requisitos
+
+- Java 25 (`sdkman` ou similar)
+- Maven 4
+- GraalVM 22+ com `native-image` (`gu install native-image`)
+- AWS CLI v2 configurado
+- AWS SAM CLI 1.131+
+- Docker (para `sam build --use-container`)
+
+## Setup
+
+```bash
+# 1. Verificar versão do Java + GraalVM
+java --version            # OpenJDK 25 ou GraalVM 22+
+native-image --version    # 22+
+
+# 2. Build local (rápido, mas binário só roda no host)
+mvn -Pnative native:compile
+
+# 3. Build via container al2023 (lento, mas binário compatível com Lambda)
+sam build --use-container
+```
+
+## Deploy
+
+```bash
+# Primeira vez — cria samconfig.toml interativamente
+sam deploy --guided
+
+# Subsequentes
+sam deploy
+sam deploy --config-env stg
+sam deploy --config-env prd
+```
+
+Ao final, o SAM imprime os outputs (URL do API Gateway, ARN da tabela).
+
+## Endpoints
+
+{{#each endpoints}}
+- `{{ method }} {{ path }}` → `{{ handler }}`
+{{/each}}
+
+Exemplo de chamada (substitua `<api-url>` pelo output do deploy):
+
+```bash
+curl https://<api-url>/users/42
+```
+
+## Teste local
+
+```bash
+# Invoca a função com evento mockado
+sam local invoke ApiGatewayFunction --event events/get-user.json
+
+# Roda a API toda em emulador local na porta 3000
+sam local start-api
+```
+
+{{#if has_streams}}
+## Streams
+
+A Stream da tabela `{{ single_table_name }}` é capturada pela
+`StreamHandlerFunction`. Os handlers por `_type` estão em
+`{{ base_package_path }}/handler/DynamoDbStreamHandler.java`.
+
+```bash
+# Teste local com payload de stream
+sam local invoke StreamHandlerFunction --event events/dynamodb-stream.json
+```
+{{/if}}
+
+## Testes
+
+```bash
+# Testes unitários + integração (Testcontainers + LocalStack)
+mvn test
+
+# Testes em modo nativo (validação obrigatória antes de deploy)
+mvn -Pnative native:test
+```
+
+## Single-table design
+
+A tabela `{{ single_table_name }}` armazena {{ entities.0.name }}{{#each entities}}{{#if .}}, {{ name }}{{/if}}{{/each}} no formato:
+
+| Item | PK | SK |
+|---|---|---|
+{{#each entities}}
+| {{ name }} | `{{ pk_template }}` | `{{ sk_template }}` |
+{{/each}}
+
+Ver `template.yaml` para os GSIs e `{{ base_package_path }}/repository/SingleTableRepository.java`
+para os access patterns implementados.
+
+## Cold start esperado
+
+| Cenário | Latência |
+|---|---|
+| Cold start (init + 1 query) | 80–150 ms |
+| Warm invocation (1 query) | 5–15 ms |
+| Cold start sem DynamoDB call | 50–100 ms |
+
+Se cold start estiver acima de 200ms, verificar:
+1. `MemorySize` no `template.yaml` (mínimo 512MB para Java native)
+2. `--no-fallback` no `pom.xml` profile native
+3. `provided.al2023` (não `provided.al2`)
+4. `Architectures: [arm64]` (Graviton é mais rápido que x86_64)
+
+## Troubleshooting
+
+| Sintoma | Causa provável | Fix |
+|---|---|---|
+| `ClassNotFoundException` em runtime | Reflection unregistered | Adicionar classe em `NativeHints.java` ou rodar tracing agent |
+| `MissingResourceException` para `.properties` | Resource não incluído no GraalVM | Editar `resource-config.json` |
+| Binário roda local mas crash em Lambda | Incompat glibc host vs al2023 | Usar `sam build --use-container` |
+| Cold start > 1s | Não está rodando native | Confirmar `Runtime: provided.al2023` no template.yaml |
+
+## Referências
+
+- [Skill aws-lambda-java25-aot](../aws-lambda-java25-aot/SKILL.md)
+- [Spring Boot 4 GraalVM docs](https://docs.spring.io/spring-boot/reference/packaging/native-image/index.html)
+- [AWS Lambda Custom Runtime](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-walkthrough.html)
+- [DynamoDB single-table design (AWS Re:Invent talk)](https://www.youtube.com/watch?v=DdkR_blSrRk)

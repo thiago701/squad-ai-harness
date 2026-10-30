@@ -1,0 +1,31 @@
+id: nodejs-api-rest
+stack: nodejs
+language_version: "22 LTS"
+framework_version: "node:http nativo (sem framework — P1)"
+app_type: api-rest
+architecture: "modular ESM (dominio/aplicacao/adaptadores)"
+context: >
+  API REST Node.js sem dependencias: dominio com value objects congelados,
+  colecao de primeira classe, servico de aplicacao e borda HTTP com handler
+  central de erros. Event loop protegido: nada sincrono pesado na rota.
+prerequisites: "node >= 22"
+dependencies: []
+dev_dependencies: []
+tests: "node:test nativo com gate de cobertura >=90% de linhas"
+security_rules: "fragmento seguranca-input; validacao na borda + VO; sem eval; JSON body limitado"
+observability: "logs JSON via console estruturado; health em GET /health"
+documentation: "README.md executavel"
+usage_example: "npm test && npm start"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "LTS para LTS com rodada de validacao"
+aot_compatible: "n/a"
+components: [tratamento-erros, validacao-entrada, logging-estruturado, health-check, testes-unitarios, testes-integracao, container, ci]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, observabilidade-minima, object-calisthenics]
+anti_patterns:
+  - "express/fastify por reflexo em servico trivial"
+  - "await dentro de loop quando ha Promise.all"
+  - "trabalho sincrono pesado bloqueando o event loop"
+checklist_revisao:
+  - "erros de dominio mapeados para status HTTP no unico handler?"
+  - "body com limite de tamanho e JSON validado?"
+  - "cobertura >=90 no gate?"

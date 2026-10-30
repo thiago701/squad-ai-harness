@@ -1,0 +1,27 @@
+{
+  "skill_name": "engenheiro-seguranca",
+  "descricao": "Evals de seguranca (Ciclo 7). OWASP + secrets; severidade 🔴 bloqueante; seguranca nunca negociavel.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "sql-injection-por-concatenacao",
+      "prompt": "Meu endpoint recebe o nome do cliente e monta a query: \"SELECT * FROM cliente WHERE nome = '\" + nome + \"'\". Funciona, ta ok?",
+      "expected_output": "Identificar SQL injection (OWASP A03) como achado 🔴 BLOQUEANTE (seguranca nao negociavel). Exigir query parametrizada (PreparedStatement / bind parameters / JPA com parametros), nunca concatenacao de input. Dar fix concreto, nao so 'corrija'. Mencionar validacao/sanitizacao de input e principio de menor privilegio no DB. Em pipeline, trava o GATE 2.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "hashing-de-senha-argon2id",
+      "prompt": "Vou guardar a senha do usuario com MD5 (ou bcrypt). Tanto faz?",
+      "expected_output": "Recusar MD5 (quebrado) e texto plano. Recomendar Argon2id como default 2025+ (ou bcrypt/scrypt com custo adequado se Argon2id indisponivel). Nunca armazenar senha reversivel; salt unico por senha; mencionar rate limiting no login e politica de rotacao. Achado de cripto fraca = severidade alta. Apontar references/secrets-rotation.md para rotacao sem downtime.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "veracode-no-pipeline-java",
+      "prompt": "Preciso passar o quality gate de compliance integrando o Veracode no meu pipeline Java 25 / Spring Boot. Como faco?",
+      "expected_output": "Apontar references/veracode.md. Distinguir Pipeline Scan (rapido, por PR, fail_on_severity='Very High, High' + baseline.json) de Policy Scan/Upload&Scan (release/compliance, 'Did Not Pass' trava o GATE 2). Empacotar com simbolos de debug (nao strippar; preferir 'veracode package' p/ Spring Boot fat-jar). Credenciais HMAC (VERACODE_API_ID/KEY) no cofre (Secrets Manager/Actions Secrets), nunca no codigo/YAML, service account com escopo minimo. Mapear severidade Veracode 5/4 -> 🔴 bloqueante. Mencionar SCA (reachability/SBOM) complementando OWASP Dependency-Check e Veracode Fix gated (aprovador != autor). Aplicar P1>P2>P3: so adotar Veracode com driver de compliance/contrato; senao Dependency-Check + SpotBugs bastam.",
+      "files": []
+    }
+  ]
+}

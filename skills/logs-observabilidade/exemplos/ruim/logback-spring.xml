@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- FIXTURE SINTÉTICA — configuração ERRADA de propósito (selftest LOG-20/21/22).
+     Texto livre, sem encoder estruturado, sem neutralização de quebra de linha, sem identificadores
+     de rastreamento. Versão correta: ../bom/logback-spring.xml -->
+<configuration>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <root level="DEBUG">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

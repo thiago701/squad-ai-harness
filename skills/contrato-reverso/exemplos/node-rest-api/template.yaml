@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Exemplo Node.js — REST API (v1) + Cognito + CORS (caso de validação da skill contrato-reverso)
+
+Parameters:
+  OrigemWeb:
+    Type: String
+    Default: https://web.exemplo.local
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 5
+
+Resources:
+  ItensFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handler.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          ORIGENS_PERMITIDAS: !Ref OrigemWeb
+      Events:
+        Criar: {Type: Api, Properties: {RestApiId: !Ref ItensApi, Path: /itens, Method: POST}}
+        Listar: {Type: Api, Properties: {RestApiId: !Ref ItensApi, Path: /itens, Method: GET}}
+        Obter: {Type: Api, Properties: {RestApiId: !Ref ItensApi, Path: "/itens/{id}", Method: GET}}
+        Remover: {Type: Api, Properties: {RestApiId: !Ref ItensApi, Path: "/itens/{id}", Method: DELETE}}
+
+  ItensApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Cors:
+        AllowOrigin: "'https://web.exemplo.local'"
+        AllowMethods: "'GET,POST,DELETE,OPTIONS'"
+        AllowHeaders: "'authorization,content-type'"
+      Auth:
+        DefaultAuthorizer: Cognito
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          Cognito:
+            UserPoolArn: !GetAtt Usuarios.Arn
+      MethodSettings:
+        - {ResourcePath: "/*", HttpMethod: "*", ThrottlingBurstLimit: 20, ThrottlingRateLimit: 50}
+
+  Usuarios:
+    Type: AWS::Cognito::UserPool

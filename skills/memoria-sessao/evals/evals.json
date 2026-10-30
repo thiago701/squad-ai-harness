@@ -1,0 +1,20 @@
+{
+  "skill_name": "memoria-sessao",
+  "descricao": "Evals da memoria entre sessoes (Ciclo 8). funcionou/falhou/pendente; cap de tamanho.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "salva-sessao-formato-padrao",
+      "prompt": "Vou parar por hoje, salva onde paramos.",
+      "expected_output": "Destilar a sessao e gravar em .claude/sessoes/AAAA-MM-DD-<slug>.md no formato funcionou/falhou/pendente, com convencao de nome estavel. Resumo conciso (cap de tamanho para nao estourar o contexto da proxima sessao). Modelo haiku (sumarizacao barata). Apos sessao com conteudo externo nao confiavel, revisar antes de confiar.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "retoma-injeta-mais-recente",
+      "prompt": "Retoma de onde paramos ontem.",
+      "expected_output": "Ler .claude/sessoes/ e injetar o resumo MAIS RECENTE (funcionou/falhou/pendente) no inicio da sessao, com limite de chars. Eliminar o re-onboarding: o agente parte do que ficou pendente, sem redescobrir o repositorio. Paths resolvem em Windows/PowerShell.",
+      "files": []
+    }
+  ]
+}

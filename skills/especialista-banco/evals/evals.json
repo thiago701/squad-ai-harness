@@ -1,0 +1,20 @@
+{
+  "skill_name": "especialista-banco",
+  "descricao": "Evals de modelagem de dados (Ciclo 8). DBML-first; migracao sem downtime.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dbml-como-fonte-de-verdade",
+      "prompt": "Como modelo a persistencia do dominio de pedidos? Quero o schema e o codigo Java.",
+      "expected_output": "DBML (dbdiagram.io) como FONTE DE VERDADE do DER; a partir dele gerar o mapeamento Java 25 + Spring Boot 4 (JPA/Hibernate 7 ou Spring Data) e as migrations Flyway. Modelar com normalizacao adequada (1NF-3NF/BCNF), indices coerentes com os padroes de acesso, e Outbox para Domain Events na mesma transacao. Schema consistente com o dominio.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "migracao-sem-downtime",
+      "prompt": "Preciso renomear uma coluna usada em producao sem derrubar o sistema. Como?",
+      "expected_output": "Estrategia Expand-Contract (migracao sem downtime): EXPAND (adicionar a nova coluna, escrever nas duas), backfill, migrar leituras, CONTRACT (remover a antiga) — em migrations Flyway versionadas e reversiveis, ao longo de deploys. Nunca um ALTER destrutivo de uma vez. Preservar historico. Checklist P1.DB do tech-lead-review.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_comentario": "Calendário local real usado pelas ferramentas do agente. Em produção, trocar por adapter do PMS do cliente (implementar FonteDeDisponibilidade).",
+  "acomodacoes": [
+    {"codigo": "CH1", "tipo": "Chalé Standard", "capacidade": 2, "diaria_brl": 380.0},
+    {"codigo": "CH2", "tipo": "Chalé Standard", "capacidade": 2, "diaria_brl": 380.0},
+    {"codigo": "SM1", "tipo": "Suíte Master", "capacidade": 3, "diaria_brl": 620.0},
+    {"codigo": "AF1", "tipo": "Apartamento Família", "capacidade": 4, "diaria_brl": 540.0},
+    {"codigo": "AF3", "tipo": "Apartamento Família", "capacidade": 4, "diaria_brl": 540.0}
+  ],
+  "bloqueios": [
+    {"acomodacao": "SM1", "de": "2026-09-10", "ate": "2026-09-15", "motivo": "manutencao"},
+    {"acomodacao": "CH1", "de": "2026-09-12", "ate": "2026-09-14", "motivo": "reserva"}
+  ]
+}

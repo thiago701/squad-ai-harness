@@ -1,0 +1,458 @@
+{
+ "format_version": "1.2",
+ "terraform_version": "1.9.8",
+ "planned_values": {
+  "root_module": {
+   "resources": [
+    {
+     "address": "aws_lambda_function.task",
+     "mode": "managed",
+     "type": "aws_lambda_function",
+     "name": "task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "function_name": "task-manager",
+      "runtime": "java25",
+      "handler": "com.squadai.taskmanager.api.TaskApiGatewayHandler::handleRequest",
+      "timeout": 10,
+      "memory_size": 512
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_api.task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_api",
+     "name": "task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "name": "task-manager",
+      "protocol_type": "HTTP",
+      "cors_configuration": [
+       {
+        "allow_origins": [
+         "https://painel.exemplo.local"
+        ],
+        "allow_methods": [
+         "GET",
+         "POST",
+         "PATCH",
+         "DELETE",
+         "OPTIONS"
+        ],
+        "allow_headers": [
+         "authorization",
+         "content-type"
+        ],
+        "allow_credentials": false,
+        "expose_headers": null,
+        "max_age": 600
+       }
+      ]
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_authorizer.cognito_jwt",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_authorizer",
+     "name": "cognito_jwt",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "authorizer_type": "JWT",
+      "identity_sources": [
+       "$request.header.Authorization"
+      ],
+      "name": "CognitoJwt"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_integration.task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_integration",
+     "name": "task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "integration_type": "AWS_PROXY",
+      "payload_format_version": "2.0"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_stage.prod",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_stage",
+     "name": "prod",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "name": "prod",
+      "auto_deploy": true,
+      "default_route_settings": [
+       {
+        "throttling_burst_limit": 50,
+        "throttling_rate_limit": 100,
+        "detailed_metrics_enabled": false,
+        "logging_level": ""
+       }
+      ]
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.create_task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "create_task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "POST /tasks",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.list_tasks",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "list_tasks",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "GET /tasks",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.get_task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "get_task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "GET /tasks/{taskId}",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.update_task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "update_task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "PATCH /tasks/{taskId}",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.delete_task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "delete_task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "DELETE /tasks/{taskId}",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.transition_task",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "transition_task",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "POST /tasks/{taskId}/transitions",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    },
+    {
+     "address": "aws_apigatewayv2_route.task_summary",
+     "mode": "managed",
+     "type": "aws_apigatewayv2_route",
+     "name": "task_summary",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route_key": "GET /tasks/summary",
+      "authorization_type": "JWT"
+     },
+     "sensitive_values": {}
+    }
+   ]
+  }
+ },
+ "configuration": {
+  "provider_config": {
+   "aws": {
+    "name": "aws"
+   }
+  },
+  "root_module": {
+   "resources": [
+    {
+     "address": "aws_apigatewayv2_authorizer.cognito_jwt",
+     "type": "aws_apigatewayv2_authorizer",
+     "name": "cognito_jwt",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_integration.task",
+     "type": "aws_apigatewayv2_integration",
+     "name": "task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "integration_uri": {
+       "references": [
+        "aws_lambda_function.task.invoke_arn",
+        "aws_lambda_function.task"
+       ]
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_stage.prod",
+     "type": "aws_apigatewayv2_stage",
+     "name": "prod",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "name": {
+       "references": [
+        "var.stage_name"
+       ]
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.create_task",
+     "type": "aws_apigatewayv2_route",
+     "name": "create_task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "POST /tasks"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.list_tasks",
+     "type": "aws_apigatewayv2_route",
+     "name": "list_tasks",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "GET /tasks"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.get_task",
+     "type": "aws_apigatewayv2_route",
+     "name": "get_task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "GET /tasks/{taskId}"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.update_task",
+     "type": "aws_apigatewayv2_route",
+     "name": "update_task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "PATCH /tasks/{taskId}"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.delete_task",
+     "type": "aws_apigatewayv2_route",
+     "name": "delete_task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "DELETE /tasks/{taskId}"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.transition_task",
+     "type": "aws_apigatewayv2_route",
+     "name": "transition_task",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "POST /tasks/{taskId}/transitions"
+      }
+     }
+    },
+    {
+     "address": "aws_apigatewayv2_route.task_summary",
+     "type": "aws_apigatewayv2_route",
+     "name": "task_summary",
+     "expressions": {
+      "api_id": {
+       "references": [
+        "aws_apigatewayv2_api.task.id",
+        "aws_apigatewayv2_api.task"
+       ]
+      },
+      "target": {
+       "references": [
+        "aws_apigatewayv2_integration.task.id",
+        "aws_apigatewayv2_integration.task"
+       ]
+      },
+      "authorizer_id": {
+       "references": [
+        "aws_apigatewayv2_authorizer.cognito_jwt.id",
+        "aws_apigatewayv2_authorizer.cognito_jwt"
+       ]
+      },
+      "route_key": {
+       "constant_value": "GET /tasks/summary"
+      }
+     }
+    }
+   ]
+  }
+ }
+}

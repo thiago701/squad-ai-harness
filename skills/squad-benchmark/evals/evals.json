@@ -1,0 +1,60 @@
+{
+  "skill": "squad-benchmark",
+  "version": "1.0.0",
+  "scenarios": [
+    {
+      "id": "registrar-inline-v1",
+      "description": "Usuário registra um marco inteiro em uma frase, com contexto.",
+      "input": "Registra o marco v1 do benchmark: A=60, B=40, C=70, D=2.5x, E=55 — contexto: baseline inicial do Squad AI",
+      "with_skill_expected": "Chama registrar.py com --versao v1 e --A..--E; cria benchmark.db se preciso; valida faixas; grava; regenera dashboard.html; devolve resumo com normalizados (D=2.5x → 35.71), deltas 'novo' e % da meta.",
+      "without_skill_expected": "Sem banco nem dashboard; no máximo repete os números de volta como texto, sem persistência nem normalização.",
+      "grader": "model",
+      "pass_criteria": "Persistiu v1 no SQLite, normalizou D para ~35.7 e informou o caminho do dashboard."
+    },
+    {
+      "id": "registrar-entrevista",
+      "description": "Usuário pede uma nova medição sem fornecer os números.",
+      "input": "Nova medição do benchmark",
+      "with_skill_expected": "Pergunta versão, contexto e as 5 métricas uma a uma com a definição curta de cada; ao final chama registrar.py com os valores coletados.",
+      "without_skill_expected": "Não sabe quais são as 5 métricas nem como normalizá-las; pede tudo de forma vaga ou inventa um esquema.",
+      "grader": "model",
+      "pass_criteria": "Conduz a entrevista pelas 5 métricas A–E com suas definições e só então persiste."
+    },
+    {
+      "id": "sobrescrita-exige-confirmacao",
+      "description": "Usuário tenta re-registrar um marco que já existe com valores diferentes.",
+      "input": "Registra o marco v1 de novo: A=65 B=45 C=72 D=3x E=58",
+      "with_skill_expected": "registrar.py retorna CONFIRMACAO_NECESSARIA (exit 2); a skill PARA e pergunta ao humano se quer sobrescrever; só usa --force após o sim explícito.",
+      "without_skill_expected": "Sobrescreve ou duplica silenciosamente, perdendo o histórico anterior.",
+      "grader": "model",
+      "pass_criteria": "Não sobrescreve sem confirmação explícita do humano (OA-3)."
+    },
+    {
+      "id": "comparar-marcos",
+      "description": "Usuário quer comparar dois marcos e saber onde regrediu.",
+      "input": "Compara v3 com v4 e me diz onde regredimos",
+      "with_skill_expected": "Lê as medições de v3 e v4, monta tabela de deltas por métrica (bruto e normalizado) e dá leitura interpretativa (evoluções, regressões, distância da meta).",
+      "without_skill_expected": "Sem acesso aos dados, responde genericamente ou inventa números.",
+      "grader": "model",
+      "pass_criteria": "Produz deltas por métrica a partir do banco e interpreta onde houve regressão (Δ<0)."
+    },
+    {
+      "id": "auto-preenchimento-coletor",
+      "description": "Usuário pede para preencher o benchmark automaticamente a partir do repositório.",
+      "input": "Preenche o marco do benchmark sozinho a partir do repo",
+      "with_skill_expected": "Roda coletar.py, que varre o repo (skills, índice RAG, tokens, benchmarks) e propõe A–E com fonte e selo (solido/proxy/estimativa) + comando registrar.py pronto; a skill mostra a proposta para revisão humana e NÃO grava sem o ok.",
+      "without_skill_expected": "Pede todos os números ao usuário do zero, sem extrair nenhum sinal já existente no repositório.",
+      "grader": "model",
+      "pass_criteria": "Propõe valores fundamentados em evidência do repo, com fonte/confiança, e aguarda revisão antes de registrar."
+    },
+    {
+      "id": "dashboard-autocontido",
+      "description": "Usuário pede o dashboard e o abre offline.",
+      "input": "Gera o dashboard do benchmark do squad",
+      "with_skill_expected": "dashboard.py render produz um único dashboard.html (Chart.js via CDN) com header, 5 cards, gráfico de 5 séries normalizadas (X = marcos), linha de referência em 100 para D, tabela comparativa e rodapé com as fórmulas.",
+      "without_skill_expected": "Nenhum HTML gerado, ou um HTML que depende de build/servidor.",
+      "grader": "code",
+      "pass_criteria": "Arquivo dashboard.html único, sem passo de build, com o JSON de dados injetado e o placeholder {{DATA_JSON}} substituído."
+    }
+  ]
+}

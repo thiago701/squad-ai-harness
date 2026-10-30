@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Lambda appender do PowerTools — escreve JSON no stdout
+             em formato esperado pelo CloudWatch Logs Insights. -->
+        <Lambda name="Lambda">
+            <JsonLayout
+                complete="false"
+                compact="true"
+                eventEol="true"
+                objectMessageAsJsonObject="true"
+                properties="true"/>
+        </Lambda>
+    </Appenders>
+    <Loggers>
+        <Logger name="software.amazon.awssdk" level="WARN"/>
+        <Logger name="org.springframework" level="WARN"/>
+        <Root level="info">
+            <AppenderRef ref="Lambda"/>
+        </Root>
+    </Loggers>
+</Configuration>

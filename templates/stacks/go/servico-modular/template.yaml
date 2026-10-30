@@ -1,0 +1,32 @@
+id: go-servico-modular
+stack: go
+language_version: "1.26"
+framework_version: "stdlib (sem framework — idioma Go)"
+app_type: api-rest
+architecture: "pacotes por camada (dominio/aplicacao/adaptadores) + cmd/"
+context: >
+  Servico Go idiomatico: dominio com value objects e erros sentinela,
+  colecao de primeira classe, servico de aplicacao por interface pequena,
+  repositorio em memoria seguro para concorrencia e CLI em cmd/.
+  Borda HTTP moderna incluida: ServeMux 1.22+ com metodo na rota e PathValue — o idioma Go atual para APIs, sem framework.
+prerequisites: "go >= 1.26"
+dependencies: []
+dev_dependencies: []
+tests: "table-driven por pacote; go vet; cobertura >=90% verificada no Makefile"
+security_rules: "fragmento seguranca-input; validacao na construcao; contexto propagado"
+observability: "log/slog JSON estruturado"
+documentation: "README.md executavel"
+usage_example: "make check"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "toolchain minor livre; major exige rodada de validacao"
+aot_compatible: "sim (binario nativo por padrao)"
+components: [tratamento-erros, validacao-entrada, logging-estruturado, testes-unitarios, container, ci]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, object-calisthenics]
+anti_patterns:
+  - "interface gigante no produtor (defina no consumidor)"
+  - "panic para erro de dominio"
+  - "goroutine sem dono/cancelamento"
+checklist_revisao:
+  - "erros com errors.Is/As e sentinelas?"
+  - "concorrencia com dono claro e sync onde ha estado?"
+  - "cobertura >=90 no gate?"

@@ -1,0 +1,27 @@
+{
+  "skill_name": "java-pro",
+  "descricao": "Evals do especialista Java 25/JVM: seleção de GC com evidência de profiling, fronteira com java25-spring-boot e armadilha do pool de conexões com virtual threads.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "selecao-de-gc-com-profiling",
+      "prompt": "Minha API de pagamentos tem p99 de 800ms com variação enorme e heap de 8GB. Qual GC eu uso? Quero resposta direta.",
+      "expected_output": "Não recomendar GC sem profiling prévio do workload real (risco documentado: sugestão de GC sem medição é contraproducente). Citar a tabela de seleção: G1GC para a maioria das aplicações (heap 4-16GB, pausa ~200ms, alto throughput); ZGC para latência ultra-baixa (< 1ms) com heap > 16GB, custando ~5-15% de throughput; Shenandoah como alternativa ao ZGC, bom em containers; Parallel GC só para batch jobs. Orientar a medir com async-profiler (ex.: ./asprof -e cpu -d 30 -f flamegraph.html <PID>; -e wall para virtual threads; -e lock para contenção) e a provar a decisão com JMH (@Warmup(iterations = 3, time = 5), @Measurement(iterations = 5, time = 10), @Fork(value = 2, jvmArgs = {...})).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "encaminha-sintaxe-para-java25-spring-boot",
+      "prompt": "Me escreve o controller REST idiomático de Spring Boot 4 com records, validação de beans e a sintaxe correta de RestClient com virtual threads.",
+      "expected_output": "Encaminhar para java25-spring-boot: features de linguagem e sintaxe fina de Spring Boot 4 são território dessa skill (risco documentado de overlap — java-pro atende apenas JVM internals, GC tuning, Spring Cloud/Resilience4j, profiling, concurrency avançada, JMH, CRaC). Só assumir se a pergunta envolver JVM internals (ex.: como virtual threads interagem com o GC ou com o pool de conexões), não a sintaxe do framework.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "pool-nao-acompanha-virtual-threads",
+      "prompt": "Vou migrar pra virtual threads com 10.000 tarefas concorrentes. Subo o HikariCP maximum-pool-size para 10.000 pra combinar, certo?",
+      "expected_output": "Recusar: armadilha documentada — 10.000 virtual threads com 20 conexões = 9.980 esperando em fila; virtual threads tornam a espera eficiente, mas o throughput real é limitado pelo pool. Nunca aumentar o pool para 'combinar' com o número de virtual threads. Aplicar a regra connections = (CPU_cores × 2) + disco_spindles: para 8 cores + SSD, máximo ~20 conexões (maximum-pool-size=20), com minimum-idle=5 e leak-detection-threshold=30000.",
+      "files": []
+    }
+  ]
+}

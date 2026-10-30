@@ -1,0 +1,48 @@
+{
+  "skill_name": "aws-serverless-eda",
+  "descricao": "Evals da arquitetura serverless/EDA AWS: padrão SQS→Lambda→DynamoDB com DLQ e idempotência, recusa de Lambda-chamando-Lambda síncrono e defesa contra perda silenciosa de mensagens.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "sqs-lambda-dynamodb-com-dlq-e-idempotencia",
+      "prompt": "Preciso processar pedidos de forma assíncrona na AWS: fila com retry automático, sem perder mensagem, e uma Lambda Java grava no DynamoDB. Monta o desenho e os pontos-chave.",
+      "expected_output": "Padrão SQS → Lambda → DynamoDB: ProcessingQueue com VisibilityTimeout 60 (>= timeout da função, que é 30) e RedrivePolicy com DLQ + maxReceiveCount 3; DLQ com MessageRetentionPeriod 1209600 (14 dias) + CloudWatch Alarm em ApproximateNumberOfMessagesVisible com Threshold 1; trigger SQS com BatchSize 10 e FunctionResponseTypes [ReportBatchItemFailures] (SEMPRE habilitar); handler com conditional write no DynamoDB — ConditionalCheckFailedException significa duplicata e ignorar é correto (idempotência); falha real vira BatchItemFailure com itemIdentifier = messageId; clientes inicializados fora do handler; preferir arm64 (Graviton, 20% mais barato).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "recusar-lambda-chamando-lambda-sincrono",
+      "prompt": "Pra simplificar, a função A vai invocar a B e a C direto via SDK síncrono — assim não preciso de Step Functions nem fila. Valida esse desenho?",
+      "expected_output": "Recusar o desenho — anti-padrão PROIBIDO: Lambda chamando Lambda síncrono gera acoplamento, double billing e falhas em cascata. Orquestrar com Step Functions (histórico visual de execuções, retry e backoff automáticos por estado, cancelamento de tasks paralelas, service integrations sem código, sem double billing) ou desacoplar com SQS/EventBridge. CRUD síncrono via HTTP é API Gateway → Lambda, usando a skill aws-lambda-java25-aot.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "recusar-remover-dlq-e-idempotencia",
+      "prompt": "Tira a DLQ e o ReportBatchItemFailures pra deixar o template mais simples, e grava direto no banco sem checar duplicata — a chance de mensagem repetida é mínima.",
+      "expected_output": "Recusar: sem DLQ em async invocations, mensagens são perdidas silenciosamente após 2 retries — sempre configurar DLQ ou OnFailure destination. Sem ReportBatchItemFailures, se 1 de 10 mensagens falha, todas as 10 são reprocessadas. Operações não idempotentes com retry = dados duplicados: Lambda pode ser invocada mais de uma vez, então design para at-least-once com idempotency keys / conditional write. Segurança: secrets em variáveis de ambiente → Secrets Manager ou SSM Parameter Store com caching via Powertools Parameters; timeout proporcional à duração esperada + buffer, nunca sempre o máximo de 15 minutos.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "putevents-parcial",
+      "prompt": "Meu publicador chama putEvents e, se não der exceção, considera publicado. Está certo?",
+      "expected_output": "Não: PutEvents devolve 200 com FailedEntryCount > 0 em falha parcial; checar e reenviar as entradas com erro; bus inexistente responde 200 e descarta; citar fatos oficiais.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "escrita-dupla",
+      "prompt": "Gravo o pedido no DynamoDB e logo depois publico o evento no EventBridge. Algum risco?",
+      "expected_output": "Apontar escrita dupla; propor CDC (DynamoDB Streams → Pipes com input template de campos restritos) ou outbox; ambos at-least-once → consumidor idempotente por versão; sem presumir ordem.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "scheduler-ou-regra",
+      "prompt": "Preciso disparar um job todo dia às 7h no horário de Brasília. Uso uma scheduled rule?",
+      "expected_output": "Usar EventBridge Scheduler (scheduled rules são legado), cron com fuso IANA America/Sao_Paulo, retry e DLQ SQS standard; entrega at-least-once → job idempotente.",
+      "files": []
+    }
+  ]
+}

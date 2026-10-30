@@ -1,0 +1,48 @@
+{
+  "skill_name": "go-performance-engineer",
+  "descricao": "Evals da v1.0.0. Cobrem o método medir→explicar→mudar→provar, leitura de pprof/benchstat, GC/GOMEMLIMIT em contêiner, PGO e anti-padrões de sync.Pool/unsafe.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "metodo-medir-antes-de-otimizar",
+      "prompt": "Meu endpoint Go está lento. Já reescrevi o laço principal com unsafe e sync.Pool e não melhorou. O que faço?",
+      "expected_output": "Parar de otimizar no escuro: definir meta/métrica (p99, throughput, CPU), medir a base e coletar perfil sob carga realista (pprof CPU + alloc_space, go tool trace se for latência com CPU baixa). Ler o perfil (flat × cum), explicar a causa (alocação? mutex? I/O externo?), mudar UMA coisa e provar com benchmark + benchstat (-count>=6, p<0.05; tempo, B/op, allocs/op). Reverter unsafe/sync.Pool se não houver ganho medido (P1 simplicidade). Se o gargalo é I/O (banco/rede), otimizar CPU não ajuda. pprof apenas em porta interna.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "ler-pprof-mallocgc-dominante",
+      "prompt": "No pprof -top, runtime.mallocgc, mapassign_faststr e fmt.(*pp).doPrintf estão no topo. O que isso diz e qual o plano?",
+      "expected_output": "Indica problema de ALOCAÇÃO/formatação, não de lógica: confirmar com -sample_index=alloc_space e list da função. Plano: pré-dimensionar (make([]T,0,n), make(map,n), strings.Builder.Grow), trocar fmt.Sprintf por strconv/Builder em caminho quente, evitar += em string e boxing em any, avaliar sync.Pool só com prova. Provar com benchstat mostrando queda de tempo, B/op e allocs/op (ex.: ordem de dezenas de vezes menos alocações) e teste de equivalência + -race.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "gc-em-conteiner-gomemlimit",
+      "prompt": "Meu serviço Go no Kubernetes (limit 1Gi) leva OOMKill de vez em quando, mesmo com o heap vivo em ~400 MB. Como ajusto o GC?",
+      "expected_output": "Definir GOMEMLIMIT (teto suave) em ~80-90% do limite do contêiner (ex.: ~850-900MiB) — o runtime não deduz isso do cgroup sozinho; GOGC padrão 100 deixa o heap chegar perto de 2x o vivo, o que somado a pilhas/buffers estoura. Considerar memória fora do heap (cgo, mmap, pilhas). Medir com runtime/metrics (/gc/heap/live:bytes, /gc/gomemlimit:bytes, /cpu/classes/gc/total:cpu-seconds) e gctrace; reduzir taxa de alocação antes de subir GOGC; GOGC=off só com GOMEMLIMIT e heap pequeno/estável. Comparar com GOEXPERIMENT=nogreenteagc se suspeitar do coletor (Green Tea é padrão desde 1.26). GOMAXPROCS já é ciente de cgroup desde 1.25.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "pgo-fluxo-e-expectativa",
+      "prompt": "Quero usar PGO no meu serviço Go. Como faço e que ganho posso prometer ao time?",
+      "expected_output": "Coletar CPU profile de produção representativo (/debug/pprof/profile?seconds=30-60 em várias instâncias), mesclar com go tool pprof -proto a.pprof b.pprof > default.pgo, colocar default.pgo no diretório do pacote main e commitar; go build usa -pgo=auto por padrão (confirmar com go version -m | grep pgo; comparar com -pgo=off). Não prometer número: ganho típico documentado 2-14%, mas depende do código e pode ser nulo; medir com benchmark/carga e benchstat; renovar o perfil periodicamente; build um pouco mais lento.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "benchmark-correto-b-loop",
+      "prompt": "Escrevi func BenchmarkX(b *testing.B){ for i:=0;i<b.N;i++ { Process(data) } } e o resultado deu 0,3 ns/op. Dá para confiar?",
+      "expected_output": "Provavelmente o compilador eliminou/inlinou o corpo (resultado não usado) — 0,3 ns é suspeito. Usar for b.Loop() (Go 1.24+), que impede a eliminação do corpo e dispensa b.ResetTimer; preparo fora do laço; b.ReportAllocs(); rodar com -run '^$' -bench . -count=10 e comparar com benchstat; máquina quieta; sub-benchmarks por tamanho para ver a curva; RunParallel para estruturas compartilhadas.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "sync-pool-armadilhas",
+      "prompt": "Coloquei um sync.Pool de bytes.Buffer no meu handler e retorno buf.Bytes() na resposta antes de devolver o buffer ao pool. Está certo?",
+      "expected_output": "Não: devolver buf.Bytes() de um buffer que volta ao pool deixa a fatia apontando para memória reutilizada por outra requisição (corrupção/vazamento de dados entre requisições). Copiar antes (b.String() ou append) e fazer Reset ao pegar/devolver; nunca reter dados sensíveis no pool; o GC esvazia o pool; sync.Pool só para objetos temporários caros e homogêneos, e somente com benchmark mostrando ganho (benchstat). Alternativa mais simples: buffer local reutilizado no laço (buf = buf[:0]) ou pré-dimensionar. Validar com -race.",
+      "files": []
+    }
+  ]
+}

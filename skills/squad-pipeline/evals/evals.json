@@ -1,0 +1,27 @@
+{
+  "skill_name": "squad-pipeline",
+  "descricao": "Evals do motor gated (Ciclo 7). Step 0 classifica; gatilho de seguranca automatico.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "step0-classifica-e-gates",
+      "prompt": "Implementa uma feature nova: endpoint de cupom de desconto com persistencia e testes (uns 6 arquivos, 1 dep nova).",
+      "expected_output": "Step 0 classifica como 'standard' (4-10 arquivos, 0-1 deps, ambiguidade media). Roda Intake->Research->Plan->GATE 1 (humano aprova o plano)->Scaffold->TDD->Review->GATE 2 (verificacao-loop PRONTO + humano)->Commit. Delega por fase (engenheiro-especificacao, arquiteto-minimalista, especialista-qualidade, tech-lead-review). Handoff por artefatos em .claude/pipeline/<slug>/. Nao escreve codigo antes do GATE 1.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "gatilho-seguranca-automatico",
+      "prompt": "A feature mexe no fluxo de login (autenticacao JWT) e numa query que concatena input do usuario.",
+      "expected_output": "Apos a Fase 5 (TDD) e ANTES da Review, o motor inspeciona o diff e dispara OBRIGATORIAMENTE o engenheiro-seguranca (gatilho: auth + input + queries) — nao e opcional nem depende do tier. Achado 🔴 critico (ex.: SQL injection por concatenacao) trava o GATE 2 ate resolucao.",
+      "files": []
+    },
+    {
+      "name": "loop-ate-operacional-com-oraculo",
+      "prompt": "Implementa em loop até a CLI ficar operacional integrada à AWS. A conta é do dono e os repos de teste precisam ser criados privados.",
+      "expected_output": "Antes de girar: fixar o critério de parada (cenários e2e aprovados passando pelo comando real) e o ambiente do loop (nuvem simulada: moto server + fakes gravados). Cada volta: menor fatia → testes unit+e2e local → lint/typecheck/terraform test → entregar na pasta do dono (comparando hash) → atualizar 00-andamento. O irreversível fica com o dono via runbook: terraform apply/destroy, gh repo create --private, segredos. GATE 2 por onda com revisão independente (large). Pedido novo no meio: confirmar, atender, registrar onde parou e retomar.",
+      "id": 3,
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "skill_name": "engenheiro-clean-architect",
+  "descricao": "Evals de SOLID/Clean Architecture (Ciclo 8). Dominio isolado; regra de dependencia.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "isolar-dominio-de-framework",
+      "prompt": "Minhas entidades de dominio tem @Entity, @Autowired e chamam o repositorio Spring direto. Como organizo?",
+      "expected_output": "Violacao da regra de dependencia: o dominio NAO pode importar jakarta./org.springframework./hibernate. Separar em camadas (domain puro <- application/use cases <- infrastructure). Dominio define PORTS (interfaces); a infra implementa adapters (ports & adapters/hexagonal). Inverter a dependencia (DIP). Validar com ArchUnit no CI. Entidade JPA != entidade de dominio.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "nao-over-layering",
+      "prompt": "Preciso criar interface, factory e strategy para cada classe, certo? Clean Architecture exige.",
+      "expected_output": "NAO. Clean Architecture nao e over-layering. Abstracao nasce quando ha a 2a variacao real (YAGNI), nao por reflexo. SOLID a servico da legibilidade/testabilidade, nao cerimonia. Em conflito com simplicidade, o arquiteto-minimalista arbitra (P1). Camadas existem para isolar o dominio, nao para multiplicar arquivos.",
+      "files": []
+    }
+  ]
+}

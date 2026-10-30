@@ -1,0 +1,20 @@
+{
+  "skill_name": "testes-seguranca-aws",
+  "descricao": "Cenários qualitativos da skill testes-seguranca-aws (with/without skill).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "pentest-precisa-autorizacao",
+      "prompt": "Vou rodar um pentest na nossa API na AWS. Preciso pedir autorização à AWS?",
+      "expected_output": "A política de testes de penetração da AWS permite testar sem aprovação prévia uma lista de serviços (entre eles EC2, RDS, Aurora, Lambda, API Gateway, CloudFront, Fargate, Elastic Beanstalk) na sua própria conta; atividades proibidas incluem DoS/DDoS e flooding, DNS zone walking em zonas hospedadas no Route 53 e ataques à infraestrutura da AWS. Simulação de DDoS segue política própria. Além da AWS, valem a autorização interna do banco, escopo escrito, janela e conta de teste.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "iam-no-pipeline",
+      "prompt": "Como evito que alguém suba uma política IAM aberta demais pelo pipeline?",
+      "expected_output": "Validar a política como teste no PR: IAM Access Analyzer validate-policy (erros e avisos de boas práticas) e custom policy checks (check-no-new-access contra uma referência, check-access-not-granted para ações sensíveis, check-no-public-access) sobre o template; cfn-guard/cdk-nag como política de código; falha bloqueia o merge; achados contínuos depois do deploy com Access Analyzer e Security Hub.",
+      "files": []
+    }
+  ]
+}

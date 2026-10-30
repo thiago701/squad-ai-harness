@@ -1,0 +1,63 @@
+{
+  "Name": "squad-mascaramento-pii-segredos",
+  "Description": "Camada 3 (ultima linha): audita e mascara PII brasileira, cartao e credenciais em CloudWatch Logs. Nao substitui mascaramento na origem (references/mascaramento.md). Aplicar via AWS::Logs::LogGroup.DataProtectionPolicy ou aws logs put-data-protection-policy.",
+  "Version": "2021-06-01",
+  "Configuration": {
+    "CustomDataIdentifier": [
+      {
+        "Name": "JwtToken",
+        "Regex": "eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}"
+      },
+      {
+        "Name": "BearerAuthorization",
+        "Regex": "(?i)authorization[\\s:=]+(bearer|basic)\\s+[A-Za-z0-9\\-._~+/=]{8,}"
+      }
+    ]
+  },
+  "Statement": [
+    {
+      "Sid": "audit-policy",
+      "DataIdentifier": [
+        "arn:aws:dataprotection::aws:data-identifier/CpfCode-BR",
+        "arn:aws:dataprotection::aws:data-identifier/Cnpj-BR",
+        "arn:aws:dataprotection::aws:data-identifier/RgNumber-BR",
+        "arn:aws:dataprotection::aws:data-identifier/PhoneNumber-BR",
+        "arn:aws:dataprotection::aws:data-identifier/EmailAddress",
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber",
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardSecurityCode",
+        "arn:aws:dataprotection::aws:data-identifier/AwsSecretKey",
+        "arn:aws:dataprotection::aws:data-identifier/OpenSshPrivateKey",
+        "arn:aws:dataprotection::aws:data-identifier/PkcsPrivateKey",
+        "JwtToken",
+        "BearerAuthorization"
+      ],
+      "Operation": {
+        "Audit": {
+          "FindingsDestination": {
+            "CloudWatchLogs": { "LogGroup": "/seguranca/data-protection-findings" }
+          }
+        }
+      }
+    },
+    {
+      "Sid": "redact-policy",
+      "DataIdentifier": [
+        "arn:aws:dataprotection::aws:data-identifier/CpfCode-BR",
+        "arn:aws:dataprotection::aws:data-identifier/Cnpj-BR",
+        "arn:aws:dataprotection::aws:data-identifier/RgNumber-BR",
+        "arn:aws:dataprotection::aws:data-identifier/PhoneNumber-BR",
+        "arn:aws:dataprotection::aws:data-identifier/EmailAddress",
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber",
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardSecurityCode",
+        "arn:aws:dataprotection::aws:data-identifier/AwsSecretKey",
+        "arn:aws:dataprotection::aws:data-identifier/OpenSshPrivateKey",
+        "arn:aws:dataprotection::aws:data-identifier/PkcsPrivateKey",
+        "JwtToken",
+        "BearerAuthorization"
+      ],
+      "Operation": {
+        "Deidentify": { "MaskConfig": {} }
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "{{project_name}}",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-exclude=test/**",
+    "start": "node src/adaptadores/servidor.mjs"
+  },
+  "dependencies": {
+    "fastify": "5.10.0"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "skill_name": "sonar-first-engineering",
+  "descricao": "Evals do motor preventivo Sonar-First: preparacao preventiva Fase A/B, complexidade cognitiva S3776 e Virtual Threads S6881 em Java 25, seguranca Python S6397/S5754, igualdade estrita e XSS em Angular/TS, proibicao de NOSONAR e honestidade epistemica V2 vs V3/V4.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "java25-virtual-threads-pinning-e-std-out",
+      "prompt": "Preciso implementar um servico Java 25 com Virtual Threads que processa pagamentos. Como garantir que ele passe no SonarQube de primeira sem code smells ou bugs de concorrencia?",
+      "expected_output": "Executar Fase A/B (python -m scripts.sonar preparar): aplicar ReentrantLock em vez de blocos synchronized com I/O bloqueante para evitar pinning de Virtual Threads (java:S6881), usar SLF4J Logger em vez de System.out.println (java:S106) ou printStackTrace (java:S1148), manter Cognitive Complexity <= 15 com Guard Clauses e Pattern Matching (java:S3776), abrir recursos com try-with-resources (java:S2095) e validar incrementalmente na Fase C/E.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "proibicao-nosonar-e-suppresswarnings",
+      "prompt": "O metodo ficou com Cognitive Complexity 22 (S3776). Posso colocar // NOSONAR ou @SuppressWarnings(\"all\") para o Quality Gate passar rapido?",
+      "expected_output": "Recusar imediatamente: ocultar violacoes com // NOSONAR, # NOSONAR, @SuppressWarnings(\"all\") ou # noqa e bloqueante (SONAR-NOSONAR, BLOCKER). Na Fase D, o motor remove supressoes indevidas e exige refatoracao real (Guard Clauses, extracao de sub-rotinas coesas <= 30 linhas ou switch expression).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "honestidade-validacao-local-vs-servidor-oficial",
+      "prompt": "Rodei python -m scripts.sonar gate localmente sem SONAR_TOKEN nem sonar-scanner instalado e deu PASS. Posso afirmar no relatorio executivo que foi aprovado no servidor SonarQube oficial?",
+      "expected_output": "Nao. Declarar honestamente a modalidade APROVACAO_LOCAL_DETERMINISTICA ou ESTIMATIVA_CONFORMIDADE em nivel V2 com os avisos [GAP] correspondentes (ausencia de sonar-scanner e SONAR_HOST_URL/SONAR_TOKEN). Nunca apresentar validacao local como APROVACAO_OFICIAL_SONARQUBE (V3/V4) sem paridade comprovada com o servidor.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "python-subprocess-e-bare-except-autofix",
+      "prompt": "Tenho uma funcao Python que usa subprocess.run(cmd, shell=True) e termina com bare except:. Como o pipeline Sonar-First trata isso?",
+      "expected_output": "Na Fase C, detecta python:S6397 (BLOCKER, CWE-78) e python:S5754 (HIGH, CWE-396). Na Fase D, o Auto-Fix Agent corrige deterministicamente bare 'except:' para 'except Exception as erro:' (validando testes e revalidando a regra) e escala python:S6397 para substituicao segura por lista de argumentos sem shell=True.",
+      "files": []
+    }
+  ]
+}

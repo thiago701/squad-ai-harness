@@ -1,0 +1,27 @@
+# VPS + Docker Compose. Um arquivo por cliente = deploy isolado.
+# Não há Postgres, Redis nem fila aqui de propósito: para até ~10k conversas/mês
+# eles seriam complexidade acidental. O caminho de crescimento está no README.
+services:
+  chatbot:
+    build: .
+    image: {{PROJETO}}:0.1.0
+    container_name: {{PROJETO}}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      CHATBOT_HOST: 0.0.0.0
+      CHATBOT_PORTA: "8080"
+    ports:
+      - "127.0.0.1:{{PORTA}}:8080"
+    volumes:
+      - dados:/app/var
+      - ./dados:/app/dados
+      - ./verticais:/app/verticais
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  dados:

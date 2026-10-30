@@ -1,0 +1,42 @@
+# .gitattributes — normalização de fim de linha (fecha o débito do "CRLF churn").
+#
+# Por que existe: o working tree no Windows reescrevia arquivos LF→CRLF a cada
+# save, sujando `git status` com diffs fantasma (inserções == deleções) e
+# ameaçando a integridade de hash do corpus congelado. Esta política força LF
+# no repositório para todo texto, preserva CRLF onde o Windows exige (.ps1) e
+# blinda os artefatos hash-frozen contra qualquer normalização.
+
+# Padrão: detecta texto e normaliza para LF no repo.
+* text=auto eol=lf
+
+# Texto explícito → LF (determinístico, não depende da heurística).
+*.py    text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.sh    text eol=lf
+*.txt   text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+*.toml  text eol=lf
+
+# PowerShell roda no Windows — mantém CRLF (Current Constraints: PowerShell-first).
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.psd1  text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Binários — nunca normalizar.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.pdf    binary
+*.zip    binary
+*.skill  binary
+*.drawio binary
+
+# Corpus hash-frozen do CAP — NUNCA normalizar (protege o hash do MANIFEST.json).
+scripts/cap/corpus/** -text

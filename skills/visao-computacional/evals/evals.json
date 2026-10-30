@@ -1,0 +1,20 @@
+{
+  "skill_name": "visao-computacional",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a validação barata antes da IA e o tratamento de biometria/viés — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "rejeitar-antes-de-gerar",
+      "prompt": "Umas 15% das fotos do totem saem ruins da IA. Penso em gerar duas versões e escolher a melhor. Faz sentido?",
+      "expected_output": "Não — isso dobra custo e latência para tratar um sintoma. A causa costuma estar na entrada. Valide antes de gastar inferência: rosto presente, área do rosto >= ~4% da imagem, nitidez (variância do laplaciano na ROI facial), exposição (média e clipping do histograma) e pose. Custa < 100 ms e evita 10 s + US$0,04 por foto que seria reprovada de qualquer jeito. Some validação de SAÍDA (rosto detectado, similaridade >= limiar, delta de nitidez, anomalia de mãos) com regeração única e degradação para tema determinístico na segunda falha. Detalhes que importam: `exif_transpose` antes de tudo, detectar na cópia reduzida (640 px) e escalar coordenadas, proporção travada no resize. A UI orienta ('chegue mais perto'), com no máximo 2 tentativas — travar o usuário na fila é pior que uma foto mediana.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "biometria-e-vies",
+      "prompt": "Vou guardar o embedding facial de cada visitante no banco para medir a similaridade depois e afinar os limiares. Boa ideia?",
+      "expected_output": "Não. Embedding facial é dado biométrico — categoria especialmente sensível na LGPD; persistir cria uma base biométrica, com regime jurídico bem mais pesado que o de uma foto de evento. Calcule o vetor em memória para a métrica da sessão e descarte-o ao final: nunca em banco, log ou checkpoint. Para afinar limiares use um eval-set fechado, com consentimento documentado ou rostos sintéticos (skill `ai-evaluation`). A resposta deve levantar também o viés: detectores falham mais em pele escura e luz baixa — calibre com amostra diversa e reporte a taxa por subgrupo, não só a média; diferença > 15 pontos entre subgrupos é achado 🟡 que exige ação, porque um totem que funciona pior para parte do público é defeito de produto.",
+      "files": []
+    }
+  ]
+}

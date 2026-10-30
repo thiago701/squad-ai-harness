@@ -1,0 +1,38 @@
+{
+  "package": "com.acme.catalogo.domain",
+  "value_objects": [
+    {
+      "name": "Sku",
+      "kind": "string_pattern",
+      "pattern": "^[A-Z0-9-]{4,20}$",
+      "normalize": "upper",
+      "message": "SKU deve ter 4 a 20 caracteres (A-Z, 0-9, hifen)"
+    },
+    {
+      "name": "Preco",
+      "kind": "decimal",
+      "positive": true
+    },
+    {
+      "name": "Estoque",
+      "kind": "integer_range",
+      "min": 0,
+      "max": 1000000
+    },
+    {
+      "name": "Categoria",
+      "kind": "enum",
+      "values": ["ELETRONICO", "VESTUARIO", "ALIMENTO"]
+    },
+    {
+      "name": "CriadoEm",
+      "kind": "instant"
+    },
+    {
+      "name": "Observacao",
+      "kind": "bounded_string",
+      "min_length": 0,
+      "max_length": 1000
+    }
+  ]
+}

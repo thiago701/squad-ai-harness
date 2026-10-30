@@ -1,0 +1,20 @@
+{
+  "skill_name": "arquiteto-minimalista",
+  "descricao": "Evals do anti-overengineering (Ciclo 7). Advogado do Diabo; complexidade essencial vs acidental.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "recusa-kafka-prematuro",
+      "prompt": "Preciso processar 200 uploads por dia. Vou usar Kafka para a fila. Pode ser?",
+      "expected_output": "Advogado do Diabo: 200/dia e baixissima volumetria. Recusar Kafka como complexidade acidental. Propor a alternativa mais simples (job queue: banco + worker, ou SQS) que resolve 95% do problema com 20% do custo operacional. Perguntar qual problema concreto o Kafka resolveria que a alternativa nao resolve; questionar se o time tem custo operacional (observabilidade, debugging assincrono). Nomear o trade-off.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "monolito-modular-antes-de-microservicos",
+      "prompt": "Quero ja quebrar o sistema em microsservicos para o time escalar. Somos 5 engenheiros.",
+      "expected_output": "Questionar a quebra prematura: time pequeno (<8) e sem dor real de coordenacao observada. Recomendar monolito modular bem estruturado (fronteiras/bounded contexts claros, libs/rotas) primeiro; extrair um modulo como servico so quando houver alta volumetria comprovada NAQUELE modulo. Nomear o anti-padrao 'Distributed Monolith' (o pior dos dois mundos). P1-Simplicidade.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Saída equivalente a `terraform plan -out plan.tfplan && terraform show -json plan.tfplan > plan.json` do Gateway do Task Manager (fixture de paridade do leitor terraform-json). Valores calculados (ids, ARNs) não aparecem no plano; as ligações vêm de `configuration.*.expressions.references`.

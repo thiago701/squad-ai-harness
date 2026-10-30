@@ -1,0 +1,69 @@
+# Contrato do consumidor (SPA web) do exemplo Node — REST API v1 + Cognito + CORS.
+versao_formato: 1
+consumidor:
+  nome: web
+  tipo: navegador
+  origem_navegador: https://web.exemplo.local
+  hipotetico: true
+  trata_genericamente: ["5xx", 429]
+  leitor: {ignora_campos_desconhecidos: true, enums_fechados: []}
+  limitacao: Exemplo da skill; consumidor ilustrativo.
+provedor:
+  nome: itens
+  raiz: .
+  openapi: openapi/openapi.yaml
+  gateway: {template: template.yaml, recurso_api: ItensApi, funcao: ItensFunction}
+  verificador_inprocess:
+    runner: node
+    fabrica: "test/cdc-fabrica.mjs#criarHandler"
+    persistencia: repositório em memória (test/cdc-fabrica.mjs)
+identidades: [usuario-a, usuario-b]
+interacoes:
+  - id: preflight
+    risco: SPA não consegue enviar o POST
+    origem: {tipo: documentacao, ref: "template.yaml Cors"}
+    requisicao:
+      metodo: OPTIONS
+      caminho: /itens
+      headers: {Origin: "{{origem}}", Access-Control-Request-Method: POST, Access-Control-Request-Headers: "authorization,content-type"}
+    resposta: {status: [200, 204], headers: {Access-Control-Allow-Origin: ["{{origem}}", "*"]}}
+  - id: criar
+    risco: usuário não cria item
+    origem: {tipo: documentacao, ref: "openapi criarItem"}
+    requisicao: {metodo: POST, caminho: /itens, token: usuario-a, headers: {Content-Type: application/json}, corpo: {nome: Caderno, quantidade: 2}}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos: {id: {tipo: string}, nome: {tipo: string, eco: nome}, criadoEm: {tipo: string, formato: date-time}}
+    capturar: {item: id}
+  - id: criar-segundo
+    risco: lista precisa de dois itens para provar ordem
+    origem: {tipo: documentacao, ref: "openapi criarItem"}
+    requisicao: {metodo: POST, caminho: /itens, token: usuario-a, headers: {Content-Type: application/json}, corpo: {nome: Caneta}}
+    resposta: {status: 201, content_type: application/json, campos: {id: {tipo: string}, quantidade: {tipo: integer, igual: 1}}}
+    capturar: {item2: id}
+  - id: listar
+    risco: lista fora de ordem ou com total errado
+    origem: {tipo: documentacao, ref: "handler: mais novo primeiro"}
+    requisicao: {metodo: GET, caminho: /itens, token: usuario-a}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        itens: {tipo: array, contem_capturas: [item, item2], ordenado_por: {campo: criadoEm, ordem: desc}}
+        total: {tipo: integer, igual_tamanho_de: itens}
+  - id: isolamento
+    risco: usuário vê item de outro (BOLA)
+    origem: {tipo: documentacao, ref: "handler: 404, nunca 403"}
+    requisicao: {metodo: GET, caminho: "/itens/{{item}}", token: usuario-b}
+    resposta: {status: 404, content_type: application/problem+json}
+  - id: sem-token
+    risco: sessão expirada não leva ao login
+    origem: {tipo: documentacao, ref: "template.yaml DefaultAuthorizer"}
+    requisicao: {metodo: GET, caminho: /itens}
+    resposta: {status: 401, content_type: [application/json, application/problem+json]}
+  - id: remover
+    risco: exclusão não confirma
+    origem: {tipo: documentacao, ref: "openapi removerItem"}
+    requisicao: {metodo: DELETE, caminho: "/itens/{{item2}}", token: usuario-a}
+    resposta: {status: 204, corpo_vazio: true}

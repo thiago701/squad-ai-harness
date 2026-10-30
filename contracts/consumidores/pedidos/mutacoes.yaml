@@ -1,0 +1,32 @@
+# Mutações do projeto (Pedidos, Python) para `cr.py bench`. Contrato/Gateway são automáticas.
+mutacoes:
+  - id: py-idempotencia-ignorada
+    tipo: quebra
+    alvo: implementacao
+    arquivo: demo/serverless-pedidos/src/pedidos/application/services.py
+    descricao: Idempotency-Key ignorada — retry duplica o pedido (CA8)
+    trocas: [{ancora: "def criar_pedido", antigo: "if self._idem is not None and idempotency_key:", novo: "if False:"}]
+  - id: py-subtotal-sem-quantidade
+    tipo: quebra
+    alvo: implementacao
+    arquivo: demo/serverless-pedidos/src/pedidos/domain/pedido.py
+    descricao: subtotal ignora a quantidade (total errado, CA3)
+    trocas: [{ancora: "def subtotal_centavos", antigo: "return self.quantidade * self.preco_unitario_centavos", novo: "return self.preco_unitario_centavos"}]
+  - id: py-regra-vira-422
+    tipo: quebra
+    alvo: implementacao
+    arquivo: demo/serverless-pedidos/src/pedidos/adapters/handler.py
+    descricao: violação de regra de negócio passa a responder 422 em vez de 409 (CA5/CA6)
+    trocas: [{ancora: "_STATUS_POR_ERRO", antigo: "BusinessRuleError: 409,", novo: "BusinessRuleError: 422,"}]
+  - id: py-content-type-texto
+    tipo: quebra
+    alvo: implementacao
+    arquivo: demo/serverless-pedidos/src/pedidos/adapters/handler.py
+    descricao: respostas saem como text/plain
+    trocas: [{ancora: "def _resposta", antigo: '"headers": {"content-type": "application/json"},', novo: '"headers": {"content-type": "text/plain"},'}]
+  - id: ok-py-campo-novo
+    tipo: compativel
+    alvo: implementacao
+    arquivo: demo/serverless-pedidos/src/pedidos/adapters/serialization.py
+    descricao: campo novo na resposta (tolerant reader)
+    trocas: [{ancora: "def pedido_para_dict", antigo: '"cliente_id": pedido.cliente_id,', novo: '"cliente_id": pedido.cliente_id,\n        "versao": 1,'}]

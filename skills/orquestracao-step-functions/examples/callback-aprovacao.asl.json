@@ -1,0 +1,137 @@
+{
+  "Comment": "Exemplo sintético: aprovação externa por callback com timeout, compensação e falha marcada.",
+  "StartAt": "SolicitarAprovacao",
+  "States": {
+    "SolicitarAprovacao": {
+      "Type": "Task",
+      "Comment": "sem-retry: reenviar geraria novo token e nova notificação ao aprovador",
+      "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
+      "Parameters": {
+        "QueueUrl": "${FilaAprovacoes}",
+        "MessageBody": {
+          "taskToken.$": "$$.Task.Token",
+          "pedidoId.$": "$.pedidoId"
+        }
+      },
+      "TimeoutSeconds": 3600,
+      "ResultPath": "$.aprovacao",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.Timeout",
+            "States.HeartbeatTimeout"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "Compensar"
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "Falhou"
+        }
+      ],
+      "Next": "Decidir"
+    },
+    "Decidir": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.aprovacao.aprovado",
+          "BooleanEquals": true,
+          "Next": "Executar"
+        }
+      ],
+      "Default": "Rejeitado"
+    },
+    "Executar": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${FuncaoExecutar}",
+        "Payload": {
+          "pedidoId.$": "$.pedidoId"
+        }
+      },
+      "TimeoutSeconds": 30,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "Compensar"
+        }
+      ],
+      "End": true
+    },
+    "Compensar": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TabelaPedidos}",
+        "Key": {
+          "pk": {
+            "S.$": "$.pedidoId"
+          }
+        },
+        "UpdateExpression": "SET #s = :c",
+        "ExpressionAttributeNames": {
+          "#s": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":c": {
+            "S": "CANCELADO"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ProvisionedThroughputExceededException"
+          ],
+          "MaxAttempts": 3,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Falhou"
+        }
+      ],
+      "Next": "Cancelado"
+    },
+    "Rejeitado": {
+      "Type": "Succeed"
+    },
+    "Cancelado": {
+      "Type": "Fail",
+      "Error": "Pedido.Cancelado",
+      "Cause": "Sem aprovação no prazo ou execução falhou; efeito compensado."
+    },
+    "Falhou": {
+      "Type": "Fail",
+      "Error": "Pedido.FalhaTecnica",
+      "Cause": "Requer intervenção operacional."
+    }
+  }
+}

@@ -1,0 +1,151 @@
+package {{ base_package }}.handler;
+
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import software.amazon.lambda.powertools.logging.Logging;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import software.amazon.lambda.powertools.tracing.Tracing;
+import software.amazon.lambda.powertools.tracing.CaptureMode;
+
+import {{ base_package }}.repository.SingleTableRepository;
+import {{ base_package }}.model.*;
+
+import java.util.Map;
+import java.util.function.Function;
+
+/**
+ * API Gateway HTTP API handler.
+ *
+ * Roteia por path + método. Cada caso retorna um APIGatewayV2HTTPResponse.
+ * Em produção, considere extrair o roteamento para uma tabela path→handler.
+ *
+ * Contrato de resposta (ver app/openapi/openapi.yaml — fonte da verdade):
+ * - sucesso de leitura → ok(body) (200)
+ * - sucesso de criação → created(body, location) (201 + Location)
+ * - payload inválido   → badRequest(message) (400)
+ * - recurso ausente    → notFound(method, path) (404)
+ * - corpo de erro padronizado: { "error": "<código>", "message": "<humano>" } — sem stack/PII.
+ *
+ * Anotações PowerTools:
+ * - @Logging: enriquece logs com requestId, awsRequestId, coldStart
+ * - @Metrics: emite EMF metrics + ColdStart automático
+ * - @Tracing: subsegmentos X-Ray
+ */
+@Configuration
+public class ApiGatewayHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiGatewayHandler.class);
+
+    private final SingleTableRepository repo;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public ApiGatewayHandler(SingleTableRepository repo) {
+        this.repo = repo;
+    }
+
+    @Bean
+    @Primary
+    public Function<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> apiGatewayHandler() {
+        return this::route;
+    }
+
+    // PII: logEvent=false — o evento HTTP traz body/headers com dados pessoais.
+    @Logging(logEvent = false, correlationIdPath = "headers.x-correlation-id")
+    @Metrics(captureColdStart = true)
+    @Tracing(captureMode = CaptureMode.RESPONSE_AND_ERROR)
+    private APIGatewayV2HTTPResponse route(APIGatewayV2HTTPEvent event) {
+        String method = event.getRequestContext().getHttp().getMethod();
+        String path = event.getRequestContext().getHttp().getPath();
+
+        try {
+{{#each endpoints}}
+            if ("{{ method }}".equalsIgnoreCase(method) && pathMatches("{{ path }}", path)) {
+                return {{ handler }}(event);
+            }
+{{/each}}
+            return notFound(method, path);
+        } catch (Exception e) {
+            // Loga o detalhe internamente; NUNCA devolve e.getMessage() ao cliente (vaza stack/PII).
+            log.error("unhandled.error", e);
+            return error(500, "internal_error", "Erro interno ao processar a requisição");
+        }
+    }
+
+{{#each endpoints}}
+    private APIGatewayV2HTTPResponse {{ handler }}(APIGatewayV2HTTPEvent event) throws Exception {
+        // TODO: implementar o caso de uso para {{ method }} {{ path }}.
+        // Respostas padronizadas disponíveis: ok(body) · created(body, location) ·
+        //   badRequest(msg) · notFound(method, path) · error(status, code, msg).
+        // Ex.: var item = repo.getUser(event.getPathParameters().get("id"));
+        //      return (item == null) ? notFound("{{ method }}", "{{ path }}") : ok(item);
+        return ok(Map.of("message", "stub for {{ handler }}"));
+    }
+
+{{/each}}
+
+    // ─── Helpers ────────────────────────────────────────────────────────
+
+    private boolean pathMatches(String pattern, String actual) {
+        // Match simples para paths com {param}: substitui por regex equivalente
+        String regex = pattern.replaceAll("\\{[^}]+\\}", "[^/]+");
+        return actual.matches(regex);
+    }
+
+    /**
+     * Único ponto de serialização do corpo: usa Jackson (escapa aspas e é
+     * PII-safe por construção). Evita montar JSON por concatenação de String,
+     * que permitiria injeção/quebra do corpo se algum valor tivesse aspas.
+     */
+    private APIGatewayV2HTTPResponse json(int status, Map<String, String> headers, Object body) {
+        String payload;
+        try {
+            payload = mapper.writeValueAsString(body);
+        } catch (Exception e) {
+            log.error("response.serialization_error", e);
+            return APIGatewayV2HTTPResponse.builder()
+                .withStatusCode(500)
+                .withHeaders(Map.of("Content-Type", "application/json"))
+                .withBody("{\"error\":\"internal_error\",\"message\":\"Erro interno ao processar a requisição\"}")
+                .build();
+        }
+        return APIGatewayV2HTTPResponse.builder()
+            .withStatusCode(status)
+            .withHeaders(headers)
+            .withBody(payload)
+            .build();
+    }
+
+    private APIGatewayV2HTTPResponse ok(Object body) {
+        return json(200, Map.of("Content-Type", "application/json"), body);
+    }
+
+    /** 201 Created + Location — use ao criar recurso (ex.: POST /orders). */
+    private APIGatewayV2HTTPResponse created(Object body, String location) {
+        return json(201, Map.of("Content-Type", "application/json", "Location", location), body);
+    }
+
+    /** 400 — corpo viola o contrato. message é legível e sem PII. */
+    private APIGatewayV2HTTPResponse badRequest(String message) {
+        return error(400, "bad_request", message);
+    }
+
+    private APIGatewayV2HTTPResponse notFound(String method, String path) {
+        // Não reflete method/path no corpo (evita injeção/vazamento). Loga internamente para diagnóstico.
+        log.warn("route.not_found method={} path={}", method, path);
+        return error(404, "not_found", "Recurso não encontrado");
+    }
+
+    private APIGatewayV2HTTPResponse error(int status, String code, String message) {
+        return json(status, Map.of("Content-Type", "application/json"),
+                    Map.of("error", code, "message", message));
+    }
+}

@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info: {title: Itens API, version: 1.0.0}
+security: [{cognito: []}]
+paths:
+  /itens:
+    post:
+      operationId: criarItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NovoItem'}
+      responses:
+        '201': {description: criado, content: {application/json: {schema: {$ref: '#/components/schemas/Item'}}}}
+        '400': {$ref: '#/components/responses/Problema'}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '422': {$ref: '#/components/responses/Problema'}
+        '429': {$ref: '#/components/responses/Limite'}
+      x-amazon-apigateway-integration: {type: aws_proxy, httpMethod: POST, payloadFormatVersion: '1.0'}
+    get:
+      operationId: listarItens
+      responses:
+        '200': {description: ok, content: {application/json: {schema: {$ref: '#/components/schemas/Lista'}}}}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '429': {$ref: '#/components/responses/Limite'}
+      x-amazon-apigateway-integration: {type: aws_proxy, httpMethod: POST, payloadFormatVersion: '1.0'}
+  /itens/{id}:
+    parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+    get:
+      operationId: obterItem
+      responses:
+        '200': {description: ok, content: {application/json: {schema: {$ref: '#/components/schemas/Item'}}}}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '404': {$ref: '#/components/responses/Problema'}
+        '429': {$ref: '#/components/responses/Limite'}
+      x-amazon-apigateway-integration: {type: aws_proxy, httpMethod: POST, payloadFormatVersion: '1.0'}
+    delete:
+      operationId: removerItem
+      responses:
+        '204': {description: removido}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '404': {$ref: '#/components/responses/Problema'}
+        '429': {$ref: '#/components/responses/Limite'}
+      x-amazon-apigateway-integration: {type: aws_proxy, httpMethod: POST, payloadFormatVersion: '1.0'}
+components:
+  securitySchemes: {cognito: {type: http, scheme: bearer, bearerFormat: JWT}}
+  responses:
+    Problema:
+      description: RFC 9457
+      content: {application/problem+json: {schema: {$ref: '#/components/schemas/Problema'}}}
+    NaoAutenticado:
+      description: 401 do autorizador do Gateway (application/json) ou do backend (problem+json)
+      content:
+        application/json: {schema: {$ref: '#/components/schemas/MensagemGateway'}}
+        application/problem+json: {schema: {$ref: '#/components/schemas/Problema'}}
+    Limite:
+      description: throttling do Gateway
+      content: {application/json: {schema: {$ref: '#/components/schemas/MensagemGateway'}}}
+  schemas:
+    NovoItem:
+      type: object
+      required: [nome]
+      properties: {nome: {type: string, minLength: 1}, quantidade: {type: integer, minimum: 1}}
+    Item:
+      type: object
+      required: [id, nome, quantidade, criadoEm]
+      properties:
+        id: {type: string}
+        dono: {type: string}
+        nome: {type: string}
+        quantidade: {type: integer}
+        criadoEm: {type: string, format: date-time}
+    Lista:
+      type: object
+      required: [itens, total]
+      properties:
+        itens: {type: array, items: {$ref: '#/components/schemas/Item'}}
+        total: {type: integer}
+    Problema:
+      type: object
+      required: [type, title, status]
+      properties: {type: {type: string}, title: {type: string}, status: {type: integer}}
+    MensagemGateway:
+      type: object
+      required: [message]
+      properties: {message: {type: string}}

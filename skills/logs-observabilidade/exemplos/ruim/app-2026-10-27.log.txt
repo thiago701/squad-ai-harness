@@ -1,0 +1,6 @@
+2026-10-27T22:10:01.123-03:00 INFO  [pedidos] auth.login usuario=thiago.silva@exemplo.com senha=hunter2-sintetico
+2026-10-27T22:10:01.456-03:00 DEBUG [pedidos] http.request Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaW50ZXRpY28ifQ.c2ludGV0aWNvLWFzc2luYXR1cmEtZmFrZQ
+2026-10-27T22:10:02.001-03:00 INFO  [pedidos] cliente.consultado cpf=529.982.247-25 telefone=(83) 99999-1234
+2026-10-27T22:10:02.300-03:00 INFO  [pagamentos] pagamento.autorizado cartao=4111 1111 1111 1111 valor=120.50
+2026-10-27T22:10:03.000-03:00 WARN  [infra] s3.credencial aws_access_key_id=AKIAIOSFODNN7EXAMPLE regiao=sa-east-1
+2026-10-27T22:10:03.200-03:00 INFO  [infra] db.conectado url=postgres://app:SenhaSintetica123@db.interno:5432/pedidos

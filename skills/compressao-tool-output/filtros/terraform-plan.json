@@ -1,0 +1,34 @@
+{
+  "id": "terraform-plan",
+  "label": "Terraform plan",
+  "description": "Preserva o sumario Plan:, recursos com mudanca destrutiva e Error:.",
+  "category": "infra",
+  "priority": 85,
+  "match": {
+    "commands": ["^(?:terraform|tofu)\\s+(plan|apply)\\b"],
+    "patterns": ["^Plan: \\d+ to add", "^Terraform will perform the following actions"]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "dropPatterns": ["^\\s*[+~-]?\\s*(id|arn|tags_all|owner_id|created_at)\\s+=", "^\\s*$", "^\\s*# \\(\\d+ unchanged", "Refreshing state\\.\\.\\.$"],
+    "includePatterns": ["^Plan: ", "^No changes\\.", "^Error:", "^\\s*# .* will be (destroyed|replaced|created|updated)", "^\\s*-/\\+ resource", "forces replacement", "^Apply complete!"],
+    "deduplicate": true,
+    "truncateLineAt": 220,
+    "headLines": 4,
+    "tailLines": 50,
+    "maxLines": 120,
+    "onEmpty": "terraform: saida suprimida (sem mudanca relevante)"
+  },
+  "preserve": {
+    "errorPatterns": ["^Error:", "forces replacement", "will be destroyed"],
+    "summaryPatterns": ["^Plan: ", "^No changes\\.", "^Apply complete!"]
+  },
+  "tests": [
+    {
+      "name": "destroy nunca some",
+      "input": "aws_db_instance.main: Refreshing state...\n  # aws_db_instance.main will be destroyed\n    id = \"db-1\"\nPlan: 0 to add, 0 to change, 1 to destroy.",
+      "expectedContains": ["will be destroyed", "1 to destroy"],
+      "expectedNotContains": ["Refreshing state"]
+    }
+  ]
+}

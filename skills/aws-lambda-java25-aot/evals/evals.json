@@ -1,0 +1,20 @@
+{
+  "skill_name": "aws-lambda-java25-aot",
+  "descricao": "Evals do gerador Lambda Java 25 AOT (Ciclo 10). evals/ estava vazio — gap pego pelo /squad-judge.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "gerar-lambda-dbml-first",
+      "prompt": "Tenho este DBML de pedidos e quero uma Lambda Java 25 com DynamoDB e API Gateway. Gera o projeto.",
+      "expected_output": "DBML-first: mapear as entidades para single-table DynamoDB (PK/SK composto + GSIs, estilo Rick Houlihan), PROPOR o modelo e PEDIR confirmacao dos GSIs/access patterns antes de escrever codigo. Gerar handlers (API Gateway HTTP + DDB Streams), models, reflect-config.json (reflection e build-time no GraalVM Native), template SAM (custom runtime al2023) e Makefile. Maven com profile native (native-maven-plugin). AWS SDK v2 Enhanced Client (sem connection pool).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "migrar-jit-para-native-cold-start",
+      "prompt": "Minha Lambda Java demora 3s de cold start. Como derrubo isso?",
+      "expected_output": "Migrar JIT->GraalVM Native (Spring Boot 4 AOT): binario nativo ja aquecido, classpath resolvido em build-time, beans pre-instanciados — cold start cai de 2-5s para ~50-150ms (al2023 ~30-80ms). Disciplina: reflection declarada em reflect-config.json (DynamoDB Enhanced Client, Jackson); single-table para cortar N+1; SDK v2 async + virtual threads. Rodar native:test antes do deploy. Trade-off: JIT supera AOT em pico de throughput sustentado — AOT vale para serverless/cold-start-sensivel.",
+      "files": []
+    }
+  ]
+}

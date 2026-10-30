@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "description": "Configurações de Claude Code / Cowork para <PROJECT_NAME>. Permissões conservadoras: leitura ampla, escrita apenas no repo, comandos Maven/Docker/Git permitidos, operações destrutivas exigem confirmação.",
+
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Edit(./**)",
+      "Write(./**)",
+      "Bash(./mvnw *)",
+      "Bash(mvn *)",
+      "Bash(docker compose *)",
+      "Bash(docker build *)",
+      "Bash(docker run --rm *)",
+      "Bash(dbml2sql *)",
+      "Bash(db2dbml *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git switch *)",
+      "Bash(git checkout -b *)",
+      "Bash(git fetch *)",
+      "Bash(git pull)",
+      "Bash(java *)",
+      "Bash(javac *)"
+    ],
+    "ask": [
+      "Bash(rm *)",
+      "Bash(git push *)",
+      "Bash(docker system prune *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard origin/*)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo *)",
+      "Write(/etc/**)",
+      "Edit(/etc/**)"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/pre-edit-schema-guard.sh",
+        "description": "Alerta se estiver editando migration ou @Entity sem tocar o DBML correspondente."
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/post-edit-format.sh",
+        "description": "Formatação best-effort do arquivo tocado."
+      }
+    ]
+  },
+
+  "env": {
+    "TZ": "America/Sao_Paulo",
+    "JAVA_HOME_HINT": "Requer JDK 25"
+  }
+}

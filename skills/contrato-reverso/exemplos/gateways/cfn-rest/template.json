@@ -1,0 +1,438 @@
+{
+ "AWSTemplateFormatVersion": "2010-09-09",
+ "Description": "Task Manager em REST API (v1) com CloudFormation puro \u2014 fixture de paridade",
+ "Resources": {
+  "TaskFunction": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "com.squadai.taskmanager.api.TaskRestHandler::handleRequest",
+    "Runtime": "java25",
+    "Timeout": 10
+   }
+  },
+  "TaskRestApi": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Name": "task-manager"
+   }
+  },
+  "CognitoAuth": {
+   "Type": "AWS::ApiGateway::Authorizer",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "Type": "COGNITO_USER_POOLS",
+    "Name": "CognitoAuth",
+    "IdentitySource": "method.request.header.Authorization",
+    "ProviderARNs": [
+     {
+      "Fn::GetAtt": [
+       "TaskUserPool",
+       "Arn"
+      ]
+     }
+    ]
+   }
+  },
+  "ResTasks": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ParentId": {
+     "Fn::GetAtt": [
+      "TaskRestApi",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "tasks"
+   }
+  },
+  "ResTaskId": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ParentId": {
+     "Ref": "ResTasks"
+    },
+    "PathPart": "{taskId}"
+   }
+  },
+  "ResTransitions": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ParentId": {
+     "Ref": "ResTaskId"
+    },
+    "PathPart": "transitions"
+   }
+  },
+  "ResSummary": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ParentId": {
+     "Ref": "ResTasks"
+    },
+    "PathPart": "summary"
+   }
+  },
+  "PostTasks": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTasks"
+    },
+    "HttpMethod": "POST",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "GetTasks": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTasks"
+    },
+    "HttpMethod": "GET",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "GetTask": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTaskId"
+    },
+    "HttpMethod": "GET",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "PatchTask": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTaskId"
+    },
+    "HttpMethod": "PATCH",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "DeleteTask": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTaskId"
+    },
+    "HttpMethod": "DELETE",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "PostTransition": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTransitions"
+    },
+    "HttpMethod": "POST",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "GetSummary": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResSummary"
+    },
+    "HttpMethod": "GET",
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth"
+    },
+    "Integration": {
+     "Type": "AWS_PROXY",
+     "IntegrationHttpMethod": "POST",
+     "Uri": {
+      "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TaskFunction.Arn}/invocations"
+     }
+    }
+   }
+  },
+  "OptTasks": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTasks"
+    },
+    "HttpMethod": "OPTIONS",
+    "AuthorizationType": "NONE",
+    "Integration": {
+     "Type": "MOCK",
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "IntegrationResponses": [
+      {
+       "StatusCode": "204",
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Origin": "'https://painel.exemplo.local'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Headers": "'authorization,content-type'"
+       }
+      }
+     ]
+    },
+    "MethodResponses": [
+     {
+      "StatusCode": "204",
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Headers": true
+      }
+     }
+    ]
+   }
+  },
+  "OptTaskId": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTaskId"
+    },
+    "HttpMethod": "OPTIONS",
+    "AuthorizationType": "NONE",
+    "Integration": {
+     "Type": "MOCK",
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "IntegrationResponses": [
+      {
+       "StatusCode": "204",
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Origin": "'https://painel.exemplo.local'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,PATCH,DELETE,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Headers": "'authorization,content-type'"
+       }
+      }
+     ]
+    },
+    "MethodResponses": [
+     {
+      "StatusCode": "204",
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Headers": true
+      }
+     }
+    ]
+   }
+  },
+  "OptTransitions": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResTransitions"
+    },
+    "HttpMethod": "OPTIONS",
+    "AuthorizationType": "NONE",
+    "Integration": {
+     "Type": "MOCK",
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "IntegrationResponses": [
+      {
+       "StatusCode": "204",
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Origin": "'https://painel.exemplo.local'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Headers": "'authorization,content-type'"
+       }
+      }
+     ]
+    },
+    "MethodResponses": [
+     {
+      "StatusCode": "204",
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Headers": true
+      }
+     }
+    ]
+   }
+  },
+  "OptSummary": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "ResourceId": {
+     "Ref": "ResSummary"
+    },
+    "HttpMethod": "OPTIONS",
+    "AuthorizationType": "NONE",
+    "Integration": {
+     "Type": "MOCK",
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "IntegrationResponses": [
+      {
+       "StatusCode": "204",
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Origin": "'https://painel.exemplo.local'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Headers": "'authorization,content-type'"
+       }
+      }
+     ]
+    },
+    "MethodResponses": [
+     {
+      "StatusCode": "204",
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Headers": true
+      }
+     }
+    ]
+   }
+  },
+  "TaskDeployment": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "DependsOn": [
+    "PostTasks"
+   ],
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    }
+   }
+  },
+  "TaskStage": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "TaskRestApi"
+    },
+    "DeploymentId": {
+     "Ref": "TaskDeployment"
+    },
+    "StageName": "prod",
+    "MethodSettings": [
+     {
+      "ResourcePath": "/*",
+      "HttpMethod": "*",
+      "ThrottlingBurstLimit": 50,
+      "ThrottlingRateLimit": 100
+     }
+    ]
+   }
+  }
+ }
+}

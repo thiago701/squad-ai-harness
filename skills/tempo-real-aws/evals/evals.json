@@ -1,0 +1,41 @@
+{
+  "skill_name": "tempo-real-aws",
+  "descricao": "Cenários com/sem skill: CQRS × canal, limpeza de conexões, reconexão e IoT.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "websocket-fonte-verdade",
+      "prompt": "Vou mandar o status pelo WebSocket e o front guarda; não preciso de endpoint de consulta, certo?",
+      "expected_output": "Discordar: notificações podem se perder ($disconnect best-effort, cliente offline); manter a consulta autoritativa (projeção CQRS) e o protocolo de dedupe por versão + reconciliação ao reconectar; citar teste de reconexão.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "ttl-limpa",
+      "prompt": "Coloquei TTL de 2h na tabela de conexões, então não preciso tratar conexão morta.",
+      "expected_output": "Corrigir: TTL apaga tipicamente em alguns dias e itens vencidos ainda aparecem nas leituras; filtrar expiraEm, remover em GoneException e não depender do $disconnect.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "jwt-query",
+      "prompt": "Passo o JWT do Cognito na URL do WebSocket para autenticar no $connect.",
+      "expected_output": "Bloquear [SEC]: JWT na query string vai para logs; usar ticket aleatório de uso único e 60 s guardado só como hash, consumido por autorizador Lambda REQUEST; access log sem query string; WebSocket não aceita autorizador Cognito/JWT.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "iot-sem-dispositivo",
+      "prompt": "Quero usar IoT Core para mandar notificação ao navegador porque é tempo real.",
+      "expected_output": "Diferenciar: sem dispositivo, API Gateway WebSocket resolve com identidade Cognito; IoT Core/MQTT-WSS só com benefício demonstrável (pub/sub massivo, sessão persistente); não impor IoT.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "alarme-duplicado",
+      "prompt": "Sensor com QoS 1 reenviou o mesmo alarme três vezes após cair a rede e abrimos três ordens.",
+      "expected_output": "Explicar QoS 1 at-least-once e broker sem ordem; derivar id determinístico (UUID v5 de tenant+thing+alarmeId) para nome de execução/escrita condicional; regra IoT → SQS (não stepFunctions com nome aleatório) e error action.",
+      "files": []
+    }
+  ]
+}

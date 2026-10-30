@@ -1,0 +1,25 @@
+mutacoes:
+  - id: node-sem-cors-na-resposta
+    tipo: quebra
+    alvo: implementacao
+    arquivo: src/handler.mjs
+    descricao: Lambda deixa de devolver Access-Control-Allow-Origin (REST proxy não acrescenta)
+    trocas: [{ancora: "const resposta =", antigo: '...(ORIGENS.includes(origem) ? { "Access-Control-Allow-Origin": origem, Vary: "Origin" } : {}),', novo: ""}]
+  - id: node-isolamento-quebrado
+    tipo: quebra
+    alvo: implementacao
+    arquivo: src/handler.mjs
+    descricao: GET devolve item de outro dono
+    trocas: [{ancora: "const item = await repositorio.porId(id);", antigo: "if (!item || item.dono !== dono)", novo: "if (!item)"}]
+  - id: node-ordem-invertida
+    tipo: quebra
+    alvo: implementacao
+    arquivo: src/handler.mjs
+    descricao: lista volta do mais antigo para o mais novo
+    trocas: [{ancora: 'if (rota === "GET /itens")', antigo: "b.criadoEm.localeCompare(a.criadoEm)", novo: "a.criadoEm.localeCompare(b.criadoEm)"}]
+  - id: ok-node-campo-novo
+    tipo: compativel
+    alvo: implementacao
+    arquivo: src/handler.mjs
+    descricao: campo novo no item (tolerant reader)
+    trocas: [{ancora: "const item = { id: randomUUID()", antigo: "criadoEm: relogio().toISOString() };", novo: "criadoEm: relogio().toISOString(), versao: 1 };"}]

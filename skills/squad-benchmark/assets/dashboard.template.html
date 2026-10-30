@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squad AI Benchmark</title>
+<!-- Chart.js via CDN é a ÚNICA dependência externa permitida (OA-10). Abre offline;
+     sem o CDN o gráfico não renderiza, mas cards/tabela/rodapé continuam legíveis. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --ink: #0f172a; --muted: #64748b;
+    --line: #e2e8f0; --up: #16a34a; --down: #dc2626; --accent: #1f6feb;
+    --meta: #15803d; --amber: #b45309; --gray: #64748b;
+    --shadow: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1120; --card: #131c2e; --ink: #e5e9f0; --muted: #94a3b8;
+      --line: #24304a; --up: #34d399; --down: #f87171; --accent: #60a5fa;
+      --meta: #4ade80; --amber: #fbbf24; --gray: #94a3b8;
+      --shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    padding: 24px 20px 48px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header.top { display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  header.top h1 { font-size: 24px; margin: 0; letter-spacing: -.01em; }
+  header.top .meta { color: var(--muted); font-size: 14px; }
+  .legado-tag { display: inline-block; font-size: 11px; font-weight: 600;
+    color: var(--amber); border: 1px solid var(--amber); border-radius: 999px;
+    padding: 0 7px; margin-left: 6px; vertical-align: middle; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 32px 0 12px; }
+  /* Resumo executivo */
+  .summary { background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--accent); border-radius: 12px; padding: 14px 16px;
+    box-shadow: var(--shadow); margin-bottom: 8px; }
+  .summary .lead { font-size: 15px; }
+  .summary .lead b { color: var(--ink); }
+  .summary .ctx { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600;
+    border-radius: 999px; padding: 1px 9px; margin: 2px 4px 2px 0; }
+  .chip.ok { color: #fff; background: var(--up); }
+  .chip.no { color: var(--down); border: 1px solid var(--down); }
+  .chip.na { color: var(--muted); border: 1px solid var(--line); }
+  /* Cards */
+  .cards { display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; box-shadow: var(--shadow);
+    border-top: 3px solid var(--cardcolor, var(--accent)); position: relative; }
+  .card .cod { font-weight: 700; font-size: 12px; color: var(--cardcolor);
+    letter-spacing: .04em; }
+  .card .nome { font-size: 12.5px; color: var(--muted); margin: 2px 0 10px;
+    min-height: 2.6em; }
+  .card .val { font-size: 30px; font-weight: 700; line-height: 1; }
+  .card .val small { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .card .badge { position: absolute; top: 12px; right: 12px; font-size: 12px;
+    font-weight: 700; color: var(--up); }
+  .card .row { display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; font-size: 13px; }
+  .delta.up { color: var(--up); } .delta.down { color: var(--down); }
+  .delta.flat { color: var(--muted); }
+  .pct { color: var(--muted); }
+  .pct b { color: var(--ink); }
+  /* barra de progresso vs meta */
+  .bar { height: 6px; border-radius: 3px; background: var(--line); margin-top: 10px;
+    overflow: hidden; position: relative; }
+  .bar > span { display: block; height: 100%; border-radius: 3px;
+    background: var(--cardcolor); }
+  .bar .metatick { position: absolute; top: -2px; bottom: -2px; width: 2px;
+    background: var(--ink); opacity: .55; }
+  /* selo de confiança */
+  .seal { display: inline-block; font-size: 10.5px; font-weight: 600;
+    border-radius: 5px; padding: 1px 6px; margin-top: 9px; cursor: help; }
+  .seal.solido { color: #fff; background: var(--meta); }
+  .seal.proxy { color: var(--amber); border: 1px solid var(--amber); }
+  .seal.estimativa { color: var(--gray); border: 1px solid var(--gray); }
+  .seal.sem { color: var(--muted); border: 1px dashed var(--line); }
+  /* Gráfico */
+  .chart-box { background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+  .chart-scroll { overflow-x: auto; }
+  .chart-note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  canvas { max-width: 100%; }
+  /* Tabela */
+  .tbl-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; }
+  th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { background: color-mix(in srgb, var(--card) 85%, var(--line));
+    font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  tbody tr:last-child td { border-bottom: 0; }
+  .up-cell { color: var(--up); } .down-cell { color: var(--down); }
+  .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+  footer.formulas { margin-top: 32px; font-size: 13px; color: var(--muted);
+    border-top: 1px solid var(--line); padding-top: 16px; }
+  footer.formulas code { background: color-mix(in srgb, var(--card) 70%, var(--line));
+    padding: 1px 6px; border-radius: 5px; color: var(--ink); }
+  footer.formulas li { margin: 4px 0; }
+  .empty { background: var(--card); border: 1px dashed var(--line);
+    border-radius: 12px; padding: 40px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Squad AI Benchmark</h1>
+    <div class="meta" id="hdr-meta"></div>
+  </header>
+
+  <div id="content"></div>
+
+  <footer class="formulas">
+    <strong>Fórmulas de normalização (transparência do método)</strong>
+    <ul id="formulas"></ul>
+    <div id="legenda-selos" style="margin-top:8px;"></div>
+    <div id="gerado" style="margin-top:8px;"></div>
+  </footer>
+</div>
+
+<script id="benchmark-data" type="application/json">/*{{DATA_JSON}}*/</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById("benchmark-data").textContent);
+  var fmt = function (v, d) { return v === null || v === undefined ? "—"
+    : Number(v).toFixed(d === undefined ? 1 : d); };
+  var nomeMet = function (m) { return m + " (" + DATA.metricas[m].nome + ")"; };
+
+  // Header
+  var hdr = document.getElementById("hdr-meta");
+  if (DATA.ultimo_marco) {
+    hdr.innerHTML = "Último marco: <b>" + DATA.ultimo_marco + "</b>" +
+      (DATA.ultimo_legado ? '<span class="legado-tag">legado</span>' : "") +
+      " · " + (DATA.ultima_data || "");
+  }
+  document.getElementById("gerado").textContent =
+    "Dashboard gerado em " + DATA.gerado_em + " · métricas normalizadas 0–100.";
+  document.getElementById("legenda-selos").innerHTML =
+    "Selos de procedência: <span class='seal solido'>sólido</span> medido direto · " +
+    "<span class='seal proxy'>proxy</span> sinal correlato · " +
+    "<span class='seal estimativa'>estimativa</span> projeção fundamentada.";
+
+  // Fórmulas
+  var ul = document.getElementById("formulas");
+  DATA.ordem.forEach(function (m) {
+    var meta = DATA.metricas[m];
+    var li = document.createElement("li");
+    li.innerHTML = "<b>" + m + " — " + meta.nome + "</b>: <code>" +
+      meta.formula + "</code> · meta <b>" + meta.meta_rotulo + "</b>";
+    ul.appendChild(li);
+  });
+
+  var content = document.getElementById("content");
+  if (!DATA.marcos.length) {
+    content.innerHTML = '<div class="empty">Nenhum marco registrado ainda.<br>' +
+      'Registre o primeiro com: <code>registra o marco v1: A=.. B=.. C=.. D=..x E=..</code></div>';
+    return;
+  }
+
+  // ---- Resumo executivo ----
+  var r = DATA.resumo;
+  var box0 = document.createElement("div");
+  box0.className = "summary";
+  var chips = "";
+  r.na_meta.forEach(function (m) { chips += '<span class="chip ok">✓ ' + m + '</span>'; });
+  r.abaixo.forEach(function (m) { chips += '<span class="chip no">' + m + '</span>'; });
+  r.sem_dado.forEach(function (m) { chips += '<span class="chip na">' + m + ' s/ dado</span>'; });
+  var frase = "<b>" + r.n_na_meta + " de " + r.total + "</b> métricas na meta no marco <b>" +
+    DATA.ultimo_marco + "</b>.";
+  if (r.abaixo.length) frase += " Atrás da meta: <b>" +
+    r.abaixo.map(nomeMet).join(", ") + "</b>.";
+  if (r.sem_dado.length) frase += " Sem dado: <b>" + r.sem_dado.join(", ") + "</b>.";
+  box0.innerHTML = '<div class="lead">' + frase + '</div>' +
+    '<div style="margin-top:8px">' + chips + '</div>' +
+    (DATA.ultimo_contexto ? '<div class="ctx">📌 ' + esc(DATA.ultimo_contexto) + '</div>' : "");
+  content.appendChild(sectionTitle("Resumo — marco " + DATA.ultimo_marco));
+  content.appendChild(box0);
+
+  // ---- Cards ----
+  var cardsWrap = document.createElement("div");
+  cardsWrap.className = "cards";
+  DATA.cards.forEach(function (c) {
+    var arrow = "", cls = "flat";
+    if (c.delta !== null) {
+      if (c.delta > 0) { arrow = "▲ +" + fmt(c.delta); cls = "up"; }
+      else if (c.delta < 0) { arrow = "▼ " + fmt(c.delta); cls = "down"; }
+      else { arrow = "= 0.0"; cls = "flat"; }
+    } else { arrow = "novo"; }
+    var pctMeta = c.meta_norm > 0 ? Math.min(100, (c.norm / c.meta_norm) * 100) : 0;
+    var seal = c.confianca
+      ? '<span class="seal ' + c.confianca + '" title="' + esc(c.observacao || "") + '">' +
+        c.confianca + '</span>'
+      : (c.observacao
+          ? '<span class="seal sem" title="' + esc(c.observacao) + '">s/ selo</span>'
+          : "");
+    var el = document.createElement("div");
+    el.className = "card";
+    el.style.setProperty("--cardcolor", c.cor);
+    el.innerHTML =
+      '<div class="cod">' + c.metrica + '</div>' +
+      (c.bateu_meta ? '<div class="badge" title="meta atingida">✓ meta</div>' : '') +
+      '<div class="nome">' + c.nome + '</div>' +
+      '<div class="val">' + fmt(c.norm) + '<small>/100</small></div>' +
+      '<div class="row"><span class="delta ' + cls + '">' + arrow + '</span>' +
+      '<span class="pct"><b>' + fmt(c.pct_meta) + '%</b> da meta</span></div>' +
+      '<div class="bar"><span style="width:' + (c.norm === null ? 0 : c.norm) + '%"></span>' +
+        '<i class="metatick" style="left:' + (c.meta_norm) + '%"></i></div>' +
+      '<div class="row"><span class="pct">bruto: <b>' + fmt(c.bruto, 2) +
+        ' ' + c.unidade + '</b></span>' + seal + '</div>';
+    cardsWrap.appendChild(el);
+  });
+  content.appendChild(sectionTitle("Cards — marco " + DATA.ultimo_marco +
+    " (barra: valor · risco preto = meta)"));
+  content.appendChild(cardsWrap);
+
+  // ---- Gráfico de linhas ----
+  content.appendChild(sectionTitle("Evolução por marco (normalizado 0–100)"));
+  var box = document.createElement("div");
+  box.className = "chart-box";
+  var scroll = document.createElement("div");
+  scroll.className = "chart-scroll";
+  var canvas = document.createElement("canvas");
+  canvas.id = "grafico"; canvas.height = 340;
+  scroll.appendChild(canvas); box.appendChild(scroll);
+  var note = document.createElement("div");
+  note.className = "chart-note";
+  note.innerHTML = "△ = marco legado (estudo de caso importado, não checkpoint do " +
+    "timeline). Linhas tracejadas finas = meta de cada métrica (mesma cor).";
+  box.appendChild(note);
+  content.appendChild(box);
+
+  var pointStyles = DATA.marcos_tipo.map(function (t) {
+    return t === "legado" ? "triangle" : "circle"; });
+
+  var datasets = DATA.ordem.map(function (m) {
+    var meta = DATA.metricas[m];
+    return {
+      label: m + " · " + meta.nome,
+      data: DATA.series[m],
+      borderColor: meta.cor,
+      backgroundColor: meta.cor,
+      tension: 0.25, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+      pointStyle: pointStyles, spanGaps: true,
+      _bruto: DATA.series_bruto[m], _unidade: meta.unidade
+    };
+  });
+  // Linha de meta por métrica (fina, tracejada, cor da métrica; oculta da legenda).
+  DATA.ordem.forEach(function (m) {
+    var meta = DATA.metricas[m];
+    datasets.push({
+      label: "__meta " + m,
+      data: DATA.marcos.map(function () { return meta.meta_norm; }),
+      borderColor: meta.cor, borderDash: [3, 3], borderWidth: 1,
+      pointRadius: 0, fill: false, _metaline: true,
+      borderCapStyle: "round"
+    });
+  });
+
+  if (window.Chart) {
+    new Chart(canvas.getContext("2d"), {
+      type: "line",
+      data: { labels: DATA.marcos, datasets: datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          y: { min: 0, max: 100, title: { display: true, text: "Normalizado 0–100" } },
+          x: { title: { display: true, text: "Marco (△ = legado)" } }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: {
+            boxWidth: 12, usePointStyle: true,
+            filter: function (item) { return item.text.indexOf("__meta") !== 0; }
+          } },
+          tooltip: {
+            filter: function (ctx) { return !ctx.dataset._metaline; },
+            callbacks: {
+              label: function (ctx) {
+                var ds = ctx.dataset;
+                var norm = ctx.parsed.y;
+                if (norm === null) return ds.label + ": —";
+                var bruto = ds._bruto ? ds._bruto[ctx.dataIndex] : null;
+                var extra = bruto === null || bruto === undefined ? "" :
+                  "  (bruto: " + Number(bruto).toFixed(2) + " " + ds._unidade + ")";
+                return ds.label + ": " + Number(norm).toFixed(1) + extra;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ---- Tabela comparativa ----
+  content.appendChild(sectionTitle("Comparativo — atual vs anterior vs melhor histórico"));
+  var tblScroll = document.createElement("div");
+  tblScroll.className = "tbl-scroll";
+  var rows = DATA.tabela.map(function (t) {
+    return "<tr><td><b>" + t.metrica + "</b> " + t.nome + "</td>" +
+      "<td>" + fmt(t.atual) + "</td>" +
+      "<td>" + fmt(t.anterior) + "</td>" +
+      cellDelta(t.delta_ant) +
+      "<td>" + fmt(t.melhor) + "</td>" +
+      cellDelta(t.delta_melhor) + "</tr>";
+  }).join("");
+  tblScroll.innerHTML = "<table><thead><tr>" +
+    "<th>Métrica</th><th>Atual</th><th>Anterior</th><th>Δ ant.</th>" +
+    "<th>Melhor</th><th>Δ p/ melhor</th></tr></thead><tbody>" +
+    rows + "</tbody></table>";
+  content.appendChild(tblScroll);
+  var hint = document.createElement("p");
+  hint.className = "hint";
+  hint.textContent = '"Anterior" e "Δ ant." comparam com o marco imediatamente ' +
+    "anterior na ordem cronológica — inclui marcos legado, então leia o Δ como " +
+    "diferença entre marcos, não necessariamente evolução no tempo.";
+  content.appendChild(hint);
+
+  function cellDelta(v) {
+    if (v === null || v === undefined) return "<td>—</td>";
+    var cls = v > 0 ? "up-cell" : (v < 0 ? "down-cell" : "");
+    var s = (v > 0 ? "+" : "") + fmt(v);
+    return '<td class="' + cls + '">' + s + "</td>";
+  }
+  function sectionTitle(t) {
+    var h = document.createElement("h2"); h.textContent = t; return h;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+})();
+</script>
+</body>
+</html>

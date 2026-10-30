@@ -1,0 +1,48 @@
+{
+  "skill_name": "go-concurrency-expert",
+  "descricao": "Evals da v1.0.0. Cobrem diagnóstico de vazamento/deadlock/corrida, contrato de propriedade de canais, concorrência limitada e teste determinístico com synctest.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "vazamento-timeout-canal-sem-buffer",
+      "prompt": "Meu serviço Go tem memória e nº de goroutines crescendo. O código: ch := make(chan string); go func(){ ch <- slow() }(); select { case r := <-ch: return r; case <-time.After(timeout): return \"timeout\" }. O que está acontecendo e como provar/corrigir?",
+      "expected_output": "Vazamento clássico: quando o timeout vence ninguém recebe de ch e a goroutine fica presa no envio para sempre (canal sem buffer). Provar com o perfil goroutineleak (Go 1.27: pprof.Lookup(\"goroutineleak\") ou /debug/pprof/goroutineleak) e/ou pprof goroutine debug=2 (estado 'chan send' com minutos); em teste, goleak.VerifyNone. Correção: canal com buffer 1 (o único envio nunca bloqueia) e context.WithTimeout propagado para slow(ctx), select com ctx.Done() e context.Cause. Prova: perfil vazio sob carga e teste de regressão determinístico (synctest) + go test -race -count alto.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "worker-pool-sem-deadlock",
+      "prompt": "Preciso processar 10 mil itens com 8 workers, coletando erro por item, sem deadlock e sem vazar goroutines ao cancelar. Escreva.",
+      "expected_output": "Pool com canal de jobs (único dono = produtor, que fecha via defer close(in) e respeita ctx.Done() no envio) e canal de resultados; N workers (wg.Go no 1.25+ ou Add antes do go); uma goroutine fecha o canal de saída depois de wg.Wait(); o consumidor lê o canal de resultados até o fim. Regras: quem envia fecha, receptor nunca fecha; paralelismo limitado a 8; erro faz parte do resultado (ou errgroup com SetLimit se basta falhar no 1º erro). Mencionar -race, goleak e que parar de ler o canal de saída antes de fechar vaza workers.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "corrida-em-map-e-relatorio-race",
+      "prompt": "go test -race acusa WARNING: DATA RACE com mapaccess/mapassign e 'created at sync.(*WaitGroup).Go'. Várias goroutines fazem counts[k]++. Como corrijo de verdade?",
+      "expected_output": "Duas goroutines acessam o mesmo map sem sincronização (sem -race seria 'fatal error: concurrent map writes', não recuperável). Ler o relatório: acessos ao mesmo endereço, pilhas e 'created at' indicam onde o dono devia sincronizar. Correções: cada goroutine devolve resultado por índice/canal e uma só agrega; ou sync.Mutex com seção curta; ou atomic para contador simples; sync.Map só para caso específico. Não mascarar com time.Sleep. Provar com go test -race -count=100 -shuffle=on e teste de regressão.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "synctest-limites-da-bolha",
+      "prompt": "Usei synctest.Test num teste que faz requisição a um servidor httptest real e usa sync.Mutex entre goroutines; o teste trava/estranho. Por quê?",
+      "expected_output": "Na bolha do synctest o relógio é falso e só avança quando todas as goroutines estão durably blocked. Bloqueios duráveis: canal criado na bolha, select só com canais da bolha, sync.Cond.Wait, WaitGroup.Wait (com Add na bolha), time.Sleep. NÃO são duráveis: sync.Mutex/RWMutex, I/O de rede, syscalls — podem ser destravados de fora, então o tempo não avança como esperado. Evitar rede real: usar net.Pipe ou httptest.NewTestServer (Go 1.27, rede em memória). Deadlock total faz Test entrar em pânico; goroutine remanescente ao fim falha o teste; synctest.Sleep (1.27) = Sleep + Wait.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "paralelismo-ilimitado-por-requisicao",
+      "prompt": "No meu handler faço go process(item) para cada item de um lote que o cliente envia (até 1 milhão). Está tudo rápido nos testes. Algum problema?",
+      "expected_output": "Paralelismo ilimitado derruba o serviço sob carga (memória/escalonador/descritores; cliente controla o tamanho). Limitar com errgroup.SetLimit, semaphore.Weighted ou pool fixo; limitar o tamanho do lote na borda (http.MaxBytesReader / validação); propagar o ctx do request; o handler deve esperar (Wait) ou ter fila com backpressure e dono de término; erro por item. Considerar se concorrência é necessária (P1). Medir (pprof) antes de calibrar o limite; I/O-bound pode usar limite maior que GOMAXPROCS.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "ordem-de-locks-e-deadlock-em-servico",
+      "prompt": "Meu serviço Go 'trava' em produção: CPU zero, requisições penduradas, mas o processo não cai nem imprime deadlock. Como investigo?",
+      "expected_output": "O runtime só emite 'all goroutines are asleep - deadlock!' quando TODAS as goroutines bloqueiam; num servidor com outras ativas não dispara. Tirar dump: kill -QUIT ou /debug/pprof/goroutine?debug=2 (porta interna) e ler estados (chan send/receive, select, sync.Mutex.Lock/semacquire, WaitGroup.Wait, Cond.Wait) e os tempos bloqueados; montar o grafo de espera (A espera B espera A). Causas: ordem de locks invertida, lock reentrante, callback sob lock, wg.Add depois de Wait, canal sem par. Complementar com perfis mutex/block e flight recorder (Go 1.25). Correção: ordem global de locks, seção crítica curta sem I/O, contextos com prazo; prova com teste determinístico (synctest) e -race.",
+      "files": []
+    }
+  ]
+}

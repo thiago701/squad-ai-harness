@@ -1,0 +1,306 @@
+# Contrato dirigido pelo consumidor (CDC) — Task Manager (app/)
+#
+# "Teste reverso": parte do que o CONSUMIDOR precisa e verifica se o contrato
+# publicado, a configuracao do Gateway e o backend continuam atendendo.
+# Formato e CLI: skill contrato-reverso (skills/contrato-reverso/references/formato-contrato.md)
+#
+# LIMITACAO DECLARADA (registrada no relatorio de toda execucao):
+#   Nao existe cliente HTTP do Task Manager neste repositorio. As expectativas
+#   foram reconstruidas de fontes INDEPENDENTES do OpenAPI do backend — o README
+#   (tabela de rotas, exemplos curl, secoes de multi-tenancy e maquina de estados)
+#   — para nao copiar uma inconsistencia que o OpenAPI e a implementacao possam
+#   compartilhar. Onde a unica fonte foi o proprio OpenAPI, a origem diz isso
+#   (tipo: openapi-exemplo) e o relatorio marca "mesma fonte do provedor".
+#   O perfil "SPA no navegador" e HIPOTESE (tipo: hipotese) ate o dono confirmar.
+versao_formato: 1
+
+consumidor:
+  nome: painel-tarefas-spa
+  tipo: navegador                  # navegador | servico  (navegador liga as verificacoes de CORS)
+  origem_navegador: https://painel.exemplo.local
+  hipotetico: true
+  acesso_ao_codigo: false
+  trata_genericamente: ["5xx", 429] # status que o cliente trata com fallback generico
+  leitor:
+    ignora_campos_desconhecidos: true   # tolerant reader: campo novo nao quebra
+    enums_fechados: [status, priority]  # switch exaustivo na UI: valor novo QUEBRA
+  limitacao: >-
+    Sem cliente HTTP no repositorio: expectativas reconstruidas do README (fontes
+    independentes do OpenAPI) e marcadas por origem; perfil navegador e hipotese.
+
+provedor:
+  nome: task-manager
+  raiz: app
+  openapi: app/openapi/openapi.yaml
+  gateway:
+    tipo: sam-http-api
+    template: app/template.yaml
+    recurso_api: TaskHttpApi
+    funcao: TaskFunction
+  # Verificador in-process do provedor (JUnit lendo ESTE arquivo) e onde ele grava o observado.
+  verificador_inprocess:
+    comando: [mvn, -q, -B, -ntp, -o, test, "-Dtest=ConsumerContractVerificationTest,OpenApiContractTest", -Dsurefire.failIfNoSpecifiedTests=false, -Djacoco.skip=true]
+    cwd: app
+    observado: app/target/contrato-reverso/observado-painel-tarefas-spa.json
+  suite_ampliada:
+    comando: [mvn, -q, -B, -ntp, -o, test]
+    cwd: app
+  # proteção que já existia (sem o verificador novo) — coluna ANTES do bench
+  suite_existente:
+    comando: [mvn, -q, -B, -ntp, -o, test, "-Dtest=!ConsumerContractVerificationTest", -Dsurefire.failIfNoSpecifiedTests=false, -Djacoco.skip=true]
+    cwd: app
+
+# Ambientes onde a replay HTTP pode rodar. Credenciais NUNCA ficam aqui: tokens
+# vem de variaveis CDC_TOKEN_<IDENTIDADE> (ex.: CDC_TOKEN_USUARIO_A).
+ambientes:
+  local:
+    url_base_padrao: "http://127.0.0.1:3000"   # sam local start-api
+    producao: false
+  dev:
+    hosts_permitidos: ["*.execute-api.*.amazonaws.com"]
+    producao: false
+  prd:
+    hosts_permitidos: ["*.execute-api.*.amazonaws.com"]
+    producao: true                  # em producao so rodam interacoes seguras (GET/OPTIONS)
+
+identidades: [usuario-a, usuario-b]
+
+interacoes:
+  - id: preflight-criar
+    risco: SPA em outra origem nao consegue nem enviar o POST (preflight barrado)
+    origem: {tipo: hipotese, ref: "perfil navegador do consumidor (a confirmar)"}
+    requisicao:
+      metodo: OPTIONS
+      caminho: /tasks
+      headers:
+        Origin: "{{origem}}"
+        Access-Control-Request-Method: POST
+        Access-Control-Request-Headers: authorization,content-type
+    resposta:
+      status: [200, 204]
+      headers:
+        Access-Control-Allow-Origin: ["{{origem}}", "*"]
+
+  - id: criar-tarefa
+    risco: usuario nao consegue criar tarefa ou a tela perde campos exibidos
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Create"}
+    requisicao:
+      metodo: POST
+      caminho: /tasks
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {title: Revisar contrato, description: cdc, priority: HIGH, dueDate: "2030-01-01T00:00:00Z"}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos:
+        id: {tipo: string, padrao: "^[A-Za-z0-9_-]+$"}
+        title: {tipo: string, eco: title}
+        status: {tipo: string, enum: [TODO, DOING, DONE, CANCELLED], igual: TODO}
+        priority: {tipo: string, enum: [LOW, MEDIUM, HIGH], eco: priority}
+        description: {tipo: string, nulo: true}
+        dueDate: {tipo: string, nulo: true, formato: date-time}
+        createdAt: {tipo: string, formato: date-time}
+    capturar: {tarefa_a: id}
+
+  - id: criar-segunda-tarefa
+    risco: lista e resumo precisam de mais de um item para provar ordem e contagem
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Create"}
+    requisicao:
+      metodo: POST
+      caminho: /tasks
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {title: Segunda tarefa, priority: LOW}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos:
+        id: {tipo: string}
+        description: {tipo: string, nulo: true}
+        dueDate: {tipo: string, nulo: true, formato: date-time}
+    capturar: {tarefa_b: id}
+
+  - id: listar-tarefas
+    risco: quadro mostra tarefas erradas, fora de ordem ou com contador divergente
+    origem: {tipo: documentacao, ref: "app/README.md > HTTP API (GET /tasks newest first; count)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks
+      token: usuario-a
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        items:
+          tipo: array
+          contem_capturas: [tarefa_a, tarefa_b]
+          ordenado_por: {campo: createdAt, ordem: desc}
+          itens:
+            id: {tipo: string}
+            title: {tipo: string}
+            status: {tipo: string, enum: [TODO, DOING, DONE, CANCELLED]}
+            priority: {tipo: string, enum: [LOW, MEDIUM, HIGH]}
+            dueDate: {tipo: string, nulo: true, formato: date-time}
+            createdAt: {tipo: string, formato: date-time}
+        count: {tipo: integer, igual_tamanho_de: items}
+
+  - id: obter-tarefa
+    risco: tela de detalhe quebra
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Get"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks/{{tarefa_a}}
+      token: usuario-a
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        id: {tipo: string, igual: "{{tarefa_a}}"}
+        status: {tipo: string, enum: [TODO, DOING, DONE, CANCELLED]}
+
+  - id: isolamento-entre-usuarios
+    risco: vazamento de tarefa de outro usuario (BOLA/IDOR) ou vazamento de existencia (403)
+    origem: {tipo: documentacao, ref: "app/README.md > Authentication & multi-tenancy (404, nunca 403)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks/{{tarefa_a}}
+      token: usuario-b
+    resposta:
+      status: 404
+      content_type: application/problem+json
+      campos:
+        status: {tipo: integer, igual: 404}
+
+  - id: iniciar-tarefa
+    risco: botao "iniciar" nao muda o status
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Transition; maquina de estados"}
+    requisicao:
+      metodo: POST
+      caminho: /tasks/{{tarefa_a}}/transitions
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {to: DOING}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        status: {tipo: string, enum: [TODO, DOING, DONE, CANCELLED], igual: DOING}
+
+  - id: filtrar-por-status
+    risco: filtro da UI devolve itens de outro status (roda depois de uma tarefa ir para DOING)
+    origem: {tipo: documentacao, ref: "app/README.md > HTTP API (GET /tasks opt. ?status=)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks
+      token: usuario-a
+      query: {status: TODO}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        items:
+          tipo: array
+          todos: {campo: status, igual: TODO}
+          itens:
+            status: {tipo: string, enum: [TODO, DOING, DONE, CANCELLED]}
+        count: {tipo: integer, igual_tamanho_de: items}
+
+  - id: resumo-do-quadro
+    risco: contadores do painel nao fecham com o total exibido (com status mistos)
+    origem: {tipo: documentacao, ref: "app/README.md > HTTP API (GET /tasks/summary)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks/summary
+      token: usuario-a
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        total: {tipo: integer, soma_de: [todo, doing, done, cancelled]}
+        todo: {tipo: integer}
+        doing: {tipo: integer}
+        done: {tipo: integer}
+        cancelled: {tipo: integer}
+        overdue: {tipo: integer}
+
+  - id: transicao-ilegal
+    risco: UI nao distingue movimento proibido de erro generico
+    origem: {tipo: documentacao, ref: "app/README.md > maquina de estados + exemplo de erro RFC 9457"}
+    requisicao:
+      metodo: POST
+      caminho: /tasks/{{tarefa_b}}/transitions
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {to: DONE}
+    resposta:
+      status: 409
+      content_type: application/problem+json
+      campos:
+        type: {tipo: string, padrao: "invalid-status-transition$"}
+        status: {tipo: integer, igual: 409}
+        detail: {tipo: string, presenca: opcional}
+
+  - id: renomear-tarefa
+    risco: edicao inline nao persiste
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Update"}
+    requisicao:
+      metodo: PATCH
+      caminho: /tasks/{{tarefa_a}}
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {title: Renomeada pelo consumidor}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        title: {tipo: string, eco: title}
+
+  - id: titulo-em-branco
+    risco: formulario nao mostra erro de validacao
+    origem: {tipo: openapi-exemplo, ref: "app/openapi/openapi.yaml createTask.examples.invalidBlankTitle"}
+    requisicao:
+      metodo: POST
+      caminho: /tasks
+      token: usuario-a
+      headers: {Content-Type: application/json}
+      corpo: {title: "   ", priority: LOW}
+    resposta:
+      status: 422
+      content_type: application/problem+json
+      campos:
+        status: {tipo: integer, igual: 422}
+        title: {tipo: string}
+
+  - id: sem-token
+    risco: sessao expirada nao leva ao login
+    origem: {tipo: documentacao, ref: "app/README.md > All routes require a valid bearer token (401)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks
+    resposta:
+      status: 401
+      # o cliente so precisa do status para redirecionar; aceita qualquer um dos dois
+      content_type: [application/json, application/problem+json]
+
+  - id: remover-tarefa
+    risco: exclusao nao confirma
+    origem: {tipo: documentacao, ref: "app/README.md > curl examples > Delete"}
+    requisicao:
+      metodo: DELETE
+      caminho: /tasks/{{tarefa_b}}
+      token: usuario-a
+    resposta:
+      status: 204
+      corpo_vazio: true
+
+  - id: obter-removida
+    risco: tarefa excluida reaparece
+    origem: {tipo: documentacao, ref: "app/README.md > HTTP API (GET 404)"}
+    requisicao:
+      metodo: GET
+      caminho: /tasks/{{tarefa_b}}
+      token: usuario-a
+    resposta:
+      status: 404
+      content_type: application/problem+json

@@ -1,0 +1,48 @@
+{
+  "skill_name": "golang-pro",
+  "descricao": "Evals da v2.0.0 (Go 1.27). Cobrem o conhecimento version-current distintivo: gate de versão, GOMAXPROCS/cgroup, synctest, json/v2, erros tipados e fronteiras seguras. Detectam regressão de prompt.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "gomaxprocs-container-aware",
+      "prompt": "Meu serviço Go roda em Kubernetes com limit de 2 CPUs, mas cria workers demais e sofre CPU throttling. Dimensiono o pool com runtime.NumCPU(). O que está errado?",
+      "expected_output": "Desde o Go 1.25 o runtime é container-aware: GOMAXPROCS lê o limite de CPU do cgroup (e reajusta dinamicamente). runtime.NumCPU() continua vendo TODOS os cores do nó, por isso o oversubscription e o throttle. Dimensionar por runtime.GOMAXPROCS(0), p.ex. g.SetLimit(runtime.GOMAXPROCS(0)) no errgroup. Verificar a diretiva go do go.mod (>=1.25 para o comportamento). Não fixar GOMAXPROCS manualmente sem medição. Propagar context.Context para cancelamento.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "synctest-concorrencia-deterministica",
+      "prompt": "Meus testes de código concorrente em Go são frágeis: cheios de time.Sleep para esperar goroutines. Como tornar determinístico?",
+      "expected_output": "Usar testing/synctest (estável desde o Go 1.25): synctest.Test(t, func(t *testing.T){...}) cria uma bolha com relógio virtual; o tempo avança quando todas as goroutines da bolha estão bloqueadas; synctest.Wait espera quiescência; no Go 1.27 há synctest.Sleep (Sleep+Wait) e httptest.NewTestServer (rede em memória). Elimina time.Sleep real. Complementar com go test -race e -shuffle=on no CI; fechar canais do lado do produtor; propagar context.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "gate-de-versao-metodo-generico",
+      "prompt": "Meu go.mod diz 'go 1.24'. Escreva um método genérico func (r *Repo) Map[T any](f func(Item) T) []T e use new(expr) para o campo opcional.",
+      "expected_output": "Reconhecer que métodos genéricos são do Go 1.27 e new(expr) do Go 1.26 — ambos acima do go 1.24 do go.mod; o código NÃO compilaria. Antes de usar, propor subir go/toolchain (1.27 e 1.26 são as versões suportadas; 1.25 já saiu da janela) e rodar go fix ./... depois do bump. Entregar alternativa compatível com 1.24: função genérica de pacote func Map[T any](r *Repo, f func(Item) T) []T e variável auxiliar com & no lugar de new(expr). Dizer em uma linha o ganho da atualização.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "json-v2-migracao-segura",
+      "prompt": "Vou migrar de encoding/json para encoding/json/v2 no Go 1.27. Alguma pegadinha? Quero rejeitar campos desconhecidos no corpo das requisições.",
+      "expected_output": "Em 1.27 encoding/json/v2 é estável e encoding/json (v1) passa a ser implementado sobre a v2. Defaults da v2 são mais estritos (rejeita UTF-8 inválido e nomes duplicados no objeto) e diferentes (slice nil vira []; a v1 continua emitindo null). Para rejeitar campos desconhecidos usar, com import \"encoding/json/v2\", json.UnmarshalRead(r.Body, &v, json.RejectUnknownMembers(true)) (na v1: DisallowUnknownFields). Limitar o corpo com http.MaxBytesReader antes de decodificar. Rodar testes de contrato/golden; saída determinística com json.Deterministic(true). Migrar por módulo; GOEXPERIMENT=nojsonv2 só restaura a implementação v1 original (remove o pacote v2 do build) — não é mitigação para código que já importa a v2.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "erros-tipados-e-embrulho",
+      "prompt": "Meu handler converte erro em status HTTP comparando err.Error() com strings e usando errors.As com ponteiro duplo. Como deixar idiomático no Go atual?",
+      "expected_output": "Erro é valor: sentinelas (var ErrNotFound = errors.New(...)) testadas com errors.Is, tipos (ex.: *ValidationError) consumidos com errors.AsType[*ValidationError](err) (Go 1.26, sem ponteiro-para-ponteiro). Embrulhar com fmt.Errorf(\"contexto: %w\", err) uma vez por camada; tratar uma vez (logar OU retornar) e mapear status na borda do handler. Nunca comparar strings de erro. errors.Join para múltiplos erros independentes. go vet do 1.27 acusa %w com *E quando E implementa error.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "servidor-http-fronteiras-seguras",
+      "prompt": "Revise: func main(){ http.HandleFunc(\"/up\", up); http.ListenAndServe(\":8080\", nil) } — o handler lê o arquivo r.URL.Query().Get(\"f\") do disco e devolve.",
+      "expected_output": "Problemas: sem timeouts (Slowloris) — usar http.Server com ReadHeaderTimeout/ReadTimeout/WriteTimeout/IdleTimeout; sem shutdown gracioso — signal.NotifyContext + srv.Shutdown; DefaultServeMux global — usar http.NewServeMux com padrões 'GET /...'; path traversal no arquivo — usar os.OpenRoot(dir)/root.Open (nunca confiar em filepath.Clean); limitar corpo com http.MaxBytesReader; considerar http.NewCrossOriginProtection (1.25) para rotas mutáveis; log estruturado com slog sem dados sensíveis; ctx do request propagado.",
+      "files": []
+    }
+  ]
+}

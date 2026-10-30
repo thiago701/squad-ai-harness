@@ -1,0 +1,32 @@
+id: python-api-modular
+stack: python
+language_version: "3.10+ (alvo 3.13)"
+framework_version: "stdlib (sem framework por padrao — P1)"
+app_type: aplicacao-modular
+architecture: monolito-modular (dominio/aplicacao/adaptadores)
+context: >
+  Aplicacao Python modular com dominio isolado, value objects validados,
+  colecao de primeira classe, servico de aplicacao, repositorio em memoria
+  trocavel e CLI. Base para API REST (adicione FastAPI SOMENTE se a analise
+  do requisito exigir servidor HTTP).
+prerequisites: "python >= 3.10, pip, make"
+dependencies: []
+dev_dependencies: ["pytest", "pytest-cov", "ruff", "mypy"]
+tests: "pytest com cobertura >=90% (gate no Makefile); unit por camada"
+security_rules: "fragmento seguranca-input; VOs validam na construcao; sem segredos"
+observability: "logging estruturado JSON (adaptadores/registro.py)"
+documentation: "README.md executavel (make test)"
+usage_example: "make install && make check"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "patch/minor de dev-deps livre; major exige rodada de validacao"
+aot_compatible: "n/a"
+components: [tratamento-erros, validacao-entrada, logging-estruturado, testes-unitarios, container, ci]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, object-calisthenics]
+anti_patterns:
+  - "framework web por reflexo (sem requisito de HTTP)"
+  - "dominio importando adaptadores"
+  - "dict anemico circulando no lugar de VO"
+checklist_revisao:
+  - "dominio sem dependencia externa?"
+  - "erros de dominio tipados e testados?"
+  - "cobertura >=90 no gate?"

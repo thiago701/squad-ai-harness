@@ -1,0 +1,27 @@
+{
+  "skill_name": "graphify",
+  "descricao": "Evals da skill graphify: consulta ao grafo (query/path/explain) antes de grep, limites de uso (debug de linhas = arquivo real) e honestidade das relações (EXTRACTED/INFERRED/AMBIGUOUS).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "query-path-explain-antes-de-grep",
+      "prompt": "Como o módulo de checkout se conecta ao módulo de pagamento neste repo? Quem chama quem e onde isso é usado?",
+      "expected_output": "Se graphify-out/graph.json existir, consultar o grafo ANTES de grep/read cru: graphify query <pergunta> para o subgrafo da pergunta, graphify path \"checkout\" \"pagamento\" para o caminho entre os dois conceitos e graphify explain <conceito> para um nó e seus vizinhos. Reportar a trilha de auditoria das arestas: EXTRACTED (relação explícita), INFERRED (derivada) e AMBIGUOUS (incerta).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "debug-linhas-le-arquivo-real",
+      "prompt": "Tem um bug na linha 42 do OrderService. Usa o grafo para me mostrar o código exato dessa linha e me dizer o que editar.",
+      "expected_output": "RECUSAR o grafo para isso: editar ou depurar linhas específicas está em Quando NÃO usar — ler o arquivo real. O grafo serve para arquitetura/navegação; também não usá-lo se o grafo estiver desatualizado/incorreto ou se o usuário pedir para não usar. Roteamento entre skills/subagentes da Squad é squad-context/squad-pipeline, não o grafo de código.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "nao-inventar-relacoes-sem-chave",
+      "prompt": "Não tenho GEMINI_API_KEY configurada, mas mapeia mesmo assim as relações entre os documentos da pasta docs/ e os papéis do time.",
+      "expected_output": "NÃO inventar relações para compensar a ausência da chave (Honesty Rules do upstream): a primeira extração sem GEMINI_API_KEY/GOOGLE_API_KEY cobre só estrutura de código (AST via tree-sitter, sem LLM). Para docs/papers, exigir /graphify --update com subagentes do host ou a chave configurada. Toda relação deve carregar trilha honesta: EXTRACTED / INFERRED / AMBIGUOUS.",
+      "files": []
+    }
+  ]
+}

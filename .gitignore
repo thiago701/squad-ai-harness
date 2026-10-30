@@ -1,0 +1,54 @@
+# SquadAI Harness v0.8.0 — Clean Go 1.24.3 Repository
+# Compiled binaries & local runtime state
+/squad-harness
+/squad-harness.exe
+/*.exe
+/*.old.exe
+.squad-harness/
+coverage.out
+dist/
+bin/
+
+# Environment & Secrets (NEVER commit .env; only .env.example is allowed)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Terraform / Cloud State & Backups
+*.tfstate
+*.tfstate.*
+*.bak
+*.bak-*
+*.db
+*.db.bak*
+
+# Optional Python / Neural Assist Virtualenvs & Caches
+venv/
+.venv/
+.venv-*/
+**/.venv/
+**/.venv-*/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# IDE & OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+.claude/settings.local.json
+.claude/settings.local.*.json
+.claude/pipeline/*/
+
+# Temp & Logs
+*.log
+*.tmp
+*.temp
+tmp/
+scratch/

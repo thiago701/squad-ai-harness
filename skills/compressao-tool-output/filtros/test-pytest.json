@@ -1,0 +1,107 @@
+{
+  "id": "test-pytest",
+  "label": "Pytest",
+  "description": "Preserva falhas, tracebacks e o sumario terminal do pytest.",
+  "category": "test",
+  "priority": 90,
+  "match": {
+    "commands": [
+      "^(?:python3?\\s+-m\\s+)?pytest\\b"
+    ],
+    "patterns": [
+      "=+\\s+(?:\\d+\\s+)?(?:passed|failed|errors?)",
+      "^FAILED ",
+      "^E\\s+"
+    ]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "matchOutput": [
+      {
+        "when": "=+ (\\d+) passed(?:[^=]*?)in ([\\d.]+)s =+",
+        "then": "pytest: $1 passed OK ($2s)",
+        "unless": [
+          "failed",
+          "error",
+          "^E\\s+",
+          "Traceback"
+        ]
+      }
+    ],
+    "dropPatterns": [
+      "^\\.+$",
+      "^\\s*$",
+      "^platform ",
+      "^rootdir:",
+      "^plugins:",
+      "^collecting",
+      "^\\s+File \"(?:/usr/lib/python|.*[/\\\\]site-packages[/\\\\])",
+      "^\\s+at .*node_modules"
+    ],
+    "includePatterns": [
+      "^FAILED ",
+      "^ERROR ",
+      "^E\\s+",
+      "Traceback \\(most recent call last\\):",
+      "=+ short test summary info =+",
+      "AssertionError",
+      "=+ .*(failed|passed|error)"
+    ],
+    "collapsePatterns": [
+      "^E\\s+"
+    ],
+    "deduplicate": true,
+    "truncateLineAt": 300,
+    "headLines": 28,
+    "tailLines": 60,
+    "maxLines": 160,
+    "onEmpty": "pytest: saida suprimida (nenhuma linha acionavel)"
+  },
+  "preserve": {
+    "errorPatterns": [
+      "FAILED",
+      "^ERROR",
+      "Traceback",
+      "AssertionError",
+      "^E\\s+"
+    ],
+    "summaryPatterns": [
+      "=+ .*(passed|failed|error)",
+      "short test summary"
+    ]
+  },
+  "tests": [
+    {
+      "name": "nao pode reportar verde com 1 falha",
+      "input": "..F..\nFAILED tests/test_a.py::test_a - AssertionError\nE assert 1 == 2\n===== 1 failed, 94 passed in 3.10s =====",
+      "expectedContains": [
+        "FAILED tests/test_a.py::test_a",
+        "1 failed"
+      ],
+      "expectedNotContains": [
+        " OK ("
+      ]
+    },
+    {
+      "name": "verde vira uma linha",
+      "input": "platform linux\nrootdir: /x\ncollecting ...\n.............\n===== 95 passed in 12.30s =====",
+      "expectedContains": [
+        "95 passed OK (12.30s)"
+      ],
+      "expectedNotContains": [
+        "rootdir"
+      ]
+    },
+    {
+      "name": "frames de biblioteca saem, frame proprio fica",
+      "input": "Traceback (most recent call last):\n  File \"/usr/lib/python3.13/site-packages/x.py\", line 1, in wrapper\n  File \"core/pedido.py\", line 42, in criar\nAssertionError: esperado 200",
+      "expectedContains": [
+        "core/pedido.py",
+        "AssertionError"
+      ],
+      "expectedNotContains": [
+        "site-packages"
+      ]
+    }
+  ]
+}

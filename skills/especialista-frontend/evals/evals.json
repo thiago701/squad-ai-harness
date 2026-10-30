@@ -1,0 +1,20 @@
+{
+  "skill_name": "especialista-frontend",
+  "descricao": "Evals de frontend Angular 21+ (Ciclo 8). Standalone+Signals+OnPush; a11y; microfrontend e excecao.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "componente-com-estado-signals",
+      "prompt": "Crio um componente Angular de lista de produtos com filtro e estado. Como faco no Angular 21?",
+      "expected_output": "Standalone component (sem NgModule), inject(), control flow @if/@for; estado com Signals (signal/computed) e ChangeDetectionStrategy.OnPush; estado de feature com NgRx Signals (signalStore) se necessario — RxJS so para streams reais. Tipagem estrita. Acessibilidade (semantica, teclado, aria). Estados loading/erro/vazio tratados. TDD com Vitest/Jest + Playwright.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "microfrontend-e-excecao",
+      "prompt": "Vou comecar o app ja com microfrontends (Module Federation). Boa pratica?",
+      "expected_output": "Microfrontend e EXCECAO, nao default: so com times/deploys independentes reais. Para a maioria, monolito frontend modular (libs/rotas lazy) atende — distributed monolith no front e o mesmo erro do backend. Arbitrar com arquiteto-minimalista (P1). Decisoes visuais sao do ui-ux-pro-max; este skill materializa em Angular.",
+      "files": []
+    }
+  ]
+}

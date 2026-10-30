@@ -1,0 +1,20 @@
+{
+  "skill_name": "clean-code-craftsman",
+  "descricao": "Evals de qualidade micro (Ciclo 8). Naming, funcoes, smells; preserva comportamento.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "funcao-grande-com-multiplas-responsabilidades",
+      "prompt": "Essa funcao tem 80 linhas, faz parse, validacao, calculo e I/O. Como melhoro?",
+      "expected_output": "Nivel MICRO: extrair funcoes pequenas com responsabilidade unica e nomes que revelam intencao (parse/validar/calcular/persistir). Niveis de abstracao consistentes por funcao. Preservar comportamento (coberto por testes antes do refactor). Nomear smells. NAO mexer em arquitetura macro/camadas (isso e do engenheiro-clean-architect).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "comentario-redundante-vs-intencao",
+      "prompt": "Devo comentar todo metodo explicando o que ele faz?",
+      "expected_output": "NAO. Codigo que se explica dispensa comentario do 'o que' (naming-as-doc). Remover comentarios redundantes/obsoletos/codigo morto comentado. Preservar comentarios de INTENCAO (o porque), aviso de consequencia, legais, TODO com issue, JavaDoc publico contratual. Comentario nao substitui nome ruim — renomear primeiro.",
+      "files": []
+    }
+  ]
+}

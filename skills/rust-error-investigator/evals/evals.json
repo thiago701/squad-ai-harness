@@ -1,0 +1,48 @@
+{
+  "skill_name": "rust-error-investigator",
+  "descricao": "Evals da v1.0.0. Cobrem leitura dos rótulos do borrow checker (E0502), `'static` em spawn (E0373 × E0521), future não-Send com MutexGuard em await, MSRV/--locked/linker no CI, PoisonError/teste travado e migração para a edição 2024.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "borrow-checker-mutar-enquanto-itera",
+      "prompt": "Estou recebendo error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable, no código: let first = &v[0]; v.push(4); println!(\"{first}\"); O compilador sugere .clone(). Posso só colocar Rc<RefCell<Vec<_>>> e clonar tudo?",
+      "expected_output": "Aplicar o protocolo do error-investigator (classificar, evidência, diagnóstico) antes de corrigir. Ler os três rótulos da mensagem: empréstimo imutável criado em &v[0], conflito em v.push(4) (pode realocar o buffer e invalidar `first`), e uso posterior em println!. Explicar o porquê (push pode realocar → referência pendente evitada pelo compilador). Recusar Rc<RefCell<_>> por reflexo (troca erro de compilação por pânico BorrowMutError e esconde erro de modelagem) e clone cego. Correções em ordem: copiar o valor (`let first = v[0];` para tipos Copy), usar/imprimir antes do push (reordenar), guardar índice em vez de referência, separar dados/estrutura; para mutar coleção iterando: coletar índices e aplicar depois, retain/extract_if. Mostrar código corrigido compilando e um teste, e rodar cargo clippy -D warnings. Diagnóstico formal com evidência antes/depois.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "spawn-exige-static-e0521",
+      "prompt": "fn processa(s: &str) { std::thread::spawn(|| println!(\"{s}\")); } dá error[E0521]: borrowed data escapes outside of function e também E0373. Já coloquei `move` e continua o E0521. Por quê?",
+      "expected_output": "Diagnosticar a diferença: E0373 (closure pode sobreviver à função e empresta `s`) é resolvido por `move`, mas `move` leva a REFERÊNCIA `&str` (dura só durante a função) — thread::spawn exige F: 'static, então E0521 persiste ('s escapes the function body here', 'argument requires that '1 must outlive 'static'). Correções: passar dado owned (`let s = s.to_owned();` + move, ou Arc<str>), ou usar std::thread::scope (threads com escopo podem emprestar e são unidas no fim), ou em async JoinSet/Arc. Não 'promover' a referência a 'static com unsafe/Box::leak sem decisão consciente. Mostrar o código corrigido, teste e evidência antes/depois (mesmo comando falhando e passando); mencionar rustc --explain E0521.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "future-nao-send-mutexguard-await",
+      "prompt": "No tokio::spawn recebo 'future cannot be sent between threads safely ... the trait Send is not implemented for MutexGuard<'_, i32> ... used across an await'. Tentei fazer drop(g) antes do await e continua o erro. O que faço?",
+      "expected_output": "Ler a mensagem: o valor (`g`, std::sync::MutexGuard) e o `.await` que o atravessa; tokio::spawn exige F: Send + 'static. Confirmar que drop(g) explícito não resolve (verificado no 1.99.0: continua rejeitado) porque o escopo do guard ainda cobre o await para a análise — usar bloco { let g = m.lock().unwrap(); let v = *g; } antes do .await, ou copiar o dado. Alternativas: tokio::sync::Mutex só se o lock precisa cobrir o .await (e avaliar contenção), ou uma tarefa dona do estado + canal (rust-async-services). Explicar por que MutexGuard não é Send e o risco de deadlock ao segurar lock síncrono através de await. Mostrar código corrigido compilando e teste; mesmo padrão vale para Rc/RefCell.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "cargo-msrv-locked-e-linker",
+      "prompt": "No CI o build falha com: 'error: rustc 1.95.0 is not supported by the following package: app@0.1.0 requires rustc 1.99'. Na minha máquina funciona. Posso passar --ignore-rust-version? Também às vezes aparece 'cannot create the lock file because --locked was passed' e 'unable to find library -lssl'.",
+      "expected_output": "Triagem local × CI: comparar `rustc -Vv`/`cargo -V`, rust-toolchain.toml, imagem de CI. O erro de MSRV significa que o CI usa toolchain mais antigo que o rust-version do Cargo.toml — atualizar o toolchain do CI (rustup update / rust-toolchain.toml / imagem) em vez de --ignore-rust-version (que mascara incompatibilidade real; só com decisão consciente e teste). `--locked` com lock ausente/desatualizado: gerar/atualizar o Cargo.lock localmente, revisar o diff (supply chain) e comitar; não remover --locked do CI. `-lssl`: falta libssl-dev/pkg-config na imagem de build, ou trocar por rustls (preferência do Squad AI); verificar com cargo build -vv e cargo tree -i openssl-sys. Não rodar scripts/binários de origem desconhecida para 'consertar'. Entregar diagnóstico com evidência e pedir GATE para mudanças de dependência/CI.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "panico-poison-e-teste-que-trava",
+      "prompt": "Meu serviço Rust loga 'called `Result::unwrap()` on an `Err` value: PoisonError { .. }' e depois cai. E o cargo test às vezes fica pendurado para sempre num teste async com tokio::select!. Como investigo?",
+      "expected_output": "PoisonError: significa que OUTRA thread entrou em pânico segurando o Mutex — procurar o PRIMEIRO pânico no log/backtrace (RUST_BACKTRACE=1, primeiro frame do código do usuário), não o unwrap do lock; corrigir a causa original (invariante/entrada/índice), decidir conscientemente entre propagar o envenenamento, recuperar com into_inner ou redesenhar (atores/Arc<Mutex> mínimo); evitar unwrap em lock em caminho de produção e tratar com erro tipado. Teste que trava: cargo test não tem timeout — reproduzir com `timeout 60 cargo test -- --nocapture --test-threads=1` ou cargo nextest (slow-timeout), #[tokio::test(start_paused = true)] com tokio::time::timeout; causas típicas: select! com ramo `else =>` quando um ramo de cancelamento/recv fica pendente (verificado: o loop nunca termina), canal não fechado, JoinSet sem join_next. Tratar None explicitamente em vez de depender de `else`. Entregar diagnóstico formal e teste de regressão que falha sem a correção.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "migracao-2024-extern-staticmut-letchains",
+      "prompt": "Mudei a edição para 2024 e agora aparecem: 'extern blocks must be unsafe', 'unsafe attribute used without unsafe', 'creating a shared reference to mutable static' e 'let chains are only allowed in Rust 2024 or later' em outro crate do workspace. Me ajuda a resolver sem silenciar os erros.",
+      "expected_output": "Tratar como migração deliberada da edição 2024, não como bug: `unsafe extern \"C\" { … }` (itens podem ser `safe fn` só quando provadamente seguros), `#[unsafe(no_mangle)]`/`#[unsafe(export_name)]`, static mut sem referências (`&raw const`/`&raw mut`, ou AtomicXxx/Mutex/LazyLock<Mutex<_>> — preferir eliminar o static mut). O erro de let chains vem de um crate ainda em edition 2021 (let chains exigem Rust ≥ 1.88 E edição 2024): migrar também aquele crate (edition por pacote no workspace) ou reescrever com if-let aninhado/matches!. Procedimento: cargo fix --edition em commit isolado, build+test+clippy, revisar diff; qualquer unsafe novo exige // SAFETY: e passa pela rust-unsafe-security; confirmar rust-version/toolchain do CI. Não usar #![allow(...)] para calar. Entregar evidência antes/depois e pedir GATE (muda edição/MSRV).",
+      "files": []
+    }
+  ]
+}

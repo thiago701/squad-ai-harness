@@ -1,0 +1,18 @@
+{
+  "schema": "concorrencia-v1",
+  "concorrencia_max": 3,
+  "profundidade_max_delegacao": 3,
+  "lease_ttl_s": 900,
+  "sem_progresso_apos_s": 600,
+  "escalonar_apos_sem_progresso": 2,
+  "modulos_exclusivos": ["memory/", "governance/registry/", ".claude/pipeline/"],
+  "doc": {
+    "schema": "Versão do contrato. O carregador recusa schema diferente e cai nos defaults do módulo.",
+    "concorrencia_max": "Máximo de subagentes ativos ao mesmo tempo. Com ativos >= concorrencia_max o despacho deve AGUARDAR.",
+    "profundidade_max_delegacao": "Profundidade máxima da cadeia de delegação (orquestrador = 0, primeiro subagente = 1). Acima disso o despacho é BLOQUEADO.",
+    "lease_ttl_s": "Validade, em segundos, de um lease por módulo. Vencido, outro dono pode tomá-lo; o dono atual renova adquirindo de novo.",
+    "sem_progresso_apos_s": "Segundos sem novo marco de progresso para um run contar como uma ocorrência de sem_progresso (a cada janela inteira sem marco, mais uma ocorrência).",
+    "escalonar_apos_sem_progresso": "Ocorrências consecutivas de sem_progresso a partir das quais o motor deve parar e enfileirar decisão humana (status escalar).",
+    "modulos_exclusivos": "Prefixos de caminho (relativos à raiz) em que só um escritor por vez é permitido; o motor adquire lease antes de delegar escrita neles."
+  }
+}

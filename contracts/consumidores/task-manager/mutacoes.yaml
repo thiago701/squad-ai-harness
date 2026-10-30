@@ -1,0 +1,104 @@
+# Mutações DO PROJETO para o bench (`cr.py bench`). As de contrato (OpenAPI) e Gateway (SAM)
+# são geradas automaticamente a partir do que o consumidor usa; aqui ficam as que dependem do
+# código: serialização, isolamento, status, semântica. tipo: quebra | compativel.
+# Uma troca = primeira ocorrência de `antigo` após `ancora`. Mutações rodam numa cópia temporária.
+mutacoes:
+- id: java-dueDate-snake-case
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/dto/TaskResponse.java
+  descricao: serialização renomeia dueDate → due_date
+  trocas:
+  - ancora: public record TaskResponse(
+    antigo: '    String dueDate,'
+    novo: '    @com.fasterxml.jackson.annotation.JsonProperty("due_date") String dueDate,'
+- id: java-null-omitido
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/JsonSupport.java
+  descricao: null passa a ser omitido (ausência ≠ null)
+  trocas:
+  - ancora: JsonMapper.builder()
+    antigo: .addModule(new JavaTimeModule())
+    novo: ".addModule(new JavaTimeModule())\n            .serializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)"
+- id: java-isolamento-quebrado
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/application/GetTaskUseCase.java
+  descricao: GET devolve tarefa de outro usuário (BOLA/IDOR)
+  trocas:
+  - ancora: return repository.findById(id)
+    antigo: '            .filter(task -> task.ownerId().equals(OwnerId.of(callerId)))
+
+      '
+    novo: ''
+- id: java-erro-sem-problem-json
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/TaskApiGatewayHandler.java
+  descricao: erros deixam de sair como application/problem+json
+  trocas:
+  - ancora: class TaskApiGatewayHandler
+    antigo: PROBLEM_JSON = "application/problem+json"
+    novo: PROBLEM_JSON = "application/json"
+- id: java-create-200
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/TaskRoutes.java
+  descricao: criação devolve 200 em vez de 201
+  trocas:
+  - ancora: public HttpResult create(
+    antigo: HttpResult.of(201, response)
+    novo: HttpResult.of(200, response)
+- id: java-total-sem-todo
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/dto/TaskSummaryResponse.java
+  descricao: total do resumo deixa de somar TODO
+  trocas:
+  - ancora: public static TaskSummaryResponse from(
+    antigo: '            summary.total(),'
+    novo: '            summary.doing() + summary.done() + summary.cancelled(),'
+- id: java-filtro-ignorado
+  tipo: quebra
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/TaskRoutes.java
+  descricao: filtro ?status= ignorado
+  trocas:
+  - ancora: private List<Task> listedTasks(
+    antigo: .map(status -> listTasks.execute(callerId, status))
+    novo: .map(status -> listTasks.execute(callerId))
+- id: ok-java-campo-novo
+  tipo: compativel
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/dto/TaskResponse.java
+  descricao: campo novo emitido na resposta (tolerant reader)
+  trocas:
+  - ancora: public record TaskResponse(
+    antigo: '    String updatedAt
+
+      ) {'
+    novo: "    String updatedAt,\n    String revision\n) {"
+  - ancora: public static TaskResponse from(
+    antigo: '            task.timestamps().updatedAt().toString()
+
+      '
+    novo: "            task.timestamps().updatedAt().toString(),\n            \"r1\"\n"
+- id: ok-java-header-extra
+  tipo: compativel
+  alvo: implementacao
+  arquivo: app/src/main/java/com/squadai/taskmanager/api/TaskApiGatewayHandler.java
+  descricao: header de resposta adicional
+  trocas:
+  - ancora: private APIGatewayV2HTTPResponse success(
+    antigo: Map.of("Content-Type", JSON)
+    novo: Map.of("Content-Type", JSON, "X-Content-Type-Options", "nosniff")
+- id: ok-sam-remove-rota-summary
+  tipo: compativel
+  alvo: gateway
+  arquivo: app/template.yaml
+  descricao: 'rota do resumo removida: cai em /tasks/{taskId} e o handler roteia pelo path — compatível (B registra risco de rota sombreada)'
+  trocas:
+  - ancora: 'Events:'
+    antigo: "        GetTaskSummary:\n          Type: HttpApi\n          Properties:\n            ApiId: !Ref TaskHttpApi\n            Path: /tasks/summary\n            Method: GET\n"
+    novo: ''

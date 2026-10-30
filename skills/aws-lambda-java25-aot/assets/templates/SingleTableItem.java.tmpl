@@ -1,0 +1,75 @@
+package {{ base_package }}.model;
+
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+
+{{#each single_table_imports}}
+import {{ path }};
+{{/each}}
+
+/**
+ * Shape canônico do single-table design.
+ *
+ * Cada item da tabela {{ single_table_name }} é serializado/deserializado
+ * via este bean — campos comuns (PK, SK, _type, GSIs) + atributos de qualquer
+ * entidade no formato wide-row. A camada de domínio (records User, Order, etc.)
+ * faz a conversão para/de SingleTableItem nas bordas do repositório.
+ *
+ * Por que classe mutável e não record: BeanTableSchema do AWS SDK v2 Enhanced
+ * Client requer JavaBeans (getters/setters) para deserialização via reflection.
+ * Records puros têm suporte experimental mas o caminho estável continua sendo
+ * @DynamoDbBean.
+ */
+@DynamoDbBean
+public class SingleTableItem {
+
+    private String pk;
+    private String sk;
+    private String type;
+    private String gsi1pk;
+    private String gsi1sk;
+    private String gsi2pk;
+    private String gsi2sk;
+    private Long ttl;
+
+    // Atributos de domínio — wide row. Adicione conforme as entidades do schema.
+{{#each single_table_fields}}
+    private {{ java_type }} {{ name }};
+{{/each}}
+
+    @DynamoDbPartitionKey
+    public String getPk() { return pk; }
+    public void setPk(String pk) { this.pk = pk; }
+
+    @DynamoDbSortKey
+    public String getSk() { return sk; }
+    public void setSk(String sk) { this.sk = sk; }
+
+    @DynamoDbAttribute("_type")
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "GSI1")
+    public String getGsi1pk() { return gsi1pk; }
+    public void setGsi1pk(String gsi1pk) { this.gsi1pk = gsi1pk; }
+
+    @DynamoDbSecondarySortKey(indexNames = "GSI1")
+    public String getGsi1sk() { return gsi1sk; }
+    public void setGsi1sk(String gsi1sk) { this.gsi1sk = gsi1sk; }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "GSI2")
+    public String getGsi2pk() { return gsi2pk; }
+    public void setGsi2pk(String gsi2pk) { this.gsi2pk = gsi2pk; }
+
+    @DynamoDbSecondarySortKey(indexNames = "GSI2")
+    public String getGsi2sk() { return gsi2sk; }
+    public void setGsi2sk(String gsi2sk) { this.gsi2sk = gsi2sk; }
+
+    public Long getTtl() { return ttl; }
+    public void setTtl(Long ttl) { this.ttl = ttl; }
+
+{{#each single_table_fields}}
+    public {{ java_type }} get{{ name_pascal }}() { return {{ name }}; }
+    public void set{{ name_pascal }}({{ java_type }} {{ name }}) { this.{{ name }} = {{ name }}; }
+
+{{/each}}
+}

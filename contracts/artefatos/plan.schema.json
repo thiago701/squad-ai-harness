@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://squad-ai.local/contracts/artefatos/plan.schema.json",
+  "title": "Contrato de artefato PLAN (plano de implementacao)",
+  "description": "Contrato tipado do artefato de fase Plan. O plano e um DAG: cada passo tem id, dependencias e criterio de sucesso (e-book Design Patterns cap.2). Validado na fronteira pelo jev.validador-plano (estrutura + DAG) e pelo jev.contrato-artefato (presenca de campos). I5 (Onda 2/3 do plano de evolucao de 11/10/2026): em planos standard/large todo passo declara um `oraculo` executavel (passo -> alvo -> oraculo); passo de arquitetura exige smoke/ArchUnit ou ADR executavel. O GATE 1 nao recebe plano sem oraculo (scripts/gate1_plano.py).",
+  "type": "object",
+  "required": [
+    "objetivo",
+    "passos"
+  ],
+  "properties": {
+    "objetivo": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Objetivo do plano (deve casar com o PRD aprovado no GATE 1)."
+    },
+    "passos": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "descricao",
+          "criterio_sucesso"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identificador unico do passo."
+          },
+          "descricao": {
+            "type": "string",
+            "minLength": 1,
+            "description": "O que fazer, em linguagem natural."
+          },
+          "ferramenta": {
+            "type": "string",
+            "description": "Skill/ferramenta responsavel (opcional; deve constar na allowlist)."
+          },
+          "depende_de": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ids dos passos que precisam terminar antes deste (DAG sem ciclos)."
+          },
+          "criterio_sucesso": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Como verificar que o passo terminou certo."
+          },
+          "exige_gate": {
+            "type": "boolean",
+            "default": false,
+            "description": "Obrigatorio true em passos destrutivos/irreversiveis (commit, push, deploy, drop, delete, terraform_destroy, revogar_secret)."
+          },
+          "tipo_passo": {
+            "type": "string",
+            "enum": [
+              "implementacao",
+              "arquitetura",
+              "config",
+              "infra",
+              "teste",
+              "docs",
+              "dados"
+            ],
+            "description": "Natureza do passo. `arquitetura` = decisao estrutural: so aceita oraculo smoke, archunit ou adr (executavel)."
+          },
+          "oraculo": {
+            "type": "object",
+            "required": [
+              "tipo",
+              "ref"
+            ],
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "teste",
+                  "comando",
+                  "archunit",
+                  "smoke",
+                  "contrato",
+                  "lint",
+                  "adr"
+                ],
+                "description": "Quem decide se o passo terminou certo. Nunca 'o modelo considera ok'."
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Teste (tests/test_x.py::test_y), comando, regra ArchUnit, smoke (endpoint/script), schema de contrato, ou caminho do ADR."
+              },
+              "esperado": {
+                "type": "string",
+                "description": "Resultado observavel esperado (exit 0, status 200, 'N passed'...)."
+              },
+              "comando": {
+                "type": "string",
+                "description": "Obrigatorio quando tipo=adr: comando que verifica a decisao (ADR executavel)."
+              }
+            },
+            "additionalProperties": true,
+            "description": "Oraculo do passo. Obrigatorio em standard/large; opcional nos demais tiers (quando presente, e validado)."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "versao_plano": {
+      "type": "string",
+      "description": "Versao do plano (opcional)."
+    },
+    "tamanho": {
+      "type": "string",
+      "enum": [
+        "trivial",
+        "small",
+        "standard",
+        "large"
+      ],
+      "description": "Tier da entrega (vem do preflight). standard/large exigem oraculo em todo passo."
+    }
+  },
+  "additionalProperties": true
+}

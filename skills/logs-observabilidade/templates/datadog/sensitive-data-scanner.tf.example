@@ -1,0 +1,87 @@
+# (arquivo .tf.example: copie para o seu módulo Terraform — "**/*.tf" é caminho protegido no governance/protected-ruler.json)
+# Camada 3 no Datadog — Sensitive Data Scanner (references/datadog.md §4).
+# Roda no backend ANTES de indexar; só afeta logs ingeridos após a regra. Não substitui mascarar na origem.
+# Provider: DataDog/datadog ≥ 3.x (datadog_sensitive_data_scanner_group / _rule / _group_order).
+
+resource "datadog_sensitive_data_scanner_group" "pedidos_prod" {
+  name         = "squad · pedidos · prod"
+  description  = "PII brasileira, cartão e credenciais que escaparam das camadas 1 e 2"
+  product_list = ["logs"]
+  is_enabled   = true
+  filter {
+    query = "service:pedidos env:prod"
+  }
+}
+
+# Regras de biblioteca (ids via data source) — CPF/CNPJ/AWS keys/JWT/cartões
+data "datadog_sensitive_data_scanner_standard_pattern" "cpf" {
+  filter = "Brazilian Cadastro de Pessoas Físicas (CPF) Scanner"
+}
+data "datadog_sensitive_data_scanner_standard_pattern" "cnpj" {
+  filter = "Brazilian Cadastro Nacional da Pessoa Jurídica (CNPJ) Scanner"
+}
+data "datadog_sensitive_data_scanner_standard_pattern" "aws_access_key" {
+  filter = "AWS Access Key ID Scanner"
+}
+data "datadog_sensitive_data_scanner_standard_pattern" "aws_secret_key" {
+  filter = "AWS Secret Access Key Scanner"
+}
+
+locals {
+  # mesmo formato canônico do mascara.py / Mascara.java: operador reconhece o tipo sem ver o valor
+  regras_biblioteca = {
+    cpf            = { id = data.datadog_sensitive_data_scanner_standard_pattern.cpf.id, texto = "***.***.***-**", categoria = "cpf" }
+    cnpj           = { id = data.datadog_sensitive_data_scanner_standard_pattern.cnpj.id, texto = "**.***.***/****-**", categoria = "cnpj" }
+    aws_access_key = { id = data.datadog_sensitive_data_scanner_standard_pattern.aws_access_key.id, texto = "AKIA************", categoria = "aws_access_key" }
+    aws_secret_key = { id = data.datadog_sensitive_data_scanner_standard_pattern.aws_secret_key.id, texto = "[AWS_SECRET:****]", categoria = "aws_secret_key" }
+  }
+}
+
+resource "datadog_sensitive_data_scanner_rule" "biblioteca" {
+  for_each            = local.regras_biblioteca
+  name                = "squad · ${each.key}"
+  group_id            = datadog_sensitive_data_scanner_group.pedidos_prod.id
+  standard_pattern_id = each.value.id
+  is_enabled          = true
+  excluded_namespaces = ["host", "service", "env", "status", "trace_id", "date"]
+  tags                = ["sensitive_data:true", "sensitive_data_category:${each.value.categoria}"]
+  text_replacement {
+    type                = "text"
+    replacement_string  = each.value.texto
+  }
+}
+
+# Regras próprias (regex) — JWT e Authorization: Bearer
+resource "datadog_sensitive_data_scanner_rule" "jwt" {
+  name        = "squad · jwt"
+  group_id    = datadog_sensitive_data_scanner_group.pedidos_prod.id
+  pattern     = "eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}"
+  is_enabled  = true
+  tags        = ["sensitive_data:true", "sensitive_data_category:jwt"]
+  text_replacement {
+    type               = "text"
+    replacement_string = "[JWT:****]"
+  }
+}
+
+resource "datadog_sensitive_data_scanner_rule" "bearer" {
+  name        = "squad · authorization bearer"
+  group_id    = datadog_sensitive_data_scanner_group.pedidos_prod.id
+  pattern     = "(?i)(bearer|basic)\\s+[A-Za-z0-9\\-._~+/=]{8,}"
+  is_enabled  = true
+  tags        = ["sensitive_data:true", "sensitive_data_category:authorization"]
+  text_replacement {
+    type               = "partial_replacement_from_end"
+    number_of_chars    = 4
+    replacement_string = "****"
+  }
+}
+
+# Monitor "PII escapou para o log": qualquer match é bug nas camadas 1/2 → corrigir a origem (dd-monitors)
+resource "datadog_monitor" "pii_escapou" {
+  name    = "[pedidos][prod] dado sensível chegou ao log (camadas 1/2 falharam)"
+  type    = "log alert"
+  query   = "logs(\"service:pedidos env:prod sensitive_data:true\").index(\"*\").rollup(\"count\").last(\"15m\") > 0"
+  message = "Dado sensível só deveria ser barrado na origem/encoder. Corrija o código (LOG-01/LOG-02) e rotacione se for segredo. @slack-squad-seguranca"
+  tags    = ["squad:logs-observabilidade", "severidade:alta"]
+}

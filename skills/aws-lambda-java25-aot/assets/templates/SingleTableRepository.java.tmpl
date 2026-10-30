@@ -1,0 +1,54 @@
+package {{ base_package }}.repository;
+
+import org.springframework.stereotype.Repository;
+
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+
+import {{ base_package }}.model.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Repository para o single-table {{ single_table_name }}.
+ *
+ * Cada método cobre 1 access pattern. Adicione novos métodos conforme novas
+ * queries surgirem — não use 'queryByExample' genérico, single-table exige
+ * intencionalidade em cada query (PK/SK ou GSI).
+ */
+@Repository
+public class SingleTableRepository {
+
+    private final DynamoDbTable<SingleTableItem> table;
+
+    public SingleTableRepository(DynamoDbTable<SingleTableItem> table) {
+        this.table = table;
+    }
+
+{{#each entities}}
+    // ─── {{ name }} ─────────────────────────────────────────────────────
+
+    public Optional<{{ name }}> get{{ name }}(String id) {
+        SingleTableItem item = table.getItem(Key.builder()
+            .partitionValue("{{ type_discriminator }}#" + id)
+            .sortValue("{{ type_discriminator }}#" + id)
+            .build());
+        return Optional.ofNullable(item).map({{ name }}::fromItem);
+    }
+
+    public void save{{ name }}({{ name }} entity) {
+        table.putItem(entity.toItem());
+    }
+
+    public void delete{{ name }}(String id) {
+        table.deleteItem(Key.builder()
+            .partitionValue("{{ type_discriminator }}#" + id)
+            .sortValue("{{ type_discriminator }}#" + id)
+            .build());
+    }
+
+{{/each}}
+}

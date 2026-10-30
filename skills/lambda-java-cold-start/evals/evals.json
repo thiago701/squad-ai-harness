@@ -1,0 +1,27 @@
+{
+  "skill_name": "lambda-java-cold-start",
+  "descricao": "Evals da matriz de decisão de cold start Lambda Java 25: escolha por SLA/framework/deploy, obrigatoriedade de PublishedVersions no SnapStart e riscos de estado capturado no snapshot.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "matriz-de-decisao-por-sla",
+      "prompt": "Tenho uma API nova em Java 25 no Lambda, SLA de p99 200ms, deploy semanal e Spring Boot 4. Qual estratégia de cold start escolho e por quê?",
+      "expected_output": "Aplicar a Matriz de Decisão: SLA 200ms → SnapStart + Priming OU GraalVM Native. Cruzar as outras perguntas: Spring Boot 4 + AOT → GraalVM Native com suporte first-class; deploy raro (semanal+) → Native (build AOT de 5-15min amortizado). Para projeto NOVO fixando Java 25, o padrão da Squad é GraalVM Native (decisão 2026-07-05): cold start ~30-150ms vs 200-500ms do SnapStart, ~4× menor que java21 (medir). Gerar via a skill aws-lambda-java25-aot e usar arm64 sempre (20% mais barato, cold start <= x86).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "snapstart-exige-versao-publicada",
+      "prompt": "Habilitei SnapStart na função e deixei o alias prod apontando pra $LATEST — não vou ficar publicando versão a cada deploy. Funciona assim?",
+      "expected_output": "Recusar/corrigir: SnapStart requer ApplyOn: PublishedVersions — não funciona com $LATEST (risco documentado). O fluxo correto: aws lambda update-function-configuration --snap-start ApplyOn=PublishedVersions, depois aws lambda publish-version, e o alias prod apontando para a versão publicada (nunca $LATEST com SnapStart). Sem versão publicada o snapshot não é aplicado e não há o ganho esperado (200-500ms vs 2-8s sem otimização).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "estado-do-snapshot-uuid-e-conexoes",
+      "prompt": "Depois de ativar SnapStart, todos os pedidos saem com o mesmo correlationId e, de vez em quando, chamadas ao S3 morrem com conexão stale. O que está errado?",
+      "expected_output": "Diagnosticar estado capturado no init: (1) UUID/random seed gerado no init é IGUAL em todas as instâncias do snapshot — gerar no invoke time (dentro do handler), nunca em campo de instância inicializado no init; (2) conexões de rede abertas antes do snapshot podem ficar stale após o restore — usar lazy initialization (@Lazy) ou clientes stateless (ex.: UrlConnectionHttpClient), inicializados na primeira chamada pós-restore; (3) caches com estado temporal devem implementar CRaCResource (beforeCheckpoint limpa, afterRestore faz warmup). Priming fica atrás da env var LAMBDA_SNAP_START_OPTIMIZATION.",
+      "files": []
+    }
+  ]
+}

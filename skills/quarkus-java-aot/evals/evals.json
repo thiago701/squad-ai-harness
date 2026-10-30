@@ -1,0 +1,20 @@
+{
+  "skill_name": "quarkus-java-aot",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "native-reachability-metadata",
+      "prompt": "Compilei meu serviço Quarkus com -Dnative e ele quebra em runtime ao desserializar um POJO vindo de uma lib de terceiro. No modo JVM funciona.",
+      "expected_output": "Native image não tem reflection irrestrita: falta reachability metadata para o tipo refletido. Anotar com @RegisterForReflection (ou registrar resource/proxy config); em GraalVM 25 a falta de metadata lança subclasse de LinkageError em runtime. Preferir EXTENSÕES Quarkus (trazem o metadata build-time) a dependência crua; se a lib de terceiro não tem suporte native, isso é um risco a validar antes. Não compilar native no loop de dev (lento/RAM-hungry) — usar quarkus dev (JVM+live reload) e validar o binário com @QuarkusIntegrationTest. Alvo LTS 3.33 + Mandrel 25.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "quarkus-vs-spring-vs-lambda",
+      "prompt": "Devo usar Quarkus ou Spring Boot para um novo microserviço? E se for na AWS Lambda?",
+      "expected_output": "Quarkus quando cold-start e RSS importam: serverless, escala-a-zero, muitos pods pequenos, Kubernetes-native — ele faz o trabalho em build-time (DI/config) e compila native (cold-start ms). Spring Boot quando o time já domina Spring e não há requisito de cold-start/memória (java25-spring-boot). Para AWS Lambda Java especificamente, escopo é aws-lambda-java25-aot (empacotamento e cold-start próprios de Lambda), não Quarkus genérico. Nem todo serviço precisa native — JVM mode do Quarkus também é ótimo em throughput.",
+      "files": []
+    }
+  ]
+}

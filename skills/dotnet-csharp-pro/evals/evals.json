@@ -1,0 +1,20 @@
+{
+  "skill_name": "dotnet-csharp-pro",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "native-aot-json-source-gen",
+      "prompt": "Publiquei minha Minimal API com <PublishAot>true</PublishAot> e ela retorna 500 ao serializar o DTO de resposta. Em modo JIT funciona. Por quê?",
+      "expected_output": "Sob Native AOT não há reflection irrestrita: o trimmer remove o serializador reflection-based do System.Text.Json. Solução: usar o SOURCE GENERATOR do STJ — criar um JsonSerializerContext com [JsonSerializable(typeof(SeuDto))] e registrá-lo (TypeInfoResolverChain / AddContext). Todo tipo em corpo HTTP precisa estar no contexto. Tratar os warnings IL2026/IL3050 como erros (eles avisavam disso). Lembrar: MVC não é AOT-compatível, só Minimal APIs; Newtonsoft não é AOT-friendly.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "csharp14-extension-members",
+      "prompt": "Quero adicionar uma propriedade IsEmpty e um operador a IEnumerable<T> sem poluir com métodos de extensão estáticos feios. Dá para fazer em C# 14?",
+      "expected_output": "Sim — C# 14 traz extension MEMBERS (a mudança-bandeira): um bloco extension permite propriedades de extensão, operadores de extensão e membros estáticos de extensão, não só métodos. Ex.: public static class Enumerables { extension<T>(IEnumerable<T> src) { public bool IsEmpty => !src.Any(); } }. Mencionar também field keyword (backing field em accessor custom) como recurso irmão do C# 14. Alvo .NET 10 LTS.",
+      "files": []
+    }
+  ]
+}

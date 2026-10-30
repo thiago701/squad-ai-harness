@@ -1,0 +1,31 @@
+id: typescript-biblioteca-modular
+stack: typescript
+language_version: "TypeScript 7 (strict)"
+framework_version: "NodeNext ESM, sem framework"
+app_type: biblioteca-modular
+architecture: "modular (dominio/aplicacao/adaptadores) com contratos explicitos"
+context: >
+  Biblioteca TypeScript estrita: branded types para primitivos do dominio,
+  Resultado como union discriminada (sem excecao para fluxo esperado),
+  colecao de primeira classe, validacao em runtime na borda e zero any.
+prerequisites: "node >= 22, npm"
+dependencies: []
+dev_dependencies: ["typescript", "@types/node"]
+tests: "node:test sobre dist compilado; gate de cobertura >=90% de linhas"
+security_rules: "fragmento seguranca-input; entrada unknown validada em runtime na borda"
+observability: "logs JSON no adaptador CLI"
+documentation: "README.md executavel"
+usage_example: "npm install && npm test"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "minor de typescript livre; major exige rodada de validacao"
+aot_compatible: "n/a"
+components: [tratamento-erros, validacao-entrada, testes-unitarios, ci, container]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, object-calisthenics]
+anti_patterns:
+  - "any/as para calar o compilador"
+  - "excecao para fluxo esperado (use Resultado)"
+  - "generics decorativos sem restricao"
+checklist_revisao:
+  - "zero any? zero @ts-ignore?"
+  - "borda valida unknown antes de virar tipo de dominio?"
+  - "cobertura >=90 no gate?"

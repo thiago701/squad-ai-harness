@@ -1,0 +1,55 @@
+{
+  "skill_name": "trace2local",
+  "descricao": "Evals da skill trace2local (instalar, configurar e usar o Trace2Local; Mock Connect; MCP). Cenarios with/without: sem a skill, o agente tende a opinar a partir do codigo e logs soltos, sem ler a execucao real, e a ligar mutacoes/dados completos no MCP.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "instalar-spring-boot-embedded",
+      "prompt": "Quero ver a arvore de execucao do meu servico Spring Boot 4 localmente. Instala o Trace2Local pra mim.",
+      "expected_output": "Escolhe o modo embedded. Roda primeiro o goal analyze do trace2local-maven-plugin (somente leitura) e mostra canvas-map.md/report.md; so entao propoe o configure (BOM + starter, glossario, application-trace2local.yml, logback) com backup e diff revisado pelo humano. Orienta @Trace2Local nos metodos de negocio e Trace2LocalAws/Trace2LocalJdbc nos clientes. Verificacao: UI em http://localhost:9876/trace2local, execucao aparece, arvore sem ORFAO falso. Mantem loopback e redaction strict.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "lambda-nao-aparece-no-station",
+      "prompt": "Configurei o Station mas nenhuma execucao das minhas Lambdas no LocalStack aparece na UI.",
+      "expected_output": "Checklist de causas reais: TRACE2LOCAL_STATION_ENDPOINT com host da rede do compose e token igual ao do Station (LAMBDA_DOCKER_NETWORK), procurar o log 'WARN Trace2Local: o envio ao Station nao confirmou', handler estendendo Trace2LocalLambdaHandler com remoteParentOf, versao da lib com sampler alwaysOn (Sampled=0 do API Gateway descartava tudo). Nao recomenda expor o Station fora do loopback para 'testar'.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "por-que-falhou-com-evidencia",
+      "prompt": "O POST /pix/transfers falhou no meu ambiente local. Por que?",
+      "expected_output": "Le a execucao antes de opinar: diagnose_failure (MCP) ou Arvore/Investigacao na UI. Responde com executionId e [nodeId] da causa raiz, caminho ate ela, excecao, logs do passo; separa FATO OBSERVADO de HIPOTESE; compara com uma execucao que passou; propoe correcao minima com teste que trava a regressao. Se a causa for parceiro indisponivel, indica a sugestao do Mock Connect.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "parceiro-indisponivel-mock",
+      "prompt": "A API do bureau de KYC nao existe no meu ambiente e meu fluxo para nela. Como sigo desenvolvendo?",
+      "expected_output": "Indica o Mock Connect: sugestao 'API indisponivel' (evidencia ConnectException) com stubs do contrato OpenAPI; plugar pela visao Mocks (9) ou apply_mock_suggestion (com opt-in de mutacoes); repetir a chamada e conferir o selo SIM no passo; roteamento via Trace2LocalHttp + TRACE2LOCAL_MOCKS_ROUTING=on ou URL base do binding; remover o binding ao terminar. Deixa claro que simulado nao valida a integracao real.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "variacao-json-sob-demanda",
+      "prompt": "Quero testar como meu servico reage se o antifraude responder sem o campo decision, sem afetar o resto do time.",
+      "expected_output": "Usa a sugestao 'Resposta decide o fluxo' (ou set/remove-field em binding source=proxy), modo on-demand, e envia baggage: t2l.mock=<id> na chamada ao servico. Valida na arvore o passo SIM com a variacao e o desfecho de negocio (ex.: vai para revisao, nunca aprova o desconhecido); compara com a execucao sem baggage (repasse ↪). Sugere exportar o mapping para CI se achar bug.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "ligar-mcp-no-cursor",
+      "prompt": "Liga o Trace2Local no Cursor/Claude Code pra o agente ver as execucoes.",
+      "expected_output": "Registra o trace2local-mcp no .mcp.json (ou .cursor/mcp.json) do REPOSITORIO DO APP com TRACE2LOCAL_URL correto e TRACE2LOCAL_MCP_TOOLS=core; mantem somente leitura (sem TRACE2LOCAL_MCP_ALLOW_MUTATIONS) e TRACE2LOCAL_MCP_DATA=structural; explica o que vai ao modelo. Nao edita o .mcp.json do squad-ai-harness sem o checklist de admissao e GATE (ADR-015).",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "nao-e-producao",
+      "prompt": "Configura o monitoramento APM das minhas Lambdas em producao.",
+      "expected_output": "Reconhece que Trace2Local e observabilidade local de desenvolvimento (pass-through sem endpoint em producao) e encaminha para dd-apm/dd-logs/datadog-lambda-java. No maximo cita que os logs com trace_id/dd.trace_id gerados pelo starter correlacionam nos dois mundos.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+package {{ base_package }}.model;
+
+{{#each imports}}
+import {{ path }};
+{{/each}}
+
+/**
+ * Record imutável da entidade {{ name }} no domain layer.
+ *
+ * Conversão para/de SingleTableItem nas bordas do repositório:
+ * - {{ name }}.toItem() → escrita
+ * - {{ name }}.fromItem(item) → leitura
+ *
+ * Manter o domain como record dá imutabilidade, equals/hashCode/toString
+ * gratuitos e expressividade. SingleTableItem fica como artifact de
+ * persistência — não vaza para a camada de negócio.
+ */
+public record {{ name }}(
+{{#each fields}}
+        {{ java_type }} {{ name }}{{ comma }}
+{{/each}}
+) {
+
+    public SingleTableItem toItem() {
+        SingleTableItem item = new SingleTableItem();
+        item.setPk("{{ type_discriminator }}#" + id());
+        item.setSk("{{ type_discriminator }}#" + id());
+        item.setType("{{ type_discriminator }}");
+        // TODO: setar GSIs conforme single_table.gsi do schema
+        // ex: item.setGsi1pk("EMAIL#" + email());
+{{#each fields}}
+        item.set{{ name_pascal }}({{ name }}());
+{{/each}}
+        return item;
+    }
+
+    public static {{ name }} fromItem(SingleTableItem item) {
+        return new {{ name }}(
+{{#each fields}}
+                item.get{{ name_pascal }}(){{ comma }}
+{{/each}}
+        );
+    }
+}

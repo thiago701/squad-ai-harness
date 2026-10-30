@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+  "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+  "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!--
+  Narrow, documented exceptions to the structural gate. Goes to
+  config/checkstyle/suppressions.xml. The global ParameterNumber limit (5) stays
+  in force everywhere else; list only justified exemptions here, each with a
+  written reason, mirroring the project's object-calisthenics review.
+-->
+<suppressions>
+  <!--
+    The {{ entity }} aggregate is an immutable rich object carrying its full
+    state. Its create / rehydrate / copyWith methods carry that full field set by
+    necessity: create takes the irreducible domain inputs, rehydrate is the
+    canonical "reconstitute from the store" factory, and copyWith is the PRIVATE
+    immutable-copy plumbing that lets every PUBLIC behaviour method stay narrow.
+    Folding these into a parameter object would only duplicate the aggregate's own
+    fields and add indirection — over-engineering a justified DDD pattern. Both
+    ParameterNumber and MethodLength are suppressed: create/rehydrate take one
+    field per line, so a wide aggregate legitimately passes 35 lines on the
+    field-complete factory — same DDD justification, not accidental complexity.
+  -->
+  <suppress files="[\\/]domain[\\/]model[\\/]{{ entity }}\.java$" checks="ParameterNumber|MethodLength"/>
+</suppressions>

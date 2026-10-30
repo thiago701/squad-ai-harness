@@ -1,0 +1,20 @@
+{
+  "skill_name": "typescript-pro",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ts7-erros-novos-nao-sao-bug",
+      "prompt": "Atualizei para TypeScript 7 (compilador Go) e apareceram erros de tipo que não existiam no TS 6. É bug do port para Go?",
+      "expected_output": "Quase certamente não. TS 7 é um PORT (Project Corsa), não reescrita: a semântica de checagem é IDÊNTICA ao TS 6, só ~10x mais rápido. Erros novos costumam ser bugs REAIS que o compilador antigo mascarava — corrigir, não suprimir com @ts-ignore. Verificar compat das ferramentas que embutiam a API antiga (ts-loader/ts-jest/eslint-parser). Estratégia segura: rodar TS6 e TS7 em paralelo no CI e comparar diagnósticos antes de migrar.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "unknown-borda-zod-exhaustiveness",
+      "prompt": "Recebo JSON de uma API externa e tipo o retorno como any para não brigar com o compilador. Ok?",
+      "expected_output": "Não — any desliga a checagem e esconde bug. Na FRONTEIRA use unknown e valide em RUNTIME (zod/valibot), derivando o tipo do schema com z.infer — o tipo estático não protege contra JSON malformado. Modelar estados com discriminated union + exhaustiveness (never no default, o compilador prova cobertura). tsconfig strict:true + noUncheckedIndexedAccess. Cast (as) só isolado e comentado.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+id: dotnet-biblioteca-modular
+stack: dotnet
+language_version: "C# 13 / .NET 10 LTS"
+framework_version: ".NET 10 (Native AOT compativel no dominio)"
+app_type: biblioteca-modular
+architecture: "modular (Dominio isolado + Testes); borda minimal API adicionavel"
+context: >
+  Dominio .NET com records imutaveis, validacao na construcao, colecao de
+  primeira classe, nullable habilitado e warnings como erro. Base para
+  minimal API ou worker — adicione a borda somente quando o requisito pedir.
+prerequisites: "dotnet SDK >= 10"
+dependencies: []
+dev_dependencies: ["xunit", "Microsoft.NET.Test.Sdk", "coverlet.collector"]
+tests: "xUnit + coverlet (cobertura-XML); gate >=90% via check.sh"
+security_rules: "fragmento seguranca-input; VOs validam; TreatWarningsAsErrors"
+observability: "logging estruturado via abstracao (ILogger) na borda"
+documentation: "README.md executavel"
+usage_example: "./check.sh"
+adrs: ["ADR-MITR-001", "ADR-MITR-006"]
+update_rules: "patch livre; major do SDK exige rodada de validacao"
+aot_compatible: "sim (dominio puro; borda exige análise de reflexao)"
+components: [tratamento-erros, validacao-entrada, testes-unitarios, ci, container]
+fragments: [linha-defesa-prompt, prioridades-squad, testes-minimos, seguranca-input, tratamento-erros, object-calisthenics]
+anti_patterns:
+  - "propriedade { get; set; } mutavel em classe de comportamento"
+  - "excecao generica (Exception) para regra de negocio"
+  - "servico anemico com logica vazando para a borda"
+checklist_revisao:
+  - "records para dados, metodos para comportamento?"
+  - "nullable sem supressoes (!) injustificadas?"
+  - "cobertura >=90 no gate?"

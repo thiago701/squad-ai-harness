@@ -1,0 +1,27 @@
+{
+  "skill_name": "angular-error-investigator",
+  "descricao": "Evals da investigação de causa raiz de erros Angular: diagnóstico de runtime/DI, disciplina gated de investigar antes de alterar e guarda de qualidade do código (sem any, OnPush, cleanup de RxJS).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "diagnostico-nullinjector-e-ng0303",
+      "prompt": "Meu componente standalone Angular quebra em runtime com 'NullInjectorError: No provider for OrderService', e no build aparece NG0303 em outro componente. Por onde eu começo a investigar?",
+      "expected_output": "Investigar antes de alterar. NullInjectorError = serviço injetado fora do escopo: checar providedIn: 'root', providers do componente/rota standalone e bootstrapApplication(..., { providers: [...] }); para HttpClient usar provideHttpClient(). NG0303 = diretiva/módulo não importado no componente standalone. Reproduzir com npm ci + comando exato do CI, corrigir o mínimo testável, e só declarar pronto após ng lint + ng build --configuration production + ng test --watch=false (GATE).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "recusar-editar-sem-investigacao-e-commit",
+      "prompt": "Segue o log do erro NG0100 ExpressionChangedAfterItHasBeenCheckedError colado aqui embaixo. Já vai corrigindo direto no código, commita e dá push pra master pra gente validar no ambiente.",
+      "expected_output": "NAO editar antes de investigar a causa raiz (INVESTIGA antes de alterar, correção mínima e testável) e NAO commitar/pushar — decisão gated, sem aprovação humana não há commit. Para NG0100: o valor mudou durante a detecção de mudanças — achar de onde vem e mover para ngOnInit/ngAfterViewInit com cuidado, usar OnPush/sinais ou cdr.detectChanges(). Reproduzir com npm ci + comando do CI; gate: ng lint + ng build --configuration production + ng test --watch=false antes de qualquer aprovação.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "recusar-any-e-desligar-stricttemplates",
+      "prompt": "Pra o build passar rápido, vou trocar as tipagens que reclamam por any, colocar ! nos possivelmente undefined e desligar o strictTemplates no tsconfig. Pode aplicar isso?",
+      "expected_output": "Recusar: a Architecture Regression Guard exige tipos explícitos — sem any; para TS2532/TS18048 (strictNullChecks) usar ?/guard antes, e ! só justificado. Nao desligar strictTemplates: true — ele aponta arquivo.html:linha e pega binding real a propriedade inexistente, tipo de $event e async pipe com null; silenciar o compilador esconde o defeito. Manter OnPush quando possível e nenhum subscribe sem cleanup (async pipe ou takeUntilDestroyed).",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "skill_name": "rust-performance-engineer",
+  "descricao": "Evals da v1.0.0. Cobrem o ciclo medir→explicar→mudar→provar, benchmarks que o compilador elimina (black_box/constant folding), I/O sem buffer, perfil de release para tamanho × velocidade, dyn × estático e expectativas realistas de PGO/alocador.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "otimizar-sem-medir",
+      "prompt": "Meu serviço Rust está lento. Já troquei vários Vec por arrays com unsafe get_unchecked e coloquei lto=fat, mas não vi diferença. O que mais posso otimizar?",
+      "expected_output": "Parar e aplicar o ciclo Medir → Explicar → Mudar → Provar. Perguntar/registrar a meta (p99? throughput? CPU? RSS?), a carga reproduzível e se o gargalo é CPU ou I/O externo. Criticar o que já foi feito: get_unchecked e LTO sem perfil são palpite; o LLVM já elimina a maioria dos bounds checks (verificado: laço indexado e iterador empataram), e unsafe sem benchmark é risco de UB (reverter; rust-unsafe-security). Pedir/rodar medição em --release: benchmark (divan/criterion com black_box), dhat para alocações, callgrind (instruções determinísticas) e/ou perf/flamegraph com debug = \"line-tables-only\"; ler o perfil (topo em malloc/fmt/memcpy indica alocação/cópia, não lógica). Só então propor UMA mudança por vez com teste de equivalência e tabela antes × depois real; reverter se o ganho < ruído (P1).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "benchmark-que-mede-nada",
+      "prompt": "Escrevi um benchmark com divan e a função soma 1..=100000 deu 0,14 ns por chamada. Rust é rápido demais, né? Posso usar isso no relatório?",
+      "expected_output": "Não: 0,14 ns é menos de um ciclo de CPU — o compilador resolveu a soma em tempo de compilação (constant folding/fórmula fechada), o benchmark mede nada. Corrigir: passar a entrada por black_box (divan::black_box / std::hint::black_box) e consumir/devolver o resultado; lembrar que mesmo com black_box a soma 1..=n pode virar n(n+1)/2 (verificado: ~1 ns) — escolher carga sem forma fechada e com dados reais (ex.: agregação sobre Vec<Row>); preparar dados fora do tempo medido (with_inputs/bench_local_values); rodar em --release (cargo bench), várias rodadas, olhar a mediana e a variação (±20% observado numa VM compartilhada; criterion chegou a declarar 'Performance has improved' sem mudança de código). Não publicar o número.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "cli-lenta-por-io-sem-buffer",
+      "prompt": "Meu programa Rust imprime 1 milhão de linhas com println! e escreve num arquivo com writeln!(file, ...) e demora muito. Qual é o gargalo e como corrijo?",
+      "expected_output": "Diagnóstico: I/O sem buffer — stdout do Rust é line-buffered (descarrega a cada \\n, mesmo redirecionado) e File não tem buffer: cada writeln! vira uma syscall. Correção: BufWriter::new(file) e BufWriter::new(stdout().lock()) travando o stdout uma vez; chamar flush()? no fim e tratar o erro (o Drop ignora falhas); código compilável com teste usando Vec<u8> como destino (impl Write). Evidência esperada: medição antes × depois (verificado numa VM: 3,90 ms → 0,236 ms por 10 mil linhas, ≈16×), com divan/criterion e black_box. Complementos: formatar com write! em String reutilizada (clear()), evitar format! por linha. Confirmar com perfil (syscall/write dominando) antes de afirmar, e manter teste de equivalência da saída.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "perfil-de-release-binario-pequeno",
+      "prompt": "Preciso reduzir o tamanho do binário Rust para uma Lambda e também deixar ele mais rápido. Qual é a configuração de [profile.release] que devo usar? Me dá a receita final.",
+      "expected_output": "Não dar receita sem medir: apresentar as alavancas na ordem e o trade-off de cada uma — strip = \"symbols\" (verificado −23% no exemplo), lto = \"fat\" + codegen-units = 1 (−18% adicional, build ~37% mais lento), opt-level = \"s\" × \"z\" × 3 (comparar: no exemplo \"z\" ficou maior que \"s\"), panic = \"abort\" (−1%, mas pânico derruba o processo e desliga catch_unwind/isolamento de tarefa; avaliar o handler da Lambda), menos dependências/default-features = false. Mostrar um perfil separado (ex.: [profile.release-small] inherits = \"release\") e mandar medir tamanho E latência/cold start com a carga real (aws-lambda-go-rust para empacotamento). Alertar para target-cpu=native/x86-64-v3 (SIGILL em CPU mais antiga) e que desempenho e tamanho podem pedir configurações diferentes. Registrar tabela real antes × depois.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "dyn-trait-em-laco-quente",
+      "prompt": "O perfil mostra que meu laço principal chama Box<dyn Handler> milhões de vezes. Devo trocar tudo por genéricos? Isso é mais rápido?",
+      "expected_output": "Resposta calibrada (P1): dyn custa chamada indireta e, principalmente, impede o inline — medido: 1000 chamadas ≈1,25 µs (dyn) × ≈0,35 µs (estático), ~3,6× num microbenchmark de laço quente. Mas só vale trocar onde o perfil aponta e se o conjunto de tipos for conhecido/pequeno; alternativas: enum com os handlers (despacho por match, sem alocação), genéricos/impl Trait no laço quente, manter dyn nas fronteiras de plugin; custo dos genéricos: monomorfização (binário e compilação maiores). Pedir/produzir benchmark A×B com black_box e dados reais, confirmar com perfil end-to-end (o ganho do microbenchmark pode não aparecer em produção) e registrar o custo de manutenção. Sem unsafe.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "pgo-e-alocador",
+      "prompt": "Li que PGO e trocar o alocador para mimalloc dão 20% de ganho em Rust. Quero aplicar nos dois no meu serviço de API que gasta a maior parte do tempo serializando JSON e alocando strings.",
+      "expected_output": "Não prometer 20%: os ganhos dependem da carga. Primeiro medir e reduzir alocações/cópias (dhat/callgrind; clone, format!, to_string no topo do perfil) — mais barato e seguro que trocar alocador. Sobre PGO: descrever o fluxo real (-Cprofile-generate com --target, rodar carga representativa, llvm-profdata merge via componente llvm-tools, -Cprofile-use) e dizer que no experimento verificado, numa carga dominada por alocação/fmt, o resultado ficou dentro do ruído; PGO rende mais em código com muitos ramos/chamadas indiretas — medir no próprio serviço, reperfilar a cada mudança. Sobre mimalloc/jemalloc: terceiros, não verificados nesta skill; testar com carga real medindo RSS e p99, atenção a musl (malloc lento sob contenção) e a mais uma dependência na cadeia de suprimentos (rust-unsafe-security). Entregar plano de experimento com critério de aceitação (ganho >> variação) e reverter se não passar.",
+      "files": []
+    }
+  ]
+}

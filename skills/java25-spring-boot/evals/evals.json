@@ -1,0 +1,20 @@
+{
+  "skill_name": "java25-spring-boot",
+  "descricao": "Evals mínimos (gap A3 do parecer /squad-judge 2026-06-16). Cenários with/without skill para detectar regressão de prompt.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "virtual-threads-gargalo-pool",
+      "prompt": "Ativei spring.threads.virtual.enabled=true e criei 10.000 virtual threads, mas o throughput não melhorou. HikariCP com maximum-pool-size=20. Por quê?",
+      "expected_output": "Explicar que virtual threads NÃO removem o gargalo do banco: 10k VTs com 20 conexões = 9.980 esperando. VT torna a espera barata (sem consumir carrier thread), mas o throughput real é limitado pelo pool. Dimensionar o pool por benchmark (regra HikariCP ~CPU×2), não pelo número de VTs. Mencionar pinning por synchronized (preferir ReentrantLock) como armadilha correlata.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "maperror-pattern-switch-seguro",
+      "prompt": "Tenho um handler HTTP com 4 catches tipados (JsonProcessingException, IllegalArgumentException, etc.) que repetem log + montagem de resposta. Como limpar isso em Java 25?",
+      "expected_output": "Extrair um método puro mapError(Exception) com pattern matching for switch (JEP 441) exaustivo, substituindo a cadeia de catches. Função Exception->Response testável sem mock. ALERTA DE SEGURANÇA: não devolver e.getMessage()/getOriginalMessage() ao cliente (vaza PII/stack/SQL); logar o detalhe internamente com correlation id e devolver mensagem genérica ou de validação de domínio controlada.",
+      "files": []
+    }
+  ]
+}

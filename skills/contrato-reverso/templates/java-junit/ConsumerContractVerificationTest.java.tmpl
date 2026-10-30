@@ -1,0 +1,431 @@
+package __PACOTE__;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent.RequestContext;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent.RequestContext.Authorizer;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent.RequestContext.Authorizer.JWT;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent.RequestContext.Http;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+__IMPORT_HANDLER__import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+
+/// Verificação do PROVEDOR guiada pelo contrato do CONSUMIDOR ("teste reverso", camada C1).
+/// Gerado a partir do template da skill `contrato-reverso` (templates/java-junit); a única parte
+/// específica deste projeto é o bloco "ADAPTAÇÃO DO PROJETO" logo abaixo.
+///
+/// Lê a ENTRADA que `cr.py verificar` grava (contrato já parseado + Gateway NORMALIZADO, venha ele de
+/// SAM, CloudFormation/CDK ou Terraform), reproduz a jornada do consumidor contra o handler real e
+/// grava o observado em `target/contrato-reverso/`. Julgamento completo (campos, null × ausente,
+/// enums, ordenação, contagem) é da CLI — um avaliador só para C1 e C2. Aqui só se afirma o status.
+///
+/// ALCANCE: Gateway SIMULADO (rotas, autorizador, CORS, payload 1.0/2.0); persistência em dublê.
+/// Comprova a implementação — não o Gateway implantado nem o banco real.
+@DisplayName("Contrato do consumidor (verificação do provedor)")
+class ConsumerContractVerificationTest {
+
+    // ------------------------------------------------------------ ADAPTAÇÃO DO PROJETO
+    // Único trecho a editar. Gerado por `cr.py iniciar`; enquanto lançar a exceção abaixo,
+    // o verificador não grava o observado e a camada C1 fica INCONCLUSIVA (nunca aprovada).
+
+    /// Persistência usada aqui (vai para o relatório como alcance da evidência).
+    private static final String PERSISTENCIA = "ADAPTE: descreva o dublê (ex.: repositório em memória)";
+
+    /// HTTP API (payload 2.0): handler real com dublês nas portas de saída — nunca a nuvem. null se não usar.
+    private static RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> criarHandlerV2() {
+        throw new UnsupportedOperationException(
+            "ADAPTE criarHandler(): devolva __CLASSE_HANDLER__ montado com dublês (veja o README da skill contrato-reverso)");
+    }
+
+    /// REST API (payload 1.0): idem. null se não usar.
+    private static RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> criarHandlerV1() {
+        return null;
+    }
+    // ------------------------------------------------------------ fim da adaptação
+
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{\\s*([A-Za-z0-9_:\\-]+)\\s*}}");
+    private static final ObjectMapper JSON = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    private static final Path RAIZ_REPO = raizDoRepositorio();
+    private static final String PROVEDOR = raizDoProvedor();
+
+    @TestFactory
+    Stream<DynamicTest> interacoesDoConsumidor() throws IOException {
+        List<Path> entradas = entradasDoProvedor();
+        Assumptions.assumeFalse(entradas.isEmpty(),
+            "sem entrada do contrato para o provedor '" + PROVEDOR + "' — rode `cr.py verificar --nivel direcionado`");
+        List<DynamicTest> testes = new ArrayList<>();
+        for (Path entrada : entradas) {
+            testes.addAll(verificar(mapa(JSON.readValue(entrada.toFile(), Map.class))));
+        }
+        return testes.stream();
+    }
+
+    private List<DynamicTest> verificar(Map<String, Object> entrada) throws IOException {
+        Map<String, Object> contrato = mapa(entrada.get("contrato"));
+        Map<String, Object> consumidor = mapa(contrato.get("consumidor"));
+        String origem = "navegador".equals(consumidor.get("tipo")) ? String.valueOf(consumidor.getOrDefault("origem_navegador", "")) : "";
+        GatewaySimulado gateway = new GatewaySimulado(mapa(entrada.get("gateway")), origem);
+        Map<String, String> variaveis = new LinkedHashMap<>();
+        variaveis.put("origem", String.valueOf(consumidor.getOrDefault("origem_navegador", "")));
+        List<Map<String, Object>> observados = new ArrayList<>();
+        List<DynamicTest> testes = new ArrayList<>();
+        for (Object bruto : lista(contrato.get("interacoes"))) {
+            Map<String, Object> interacao = mapa(bruto);
+            String id = String.valueOf(interacao.get("id"));
+            Map<String, Object> requisicao = mapa(substituir(interacao.get("requisicao"), variaveis));
+            Observado obs = gateway.encaminhar(requisicao);
+            capturar(mapa(interacao.get("capturar")), obs.corpo(), variaveis);
+            observados.add(obs.paraMapa(id, requisicao));
+            List<Integer> esperados = statusEsperados(mapa(interacao.get("resposta")).get("status"));
+            testes.add(DynamicTest.dynamicTest(id + " → " + esperados, () ->
+                assertThat(esperados)
+                    .as("%s: status observado %d (origem: %s), corpo: %s", id, obs.status(), obs.origem(), obs.corpo())
+                    .contains(obs.status())));
+        }
+        gravarObservado(entrada, consumidor, observados);
+        return testes;
+    }
+
+    // ------------------------------------------------------------------ Gateway simulado
+    record Rota(String metodo, String template, Pattern regex, List<String> parametros, boolean autenticada, String payload) {
+        Optional<Map<String, String>> casar(String metodoReq, String caminho) {
+            if (!"$default".equals(template) && !metodo.equals("ANY") && !metodo.equals(metodoReq)) {
+                return Optional.empty();
+            }
+            Matcher m = regex.matcher(caminho);
+            if (!m.matches()) {
+                return Optional.empty();
+            }
+            Map<String, String> valores = new LinkedHashMap<>();
+            for (int i = 0; i < parametros.size(); i++) {
+                valores.put(parametros.get(i), m.group(i + 1));
+            }
+            return Optional.of(valores);
+        }
+
+        int especificidade() {
+            return ("$default".equals(template) ? 1000 : 0) + (template.contains("+}") ? 100 : 0)
+                + ("ANY".equals(metodo) ? 10 : 0) + parametros.size();
+        }
+    }
+
+    record Observado(int status, Map<String, String> headers, String corpo, String origem) {
+        Map<String, Object> paraMapa(String id, Map<String, Object> requisicao) {
+            Map<String, Object> req = new LinkedHashMap<>(requisicao);
+            req.remove("token"); // nenhuma credencial no observado
+            Map<String, Object> mapa = new LinkedHashMap<>();
+            mapa.put("id", id);
+            mapa.put("status", status);
+            mapa.put("headers", headers);
+            mapa.put("corpo", corpo);
+            mapa.put("origem_resposta", origem);
+            mapa.put("requisicao", req);
+            return mapa;
+        }
+    }
+
+    static final class GatewaySimulado {
+        private final List<Rota> rotas = new ArrayList<>();
+        private final Map<String, Object> cors;
+        private final Map<String, Object> corsPorCaminho;
+        private final String tipoApi;
+        private final String estagio;
+        private final String origemNavegador;
+        private final Map<String, Object> respostas;
+        private RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> v2;
+        private RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> v1;
+
+        GatewaySimulado(Map<String, Object> modelo, String origemNavegador) {
+            this.tipoApi = String.valueOf(modelo.getOrDefault("tipo_api", "http"));
+            this.estagio = String.valueOf(modelo.getOrDefault("estagio", "$default"));
+            this.cors = mapa(modelo.get("cors"));
+            this.corsPorCaminho = mapa(modelo.get("cors_por_caminho"));
+            this.respostas = mapa(modelo.get("respostas"));
+            this.origemNavegador = origemNavegador;
+            for (Object r : lista(modelo.get("rotas"))) {
+                Map<String, Object> rota = mapa(r);
+                Object aut = rota.get("autorizador");
+                rotas.add(rota(String.valueOf(rota.get("metodo")).toUpperCase(Locale.ROOT), String.valueOf(rota.get("caminho")),
+                    aut != null && !String.valueOf(aut).isBlank(), String.valueOf(rota.getOrDefault("payload", "2.0"))));
+            }
+            if (modelo.isEmpty()) { // sem modelo de Gateway: tudo vai direto ao handler
+                rotas.add(rota("ANY", "$default", false, "2.0"));
+            }
+        }
+
+        private static Rota rota(String metodo, String template, boolean autenticada, String payload) {
+            if ("$default".equals(template)) {
+                return new Rota(metodo, template, Pattern.compile(".*"), List.of(), autenticada, payload);
+            }
+            List<String> nomes = new ArrayList<>();
+            Matcher m = Pattern.compile("\\{([^}/]+)}").matcher(template);
+            StringBuilder regex = new StringBuilder();
+            int fim = 0;
+            while (m.find()) {
+                String nome = m.group(1);
+                regex.append(Pattern.quote(template.substring(fim, m.start()))).append(nome.endsWith("+") ? "(.+)" : "([^/]+)");
+                nomes.add(nome.replace("+", ""));
+                fim = m.end();
+            }
+            regex.append(Pattern.quote(template.substring(fim))).append("/?");
+            return new Rota(metodo, template, Pattern.compile(regex.toString()), nomes, autenticada, payload);
+        }
+
+        private Map<String, Object> corsPara(String caminho) {
+            if ("http".equals(tipoApi)) {
+                return cors;
+            }
+            for (Map.Entry<String, Object> e : corsPorCaminho.entrySet()) {
+                if (rota("ANY", e.getKey(), false, "1.0").regex().matcher(caminho).matches()) {
+                    return mapa(e.getValue());
+                }
+            }
+            return cors;
+        }
+
+        Observado encaminhar(Map<String, Object> requisicao) {
+            String metodo = String.valueOf(requisicao.getOrDefault("metodo", "GET")).toUpperCase(Locale.ROOT);
+            String caminho = String.valueOf(requisicao.get("caminho"));
+            Map<String, String> headers = new LinkedHashMap<>();
+            mapa(requisicao.get("headers")).forEach((k, v) -> headers.put(k.toLowerCase(Locale.ROOT), String.valueOf(v)));
+            if (!origemNavegador.isBlank()) {
+                headers.putIfAbsent("origin", origemNavegador); // navegador sempre manda Origin
+            }
+            Map<String, Object> corsDaRota = corsPara(caminho);
+            if ("OPTIONS".equals(metodo) && headers.containsKey("access-control-request-method") && !corsDaRota.isEmpty()) {
+                return preflight(corsDaRota, headers.get("origin"));
+            }
+            Optional<Rota> rota = rotas.stream().filter(r -> r.casar(metodo, caminho).isPresent())
+                .min((a, b) -> Integer.compare(a.especificidade(), b.especificidade()));
+            if (rota.isEmpty()) {
+                return doGateway("sem_rota");
+            }
+            Object token = requisicao.get("token");
+            if (rota.get().autenticada() && (token == null || "invalido".equals(token))) {
+                return doGateway("nao_autorizado");
+            }
+            String sub = rota.get().autenticada() ? String.valueOf(token) : null; // sem autorizador, sem claims
+            Observado obs = "1.0".equals(rota.get().payload())
+                ? chamarV1(metodo, caminho, rota.get(), headers, requisicao, sub)
+                : chamarV2(metodo, caminho, rota.get(), headers, requisicao, sub);
+            String origem = headers.get("origin");
+            List<Object> origens = lista(corsDaRota.get("AllowOrigins"));
+            if ("http".equals(tipoApi) && origem != null && (origens.contains("*") || origens.contains(origem))) {
+                obs.headers().putIfAbsent("Access-Control-Allow-Origin", origens.contains("*") ? "*" : origem);
+            }
+            return obs;
+        }
+
+        private Observado chamarV2(String metodo, String caminho, Rota rota, Map<String, String> headers,
+                                   Map<String, Object> requisicao, String sub) {
+            if (v2 == null) {
+                v2 = criarHandlerV2();
+            }
+            RequestContext.RequestContextBuilder contexto = RequestContext.builder()
+                .withHttp(Http.builder().withMethod(metodo).withPath(caminho).build())
+                .withRequestId("cdc-" + Integer.toHexString(caminho.hashCode()))
+                .withStage(estagio)
+                .withRouteKey(metodo + " " + rota.template());
+            if (sub != null) {
+                contexto.withAuthorizer(Authorizer.builder().withJwt(JWT.builder().withClaims(Map.of("sub", sub)).build()).build());
+            }
+            Map<String, String> query = query(requisicao);
+            APIGatewayV2HTTPResponse resposta = v2.handleRequest(APIGatewayV2HTTPEvent.builder()
+                .withVersion("2.0")
+                .withRouteKey(metodo + " " + rota.template())
+                .withRawPath(caminho)
+                .withHeaders(headers)
+                .withQueryStringParameters(query.isEmpty() ? null : query)
+                .withPathParameters(rota.casar(metodo, caminho).filter(m -> !m.isEmpty()).orElse(null))
+                .withBody(corpo(requisicao))
+                .withRequestContext(contexto.build())
+                .build(), null);
+            return new Observado(resposta.getStatusCode(), new LinkedHashMap<>(Optional.ofNullable(resposta.getHeaders()).orElse(Map.of())),
+                Optional.ofNullable(resposta.getBody()).orElse(""), "handler");
+        }
+
+        private Observado chamarV1(String metodo, String caminho, Rota rota, Map<String, String> headers,
+                                   Map<String, Object> requisicao, String sub) {
+            if (v1 == null) {
+                v1 = criarHandlerV1();
+            }
+            APIGatewayProxyRequestEvent.ProxyRequestContext contexto = new APIGatewayProxyRequestEvent.ProxyRequestContext()
+                .withResourcePath(rota.template()).withHttpMethod(metodo).withPath("/" + estagio + caminho)
+                .withStage(estagio).withRequestId("cdc-" + Integer.toHexString(caminho.hashCode()));
+            if (sub != null) {
+                contexto.setAuthorizer(Map.of("claims", Map.of("sub", sub), "principalId", sub));
+            }
+            Map<String, String> query = query(requisicao);
+            APIGatewayProxyResponseEvent resposta = v1.handleRequest(new APIGatewayProxyRequestEvent()
+                .withResource(rota.template()).withPath(caminho).withHttpMethod(metodo).withHeaders(headers)
+                .withQueryStringParameters(query.isEmpty() ? null : query)
+                .withPathParameters(rota.casar(metodo, caminho).filter(m -> !m.isEmpty()).orElse(null))
+                .withBody(corpo(requisicao)).withRequestContext(contexto).withIsBase64Encoded(false), null);
+            return new Observado(resposta.getStatusCode(), new LinkedHashMap<>(Optional.ofNullable(resposta.getHeaders()).orElse(Map.of())),
+                Optional.ofNullable(resposta.getBody()).orElse(""), "handler");
+        }
+
+        private Observado preflight(Map<String, Object> corsDaRota, String origem) {
+            List<Object> origens = lista(corsDaRota.get("AllowOrigins"));
+            Map<String, String> h = new LinkedHashMap<>();
+            if (origens.contains("*") || origens.contains(origem)) {
+                h.put("Access-Control-Allow-Origin", origens.contains("*") ? "*" : origem);
+                h.put("Access-Control-Allow-Methods", String.join(",", lista(corsDaRota.get("AllowMethods")).stream().map(String::valueOf).toList()));
+                h.put("Access-Control-Allow-Headers", String.join(",", lista(corsDaRota.get("AllowHeaders")).stream().map(String::valueOf).toList()));
+            }
+            return new Observado(204, h, "", "gateway-simulado");
+        }
+
+        private Observado doGateway(String chave) {
+            List<Object> r = lista(respostas.get(chave));
+            int status = r.isEmpty() ? ("sem_rota".equals(chave) ? 404 : 401) : ((Number) r.get(0)).intValue();
+            String ct = r.size() > 1 ? String.valueOf(r.get(1)) : "application/json";
+            String corpo = r.size() > 2 ? String.valueOf(r.get(2)) : "{\"message\":\"Not Found\"}";
+            return new Observado(status, new LinkedHashMap<>(Map.of("Content-Type", ct)), corpo, "gateway-simulado");
+        }
+
+        private static Map<String, String> query(Map<String, Object> requisicao) {
+            Map<String, String> query = new LinkedHashMap<>();
+            mapa(requisicao.get("query")).forEach((k, v) -> query.put(k, String.valueOf(v)));
+            return query;
+        }
+
+        private static String corpo(Map<String, Object> requisicao) {
+            try {
+                return requisicao.get("corpo") == null ? null : JSON.writeValueAsString(requisicao.get("corpo"));
+            } catch (IOException falha) {
+                throw new IllegalStateException(falha);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ utilitários
+    /// Sobe a partir do diretório do build até achar `contracts/consumidores` (repo com N módulos).
+    private static Path raizDoRepositorio() {
+        Path atual = Path.of("").toAbsolutePath();
+        for (Path p = atual; p != null; p = p.getParent()) {
+            if (Files.isDirectory(p.resolve("contracts").resolve("consumidores"))) {
+                return p;
+            }
+        }
+        return atual;
+    }
+
+    /// `provedor.raiz` deste módulo, relativo à raiz do repositório (ex.: "app" ou ".").
+    private static String raizDoProvedor() {
+        String rel = RAIZ_REPO.relativize(Path.of("").toAbsolutePath()).toString().replace('\\', '/');
+        return rel.isEmpty() ? "." : rel;
+    }
+
+    private static List<Path> entradasDoProvedor() throws IOException {
+        String explicita = System.getenv("CDC_ENTRADA");
+        if (explicita != null && !explicita.isBlank()) {
+            return List.of(Path.of(explicita));
+        }
+        Path pasta = RAIZ_REPO.resolve(".contrato-reverso").resolve("entrada");
+        if (!Files.isDirectory(pasta)) {
+            return List.of();
+        }
+        try (Stream<Path> arquivos = Files.list(pasta)) {
+            return arquivos.filter(p -> p.toString().endsWith(".json")).filter(ConsumerContractVerificationTest::ehDesteProvedor).sorted().toList();
+        }
+    }
+
+    private static boolean ehDesteProvedor(Path entrada) {
+        try {
+            JsonNode raiz = JSON.readTree(entrada.toFile()).path("contrato").path("provedor").path("raiz");
+            String r = raiz.asText(".").replaceAll("^\\./|/$", "");
+            return PROVEDOR.equals(r.isEmpty() ? "." : r);
+        } catch (IOException falha) {
+            return false;
+        }
+    }
+
+    private static void capturar(Map<String, Object> capturas, String corpo, Map<String, String> variaveis) throws IOException {
+        if (capturas.isEmpty() || corpo == null || corpo.isBlank()) {
+            return;
+        }
+        JsonNode raiz = JSON.readTree(corpo);
+        capturas.forEach((variavel, campo) -> {
+            JsonNode valor = raiz.get(String.valueOf(campo));
+            if (valor != null && !valor.isNull()) {
+                variaveis.put(variavel, valor.asText());
+            }
+        });
+    }
+
+    private static Object substituir(Object valor, Map<String, String> variaveis) {
+        if (valor instanceof String texto) {
+            Matcher m = PLACEHOLDER.matcher(texto);
+            StringBuilder saida = new StringBuilder();
+            while (m.find()) {
+                m.appendReplacement(saida, Matcher.quoteReplacement(variaveis.getOrDefault(m.group(1), m.group(0))));
+            }
+            m.appendTail(saida);
+            return saida.toString();
+        }
+        if (valor instanceof Map<?, ?> mapa) {
+            Map<String, Object> copia = new LinkedHashMap<>();
+            mapa.forEach((k, v) -> copia.put(String.valueOf(k), substituir(v, variaveis)));
+            return copia;
+        }
+        if (valor instanceof List<?> lista) {
+            return lista.stream().map(v -> substituir(v, variaveis)).toList();
+        }
+        return valor;
+    }
+
+    private static List<Integer> statusEsperados(Object status) {
+        if (status instanceof List<?> lista) {
+            return lista.stream().map(s -> Integer.parseInt(String.valueOf(s))).toList();
+        }
+        return List.of(Integer.parseInt(String.valueOf(status)));
+    }
+
+    private static void gravarObservado(Map<String, Object> entrada, Map<String, Object> consumidor,
+                                        List<Map<String, Object>> observados) throws IOException {
+        Map<String, Object> saida = new LinkedHashMap<>();
+        saida.put("contrato_hash", entrada.get("contrato_hash"));
+        saida.put("consumidor", consumidor.get("nome"));
+        saida.put("transporte", "in-process (handler real, JUnit, Java " + Runtime.version().feature() + ")");
+        saida.put("gateway", "simulado do modelo normalizado (" + mapa(entrada.get("gateway")).getOrDefault("fonte", "sem modelo") + ")");
+        saida.put("persistencia", PERSISTENCIA);
+        saida.put("gerado_em", Instant.now().toString());
+        saida.put("interacoes", observados);
+        Path destino = Path.of("target", "contrato-reverso", "observado-" + consumidor.get("nome") + ".json");
+        Files.createDirectories(destino.getParent());
+        Files.writeString(destino, JSON.writeValueAsString(saida));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> mapa(Object valor) {
+        return valor instanceof Map<?, ?> m ? (Map<String, Object>) m : Map.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Object> lista(Object valor) {
+        return valor instanceof List<?> l ? (List<Object>) l : List.of();
+    }
+}

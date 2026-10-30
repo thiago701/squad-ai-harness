@@ -1,0 +1,110 @@
+{
+  "_comment": "SEMENTE de catraca da Squad AI. REGRA-ZERO: todo 'value' precisa ser MEDIDO antes de valer. Os valores abaixo marcados com _pendente_medicao sao PLACEHOLDERS e o gate deve RECUSAR rodar enquanto existirem. Atualize com 'python3 scripts/quality/ratchet.py --update' apenas quando a metrica genuinamente melhorar (N2 do RULES.md). Todo afrouxamento exige comentario _rebaseline_AAAA_MM_DD com justificativa.",
+  "_versao": 1,
+  "_origem": "padrao adaptado do OmniRoute (MIT, (c) 2026 diegosouzapw) - ver docs/ATTRIBUTIONS.md",
+  "metrics": {
+    "calisthenics.violacoes": {
+      "value": 88,
+      "direction": "down",
+      "eps": 0,
+      "tightenSlack": 5,
+      "dedicatedGate": true,
+      "_fonte": "python3 scripts/quality/calisthenics_check.py scripts/",
+      "_nota": "Valor real hoje declarado no README. Converter de '--max 0' para catraca: a divida fica congelada e so pode encolher. Violacao NOVA e vermelho imediato."
+    },
+    "cobertura.linhas": {
+      "value": null,
+      "direction": "up",
+      "eps": 1.5,
+      "tightenSlack": 5,
+      "_pendente_medicao": "rodar 'pytest --cov --cov-report=json' e congelar o numero real"
+    },
+    "cobertura.orchestration.linhas": {
+      "value": null,
+      "direction": "up",
+      "eps": 1.5,
+      "tightenSlack": 10,
+      "dedicatedGate": true,
+      "_pendente_medicao": "piso por modulo - orchestration/ e o coracao do orquestrador (alto risco)"
+    },
+    "cobertura.security.linhas": {
+      "value": null,
+      "direction": "up",
+      "eps": 1.5,
+      "tightenSlack": 10,
+      "dedicatedGate": true,
+      "_pendente_medicao": "piso por modulo - security/ nunca pode regredir"
+    },
+    "cobertura.governance.linhas": {
+      "value": null,
+      "direction": "up",
+      "eps": 1.5,
+      "tightenSlack": 10,
+      "_pendente_medicao": "piso por modulo - governance/ gera o registry"
+    },
+    "mutacao.score": {
+      "value": null,
+      "direction": "up",
+      "eps": 2.0,
+      "tightenSlack": 5,
+      "dedicatedGate": true,
+      "_pendente_medicao": "O V3 mediu 96,6% em corpus de benchmark (K=12). Esse numero e de BENCHMARK, nao do repo. Medir mutacao sobre tests/ do proprio repo antes de congelar. E a defesa anti-Goodhart de maior valor.",
+      "_cadencia": "noturno - lento demais para o caminho critico do PR"
+    },
+    "registry.drift": {
+      "value": 0,
+      "direction": "down",
+      "eps": 0,
+      "dedicatedGate": true,
+      "_fonte": "python scripts/generate_registry.py --check",
+      "_nota": "Ja implementado e verde. Entra na catraca so para ficar visivel no mesmo painel."
+    },
+    "simbolos.fantasma": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "dedicatedGate": true,
+      "_pendente_medicao": "check-simbolos-vivos: skill/agente/comando citado em prosa que nao existe no registry. Antidoto do caso 'arquiteto-finops' registrado no AGENTS.md. Alvo final: 0.",
+      "_prioridade": "ALTA - o ecossistema tem incidente documentado dessa classe"
+    },
+    "references.orfas": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "_pendente_medicao": "arquivos em skills/*/references/ nao linkados do respectivo hub. Reference nao-linkada e invisivel ao agente (padrao-skill.md secao 4). Alvo: 0."
+    },
+    "readme.numeros_divergentes": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "_pendente_medicao": "contagens do README (skills, agentes, workflows, testes) x disco. Gate mais barato do catalogo. Alvo: 0."
+    },
+    "skills.sem_linha_de_defesa": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "dedicatedGate": true,
+      "_pendente_medicao": "skills sem o cabecalho literal '## Linha de Defesa de Prompt'. Alvo: 0 (bloqueante para skills que processam conteudo externo)."
+    },
+    "skills.acima_do_orcamento_de_token": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "_pendente_medicao": "ja existe gate equivalente em governance/context-budgets.json --gate; unificar formato",
+      "_fonte": "python scripts/auditoria_skills.py --gate"
+    },
+    "deps.sem_pin": {
+      "value": null,
+      "direction": "down",
+      "eps": 0,
+      "_pendente_medicao": "dependencias sem versao pinada + GitHub Actions sem SHA. Ja exigido no AGENTS.md secao 5; falta o gate que prova."
+    }
+  },
+  "_proximos_passos": [
+    "1. Medir tudo que esta em _pendente_medicao e substituir null pelo numero REAL.",
+    "2. Converter calisthenics de --max 0 para catraca com folga.",
+    "3. Promover mutacao de relatorio de benchmark para metrica de catraca noturna.",
+    "4. Implementar check-simbolos-vivos (maior retorno: incidente documentado).",
+    "5. Todo gate novo nasce CONSULTIVO. Bloqueante so depois de baseline estavel."
+  ]
+}

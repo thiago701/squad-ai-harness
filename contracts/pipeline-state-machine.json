@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://squad-ai.local/contracts/pipeline-state-machine.json",
+  "title": "Máquina de estados do pipeline gated (Squad AI v2)",
+  "description": "Mapa canônico de transições permitidas do pipeline (ADR-016, doc evolucao-dsa 01 §2.5). O LLM pode SUGERIR uma transição; o código (jev.maquina-estados-pipeline) decide se é PERMITIDA. 'gate_aprovado' exige aprovação humana; achados 🔴 bloqueiam qualquer transição para 'commit'. 'atalhos_trivial' aplica quando tamanho=trivial (ADR-010: cerimônia proporcional ao blast radius).",
+  "versao": 1,
+  "estados": [
+    "intake", "research", "plan", "gate1_pendente", "scaffold", "tdd",
+    "review", "gate2_pendente", "commit", "abortado"
+  ],
+  "eventos": [
+    "artefato_prd", "artefato_research", "artefato_plan", "gate_aprovado",
+    "gate_reprovado", "scaffold_ok", "tdd_ok", "review_ready", "review_not_ready",
+    "abortar", "implementado"
+  ],
+  "transicoes": {
+    "intake": { "artefato_prd": "research" },
+    "research": { "artefato_research": "plan" },
+    "plan": { "artefato_plan": "gate1_pendente" },
+    "gate1_pendente": { "gate_aprovado": "scaffold", "gate_reprovado": "plan", "abortar": "abortado" },
+    "scaffold": { "scaffold_ok": "tdd" },
+    "tdd": { "tdd_ok": "review", "abortar": "abortado" },
+    "review": { "review_ready": "gate2_pendente", "review_not_ready": "tdd" },
+    "gate2_pendente": { "gate_aprovado": "commit", "gate_reprovado": "tdd", "abortar": "abortado" },
+    "commit": {},
+    "abortado": {}
+  },
+  "atalhos_trivial": {
+    "intake": { "implementado": "review" },
+    "review": { "gate_aprovado": "commit" }
+  },
+  "regras_globais": [
+    "gate_aprovado sem aprovação humana => REQUER_GATE_HUMANO (nunca PERMITIDA)",
+    "achados_criticos > 0 bloqueia qualquer transição com destino 'commit' (segurança nunca é negociável)",
+    "tamanho 'trivial' usa atalhos_trivial; demais tamanhos usam 'transicoes' estritas"
+  ]
+}

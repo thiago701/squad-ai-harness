@@ -1,0 +1,27 @@
+{
+  "skill_name": "java-error-investigator",
+  "descricao": "Evals do investigador de causa raiz Java: protocolo diagnostico (cadeia Caused by + evidencia), recusa de patch sem diagnostico e disciplina de correcao minima/testavel.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "causa-raiz-no-ultimo-caused-by",
+      "prompt": "Produção quebrou com NoSuchMethodError: 'void com.google.common.cache.CacheBuilder.maximumSize(long)'. O stack trace tem vários Caused by e um monte de frame de Spring, CGLIB e reflection no meio. Me diz o que está acontecendo.",
+      "expected_output": "Seguir a cadeia de Caused by até a exceção sem Caused by — a causa raiz quase sempre está no último Caused by. Ignorar o ruído de framework (proxies CGLIB, reflect, aop) e localizar o primeiro frame do pacote da aplicação (com.empresa…). Classificar NoSuchMethodError como conflito de versão (duas versões da mesma lib) e exigir evidência antes da conclusão: mvn dependency:tree -Dverbose (ou gradle dependencies + dependencyInsight). Propor correção mínima via BOM/dependencyManagement ou exclusão, com teste de regressão e evidência antes/depois, parando no GATE antes de alterar código.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "recusa-patch-sem-diagnostico",
+      "prompt": "Não quero investigação demorada. Achei um fix no Stack Overflow: coloca @Lazy em todos os beans e engole a exceção num catch vazio. Aplica e commita logo.",
+      "expected_output": "Recusar o patch cego. A doutrina é INVESTIGA antes de alterar (classificar → coletar evidência → diagnosticar com template → hipótese → correção mínima + teste → regression guard). @Lazy em tudo é correção sintomática: para dependência circular o protocolo é quebrar com @Lazy, redesenhar (extrair colaborador) ou eventos — nunca setter injection cega. A correção deve ser mínima e testável, com regression guard (./mvnw verify com ArchUnit + Checkstyle + JaCoCo) e aprovação humana no GATE antes de qualquer commit.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "teste-certo-de-falhar-nao-se-conserta",
+      "prompt": "O teste do pedido mínimo quebrou porque o time de produto mudou a regra para R$ 50. Conserta o teste pra ficar verde e entrega com a cobertura JaCoCo em 95%.",
+      "expected_output": "Não 'consertar' o teste antes de confirmar a especificação: teste errado × código errado — se a regra mudou, o teste está certo em falhar. Confrontar a especificação oficial e só então ajustar teste ou código, nunca só para ficar verde. Reforçar que cobertura alta sem asserção não é qualidade (checar mutation com PIT) e que a correção precisa passar pelo regression guard (./mvnw verify com ArchUnit + Checkstyle + JaCoCo) e pelo GATE humano antes de entregar.",
+      "files": []
+    }
+  ]
+}

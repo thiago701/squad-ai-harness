@@ -1,0 +1,41 @@
+{
+  "skill_name": "logs-observabilidade",
+  "descricao": "Evals da doutrina de logs: segredo barrado (não mascarado), PII mascarada na origem com formato canônico, evento nomeado + correlação, configuração perigosa em produção, e a lente determinística no review.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "recusar-token-em-log-e-dar-alternativa",
+      "prompt": "Pra debugar o login vou logar o JWT inteiro: log.info(\"token=\" + token). Pode?",
+      "expected_output": "Recusar (LOG-01, CWE-532, OWASP 'access tokens: nunca'): segredo não vai ao log nem mascarado parcialmente — é negado (FiltroSegredos/TurboFilter) e o bloqueio vira evento `log.segredo.bloqueado`. Alternativa: log.info(\"auth.token.recebido usuario_id={} token_presente={} token_sufixo={} kid={}\", id, token != null, Mascara.ultimos4(token), kid) — e placeholders `{}` em vez de concatenação (LOG-12). Lembrar que `logEvent=true`/wire DEBUG também expõem o header Authorization (LOG-06).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "mascarar-cpf-e-cartao-com-formato-canonico",
+      "prompt": "O suporte precisa ver o CPF e o cartão do cliente no log do pedido. Como faço?",
+      "expected_output": "Minimização (LGPD art. 6º III): logar `cliente_id` e, se o suporte precisar, CPF mascarado `***.982.247-**` (6 centrais) e PAN `**** **** **** 1111` (PCI DSS 3.4.1 — BIN+4 só com necessidade documentada). Mascarar NA ORIGEM (record com toString seguro / @JsonSerialize / Mascara.cpf, Mascara.pan), rede no encoder (MaskingJsonGeneratorDecorator / MascaraFilter) e última linha na plataforma (CloudWatch data protection policy CpfCode-BR/CreditCardNumber ou Datadog Sensitive Data Scanner). Teste 'antes → depois' obrigatório; `python lint_logs.py mascarar --texto ...` mostra o formato.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "evento-nomeado-correlacao-virtual-threads",
+      "prompt": "Spring Boot 4 com virtual threads: meus logs dentro do CompletableFuture saem sem traceId e as mensagens são frases tipo 'Processando pedido do cliente'. O que mudar?",
+      "expected_output": "Duas coisas: (1) evento nomeado `dominio.entidade.acao` + chave=valor (`pedido.processando pedido_id={} cliente_id={}`), JSON estruturado (`logging.structured.format.console=ecs` ou LogstashEncoder) com `logging.pattern.correlation`/includeMdcKeyName trace_id/span_id/correlation_id (LOG-14, LOG-20, LOG-22); (2) MDC é ThreadLocal e não é herdado por tarefas filhas (LOG-26): propagar com Micrometer ContextSnapshot/TaskDecorator ou MDC.getCopyOfContextMap()/setContextMap(), ou usar ScopedValue (JEP 506) para o contexto de negócio com StructuredTaskScope (herda), sempre com MDC.clear em finally. Sampling de spans (0.1) não reduz logs — trace_id continua em 100 % dos logs.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "config-perigosa-em-producao",
+      "prompt": "Coloquei logging.level.org.apache.http.wire=DEBUG e spring.mvc.log-request-details=true no application.yml pra investigar um bug em produção. Tá ok?",
+      "expected_output": "Não (LOG-06, 🔴): wire DEBUG e log-request-details expõem Authorization/Cookie e corpo de toda requisição no log de produção. Mover para profile `local`/`application-local.yml` (o linter ignora esses), em prod `org.apache.http.wire: OFF`, `log-request-details: false`, `include-stacktrace: never`. Para investigar em produção: correlation_id + CloudWatch Logs Insights/`dd-logs` com janela e log group explícitos, e DEBUG amostrado (`samplingRate`) ou bufferizado (Powertools BufferingAppender) — nunca DEBUG global.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "lente-rev-logs-no-review",
+      "prompt": "Tech lead: revisa esse PR que mexe em logging e appenders — como a Squad aplica a lente de logs?",
+      "expected_output": "Rodar a lente determinística `python -X utf8 skills/logs-observabilidade/scripts/lint_logs.py verificar --raiz . --diff <base> --perfil completo --falhar-em necessario --saida .claude/pipeline/<slug>/05c-logs` (segundos, sem LLM); 🔴 ativo = NOT READY (veto de segurança, fora de P1>P2>P3), só 🟡 = AGUARDANDO, INCONCLUSIVO nunca aprova (NAO_VERIFICADO). Depois o checklist de leitura P1.LOG (references/checklist-review.md): vazamento, eventos/níveis, correlação, destino/custo, mascaramento — cada item com `achado|limpo|não verificado (motivo)` na Auditoria de Cobertura. Supressões `// log-ok: motivo` conferidas uma a uma. Laudo no formato `### Lente rev-logs`.",
+      "files": []
+    }
+  ]
+}

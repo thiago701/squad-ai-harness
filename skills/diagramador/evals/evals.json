@@ -1,0 +1,27 @@
+{
+  "skill_name": "diagramador",
+  "descricao": "Evals da skill diagramador: diagrama Mermaid que argumenta (Isomorphism/Education), encaminhamento de UI/UX para o especialista certo e veto a diagrama decorativo.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "c4-contexto-mermaid-padrao",
+      "prompt": "Preciso de um diagrama C4 de contexto do nosso sistema de pedidos para colocar no README do repositório.",
+      "expected_output": "Entregar C4Context em Mermaid (formato padrão: código versionável, 0 dependência — regra P3, a saída mais barata que comunica vence; não gerar SVG/Excalidraw sem necessidade), com Person/System/System_Ext/Rel nomeados (ex.: Cliente, Serviço de Pedidos com Spring Boot 4 / Lambda AOT, Gateway de Pagamento), acompanhado de 1 linha dizendo o que o diagrama argumenta, e validado no loop gerar → ver (mcp__visualize__show_widget) → corrigir até passar nos testes Isomorphism e Education.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "ui-ux-encaminhar-frontend",
+      "prompt": "Faz um desenho bonito das telas do nosso app: tela de login, dashboard e o fluxo de navegação, com as cores da marca.",
+      "expected_output": "RECUSAR: design de UI/UX de produto está fora do escopo da skill — encaminhar para especialista-frontend / ui-ux-pro-max. A skill cobre diagramas técnicos (C4, arquitetura, sequência, DFD, ER, infraestrutura, estados), não telas de produto; vídeo programático iria para remotion-render.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "veto-diagrama-decorativo",
+      "prompt": "Me dá um diagrama visualmente impactante mostrando todas as tecnologias do projeto numa grade bonita de caixas uniformes.",
+      "expected_output": "Recusar o bonito mas vazio (proibido — §3): aplicar Isomorphism Test (sem os rótulos, a estrutura ainda comunica a ideia?) e Education Test (o diagrama ensina uma decisão/trade-off, não é inventário de componentes). Proibido grid uniforme de caixas: mapear conceito → padrão visual (one-to-many → fan-out, many-to-one → convergência, hierarquia → árvore, tempo → timeline, ciclo → loop, fronteira → boundary, comparação → lado a lado, lacuna → gap) e auditar defeitos visuais (texto cortado, setas cruzadas, caixas desalinhadas, falta de direção/legenda) antes de entregar.",
+      "files": []
+    }
+  ]
+}

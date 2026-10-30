@@ -1,0 +1,34 @@
+{
+  "skill_name": "integracao-hardware-periferico",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a HAL testável sem hardware e a idempotência de impressão — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "hal-e-teste-sem-hardware",
+      "prompt": "Integrei a webcam chamando OpenCV direto no serviço de sessão e a impressora chamando a API do Windows no mesmo lugar. Funciona. Preciso mudar?",
+      "expected_output": "Sim. SDK e API de SO dentro do serviço de negócio prendem o produto a um periférico e a um sistema operacional, e tornam a suíte dependente de hardware. Introduza ports (`CameraProvider`, `PrinterProvider`) com adapters; o domínio conhece o Protocol, nunca a marca, o SDK, a porta ou o nome do spooler. O teste que prova a abstração: a suíte completa roda SEM nenhum periférico conectado, com `MockCamera` (fixtures em disco, latência simulada e falha programada) e `VirtualPrinter`. Se algum teste exige dispositivo físico, a abstração vazou. Modele também preview (contínuo, baixa resolução) e captura (evento único, alta resolução) como operações DIFERENTES — tratá-las como a mesma chamada é origem de metade dos problemas de UX de totem.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "impressao-idempotente-e-nao-bloqueante",
+      "prompt": "Quando a impressora falha, meu código faz retry do job. Às vezes sai foto duplicada e, se a impressora está offline, a tela do usuário mostra erro. Como arrumo?",
+      "expected_output": "Dois defeitos de contrato. (1) Idempotência: derive um `job_key` determinístico de `session_id + n_copia` e consulte o estado antes de submeter — reenviar o mesmo `job_key` não pode produzir segunda cópia. Mídia de sublimação é cara e vem em quantidade fixa por kit. A fila precisa ser persistente e reconciliada no boot do worker (jobs órfãos em SPOOLING/PRINTING são conferidos contra o SO). (2) Acoplamento errado: a entrega ao usuário nunca pode depender da impressora. A foto fica disponível na tela e no QR ANTES do job ir para a fila; impressora offline degrada para 'sua foto está no QR, a impressão sai em instantes' e o operador (não o público) é notificado por um painel próprio. Some: reconexão com backoff e TETO (dispositivo que não volta exige ação humana), e torne a impressão opcional e explícita — a impressora é o gargalo de vazão do evento, não a IA.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "armadilha-do-queued-na-idempotencia",
+      "prompt": "Meu submit de impressao e idempotente: se o job_key ja existe com status ativo (QUEUED, SPOOLING, PRINTING ou DONE), devolvo o job_id sem reimprimir. Sem duplicatas. Ta certo?",
+      "expected_output": "Nao. Incluir QUEUED nessa guarda cria um bug silencioso: com a impressora offline o job entra em QUEUED, e quando ela volta QUALQUER reenvio bate na guarda e devolve o job_id SEM imprimir — o job morre na fila e ninguem percebe. Idempotencia protege contra repetir trabalho FEITO; um item que ainda nao foi feito nao e protegido por ela, e sim abandonado. Correcao: separe JA_TRATADOS = {SPOOLING, PRINTING, DONE} (onde a guarda vale) de QUEUED (que significa 'ainda vai acontecer'), reaproveitando o mesmo job_id, e adicione um `drenar()` acionado pelo health check que reenvia o que ficou parado quando a impressora volta — marcando FAILED o que perdeu a imagem. A regra geral a aplicar em qualquer guarda de idempotencia: pergunte se o estado significa 'ja aconteceu' ou 'ainda vai acontecer'.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "sumir-da-fila-e-ambiguo",
+      "prompt": "Consulto Get-PrintJob e, quando o job nao aparece mais na fila, marco como DONE. Faz sentido, ne? Ele saiu da fila porque terminou.",
+      "expected_output": "Ambiguo e perigoso: o spooler remove o job da fila quando ele TERMINA e tambem quando ele MORRE. Presumir sucesso perde fotos em silencio — o operador so descobre pela reclamacao na fila. Use um invariante fisico para desempatar: o TEMPO DE CICLO do equipamento. Numa impressora fotografica de sublimacao o ciclo de 10x15 cm e de aproximadamente 12 a 26 s (especificacao do fabricante, nao estimativa); um job que some em 1 s nao imprimiu. Guarde o instante do envio e so marque DONE se decorreu ao menos o ciclo minimo, senao FAILED com o motivo registrado. A heuristica geral: quando a API do periferico e ambigua, procure um invariante fisico (tempo de ciclo, consumo de midia, contador de paginas) — o relogio sabe coisas que a API nao conta. Bonus: teste isso sem Windows, com um ShellRunner injetavel.",
+      "files": []
+    }
+  ]
+}

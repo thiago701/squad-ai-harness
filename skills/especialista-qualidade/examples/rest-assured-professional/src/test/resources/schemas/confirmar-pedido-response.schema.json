@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ConfirmarPedidoResponse",
+  "description": "Contrato da resposta 200 de POST /api/pedidos/{id}/confirmar (draft-04: compativel com o json-schema-validator/fge do RestAssured)",
+  "type": "object",
+  "required": ["pedidoId", "status", "confirmadoEm", "valorTotal"],
+  "additionalProperties": false,
+  "properties": {
+    "pedidoId": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["CONFIRMADO"] },
+    "confirmadoEm": { "type": "string", "format": "date-time" },
+    "valorTotal": { "type": "number", "minimum": 0, "exclusiveMinimum": true }
+  }
+}

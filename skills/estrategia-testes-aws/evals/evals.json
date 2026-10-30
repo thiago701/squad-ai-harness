@@ -1,0 +1,27 @@
+{
+  "skill_name": "estrategia-testes-aws",
+  "descricao": "Cenários qualitativos da skill estrategia-testes-aws (with/without skill).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "plano-testes-api-serverless",
+      "prompt": "Vou começar um projeto novo: API REST com API Gateway, Lambda em Java e DynamoDB, com fila SQS para processamento assíncrono. Que testes eu preciso e onde cada um roda?",
+      "expected_output": "Diagnóstico curto (fatos × hipóteses). Unitário rápido e local da lógica de negócio com handler fino e SDK atrás de porta; integração na NUVEM contra pilha efêmera por branch (SAM/CDK) em conta de teste, incluindo IAM e o evento real; teste do fluxo assíncrono por ouvinte que captura o evento/registro de saída com timeout; contrato de API via contrato-reverso; poucos E2E por jornada; carga em pré-produção; segurança (Access Analyzer, Inspector) no PR; canary deploy com alarme e rollback e CloudWatch Synthetics em produção. Matriz por estágio com tempo-alvo e quem aprova; inconclusivo quando faltar ambiente.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "emulador-nao-prova",
+      "prompt": "Meus testes de integração passam no LocalStack. Posso considerar a integração com a AWS provada?",
+      "expected_output": "Não: emulador acelera, mas não prova IAM, quotas, timeouts, eventos e serialização reais. A AWS recomenda testar integração na nuvem; manter o emulador para feedback rápido e rodar a integração crítica contra pilha efêmera em conta de teste. Sem acesso à conta, o veredito é inconclusivo, não aprovado.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "testes-em-producao",
+      "prompt": "Quais testes posso rodar em produção sem colocar o banco em risco?",
+      "expected_output": "Só os não destrutivos: canaries sintéticos (CloudWatch Synthetics) com dados e contas de teste dedicados, deploy canário/linear com alarmes e rollback automático, feature flags (AppConfig) e observação de SLO. Carga, caos e pentest ficam em pré-produção; qualquer teste destrutivo em produção exige aprovação explícita, janela, condição de parada e respeito às políticas da AWS e do banco.",
+      "files": []
+    }
+  ]
+}

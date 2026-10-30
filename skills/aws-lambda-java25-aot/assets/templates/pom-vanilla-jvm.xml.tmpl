@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Vanilla JVM / SnapStart Lambda Java 25 — hardened build.
+
+  This is the "lightweight, testable" path (no Spring, no GraalVM Native): the
+  managed `java25` runtime + SnapStart for cold start, with a build that fails
+  on any quality regression. It is the blueprint proven by the Squad's Task
+  Manager delivery (line coverage 100%, 220 tests, build ~25-31s). Use it when
+  testability and a fast feedback loop matter more than sub-100ms cold start.
+  For sub-100ms / minimal footprint, use the Spring Boot 4 + GraalVM Native
+  path (pom.xml.tmpl) instead — see references/vanilla-jvm-snapstart.md.
+
+  Gates wired into `verify` (single command `./mvnw verify`):
+    - JaCoCo line coverage >= 97% on domain/application/api (gate fails build)
+    - ArchUnit boundary rules (run as ordinary tests)
+    - Checkstyle structural Object Calisthenics gate (config/checkstyle/*)
+    - Shade fat jar (mainless: Lambda invokes the handler class)
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>{{ group_id }}</groupId>
+  <artifactId>{{ artifact_id }}</artifactId>
+  <version>{{ version }}</version>
+  <packaging>jar</packaging>
+  <name>{{ artifact_id }}</name>
+  <description>AWS Lambda Java 25 (vanilla, SnapStart, single-table DynamoDB)</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <aws.lambda.core.version>1.2.3</aws.lambda.core.version>
+    <aws.lambda.events.version>3.16.0</aws.lambda.events.version>
+    <aws.sdk.version>2.31.6</aws.sdk.version>
+    <jackson.version>2.18.2</jackson.version>
+
+    <junit.version>5.11.4</junit.version>
+    <assertj.version>3.27.3</assertj.version>
+    <mockito.version>5.15.2</mockito.version>
+    <archunit.version>1.4.1</archunit.version>
+    <snakeyaml.version>2.3</snakeyaml.version>
+
+    <surefire.version>3.5.2</surefire.version>
+    <shade.version>3.6.0</shade.version>
+    <jacoco.version>0.8.13</jacoco.version>
+    <compiler.plugin.version>3.13.0</compiler.plugin.version>
+    <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+    <checkstyle.version>10.21.0</checkstyle.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws.sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Lambda runtime contract -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-lambda-java-core</artifactId>
+      <version>${aws.lambda.core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-lambda-java-events</artifactId>
+      <version>${aws.lambda.events.version}</version>
+    </dependency>
+
+    <!-- Persistence: DynamoDB Enhanced Client (pulls in dynamodb) -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>dynamodb-enhanced</artifactId>
+    </dependency>
+    <!-- Lightweight sync HTTP client (no Netty/Apache); good cold start fit -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>url-connection-client</artifactId>
+    </dependency>
+
+    <!-- JSON: api + infra only (domain stays pure) -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>${archunit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Lightweight YAML parse for the OpenAPI contract test -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- SLF4J binding so the AWS SDK emits real diagnostics in tests instead of
+         the NOP fallback. Pinned to the slf4j-api the SDK pulls in (1.7.x). -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.36</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>{{ artifact_id }}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler.plugin.version}</version>
+        <configuration>
+          <release>25</release>
+        </configuration>
+      </plugin>
+
+      <!-- Unit tests (*Test) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <!-- Failsafe is kept for any future *IT. The DynamoDB endpoint integration
+           test is a *Test so it runs in Surefire and shares the JaCoCo exec data.
+           It self-skips when DDB_ENDPOINT is unreachable, so the build stays green
+           without Docker (see references/vanilla-jvm-snapstart.md). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Fat jar (mainless: Lambda invokes the handler class) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${shade.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>module-info.class</exclude>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Coverage + gate (>= 97% line on domain/application/api) -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>check-coverage</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <includes>
+                    <include>{{ base_package }}.domain.*</include>
+                    <include>{{ base_package }}.application.*</include>
+                    <include>{{ base_package }}.api.*</include>
+                  </includes>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.97</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+              <excludes>
+                <!-- DTO record carriers and composition wiring carry no branch logic -->
+                <exclude>{{ base_package_path }}/api/dto/*</exclude>
+                <exclude>{{ base_package_path }}/config/*</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Structural Object Calisthenics gate: narrow, design-metric-only
+           Checkstyle bound to `verify`. Main sources only; fails the build on
+           any structural regression. See config/checkstyle/checkstyle.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+          <suppressionsLocation>config/checkstyle/suppressions.xml</suppressionsLocation>
+          <includeTestSourceDirectory>false</includeTestSourceDirectory>
+          <consoleOutput>true</consoleOutput>
+          <failOnViolation>true</failOnViolation>
+          <violationSeverity>error</violationSeverity>
+          <linkXRef>false</linkXRef>
+        </configuration>
+        <executions>
+          <execution>
+            <id>checkstyle-structural-gate</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

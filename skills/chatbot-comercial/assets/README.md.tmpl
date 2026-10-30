@@ -1,0 +1,115 @@
+# {{PROJETO}}
+
+Chatbot comercial multi-tenant — vertical **{{VERTICAL_ROTULO}}**, tenant `{{TENANT}}`
+({{ESTABELECIMENTO}}). Canais: {{CANAIS}}. Gerado pela skill `chatbot-comercial`.
+
+## Subir (um comando)
+
+```bash
+make instalar && make up          # http://localhost:{{PORTA}}
+```
+
+`make up` indexa `dados/{{VERTICAL}}/`, sobe o HTTP e serve o painel em `/painel`.
+Sem `.env`, sobe em **modo extrativo**: responde de verdade, citando a fonte, custo zero.
+Com `LLM_GATEWAY_ATIVO=1`, usa o `llm-gateway` (roteamento, cache e limite de custo são dele).
+
+VPS: `cp .env.example .env && make docker-up`.
+
+## Uma conversa ponta a ponta
+
+```bash
+curl -s localhost:{{PORTA}}/chat -H 'content-type: application/json' \
+  -d '{"mensagem":"posso levar meu cachorro?","sessao":"web:demo"}'
+```
+
+```json
+{"resposta":"A pousada aceita animais de estimação de pequeno porte, até 10 quilos, mediante taxa de R$ 60,00 por estadia... (fonte: estrutura)",
+ "intencao":"pet","fontes":["estrutura"],"escalonado":false}
+```
+
+Pergunta fora da base:
+
+```bash
+curl -s localhost:{{PORTA}}/chat -H 'content-type: application/json' \
+  -d '{"mensagem":"voces tem heliponto?","sessao":"web:demo"}'
+# → "Não encontrei isso na nossa base..." · escalonado:true · fontes:[]
+```
+
+Sem fonte, o agente não responde. Isso é invariante, não configuração.
+
+## Os cinco módulos
+
+| Módulo | Onde | O que garante |
+|---|---|---|
+| M1 agente | `app/agente.py`, `app/ferramentas.py`, `app/vertical.py` | persona por vertical, ferramentas com política de efeito, recusa determinística, escalonamento com contexto |
+| M2 RAG | `app/conhecimento.py` | ingestão (md/txt/csv/json/html/PDF/export WhatsApp), reindexação incremental por sha256, citação obrigatória |
+| M3 leads | `app/leads.py` | captura, qualificação, dedupe por hash de contato, timeline, export CSV |
+| M4 retreinamento | `app/curadoria.py` | curadoria → **aprovação humana** → versão → rollback. Nunca reindexa sem aprovação |
+| M5 auditoria | `app/auditoria.py`, `app/dashboard.py` | trilha por interação, custo por tenant/conversa com teto, LGPD (consentimento, retenção, esquecimento), dashboard |
+
+Monólito modular: os módulos se chamam por função, não por rede.
+Extrair qualquer um para serviço próprio exige ADR escrito em `docs/adr/`.
+
+## Painel do atendente
+
+`/painel` — feito para quem atende, não para quem programa: leads com contato mascarado,
+conversa completa da sessão (o handoff não perde contexto), fila de perguntas sem resposta boa,
+e o botão de aprovar correção da base. O `aprovado_por` fica na trilha.
+
+Em produção defina `PAINEL_TOKEN` no `.env`.
+
+## Qualidade do RAG
+
+<!-- eval-rag:inicio -->
+Rode `make eval` para gerar esta tabela.
+<!-- eval-rag:fim -->
+
+```bash
+make eval      # golden set + métricas
+make teste     # suíte + cobertura (gate 80%)
+make verificar # lint + teste + eval
+```
+
+`disciplina` é a métrica anti-trapaça: baixar `CHATBOT_SCORE_MINIMO` sobe hit@k e
+derruba disciplina. Ganho só vale se nenhuma das cinco métricas regredir.
+
+## Alimentar a base
+
+```bash
+python scripts/seed_rag.py --de ~/docs-do-cliente          # md, txt, csv, json, html, pdf, xlsx
+python scripts/seed_rag.py --url https://cliente.com/faq --nome-fonte faq
+python scripts/seed_rag.py --forcar                        # reindexa tudo
+```
+
+Incremental por sha256: só reprocessa arquivo cujo conteúdo mudou.
+PDF precisa de `.[pdf]`, planilha `.xlsx` precisa de `.[xlsx]`.
+
+## Trocar de vertical
+
+1. Crie `verticais/<nome>.json` — persona, intenções (a **ordem é a precedência**), sinônimos,
+   `termos_ignorados`, ferramentas com `intencao` + `slots_obrigatorios`, `padroes_recusa`,
+   qualificação de lead, KPIs.
+2. Ponha os documentos em `dados/<nome>/`.
+3. Escreva o golden set em `golden/<nome>.json` — mínimo 30 perguntas reais + negativos,
+   metade deles em paráfrase das políticas de recusa.
+4. `CHATBOT_VERTICAL=<nome> make up && make eval`.
+
+Nenhum arquivo de `app/` muda. Ferramenta de consulta sobre arquivo usa `adapter: "tabela"`;
+só integração com o sistema do cliente pede um adapter `_f_<nome>`.
+
+## Custo
+
+Teto por conversa e por mês, no `.env`. Estourou, degrada para extrativo e registra o
+motivo na trilha — não derruba o atendimento, não estoura a conta.
+`GET /api/painel` mostra custo por conversa e por tenant.
+
+## Crescimento
+
+| Sinal | Movimento |
+|---|---|
+| > 10k conversas/mês | `PgVectorStore` do `rag_kit` no lugar do store em memória |
+| Base > ~50 MB | Postgres + pgvector (`pip install -e .[postgres]`) |
+| Vários tenants no mesmo host | um container + um volume por tenant (deploy isolado já é o default) |
+| Latência do LLM incomodando | fila + worker; só então, não antes |
+
+Nada disso está aqui hoje porque para {{VOLUME}} seria complexidade acidental.

@@ -1,0 +1,34 @@
+{
+  "id": "error-stacktrace",
+  "label": "Stack trace",
+  "description": "Preserva a mensagem, os frames do proprio projeto e as cadeias Caused by.",
+  "category": "generic",
+  "priority": 60,
+  "match": {
+    "patterns": ["Traceback \\(most recent call last\\)", "^\\s+at [a-zA-Z0-9_.$]+\\(", "Caused by: ", "^\\s+at Object\\."]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "dropPatterns": ["^\\s+at (java\\.|jdk\\.|sun\\.|org\\.junit\\.|org\\.springframework\\.(boot\\.)?[a-z]|node:internal|/usr/lib/python)", "^\\s+at .*node_modules", "^\\s*$"],
+    "includePatterns": ["Traceback", "Caused by:", "^[A-Za-z_.]+(Error|Exception)", "^\\s+File \\\"", "^\\s+at "],
+    "collapsePatterns": ["^\\s+at "],
+    "deduplicate": true,
+    "truncateLineAt": 250,
+    "headLines": 12,
+    "tailLines": 12,
+    "maxLines": 40,
+    "onEmpty": "stack trace: sem frames de codigo proprio"
+  },
+  "preserve": {
+    "errorPatterns": ["Caused by:", "(Error|Exception):", "Traceback"],
+    "summaryPatterns": []
+  },
+  "tests": [
+    {
+      "name": "frames de framework saem, causa fica",
+      "input": "java.lang.NullPointerException: pedido nulo\n\tat com.acme.PedidoService.criar(PedidoService.java:42)\n\tat org.springframework.aop.Xyz.invoke(Xyz.java:1)\nCaused by: java.lang.IllegalStateException: sem cliente",
+      "expectedContains": ["NullPointerException", "com.acme.PedidoService.criar", "Caused by"],
+      "expectedNotContains": ["org.springframework.aop"]
+    }
+  ]
+}

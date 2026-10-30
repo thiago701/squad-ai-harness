@@ -1,0 +1,73 @@
+{
+  "schema": "model-por-tipo-v1",
+  "default": "sonnet",
+  "camadas": {
+    "haiku": "camada-1 (econômica, mecânica)",
+    "sonnet": "camada-1 (econômica, implementação)",
+    "opus": "camada-2 (fronteira, decisão)"
+  },
+  "regras": [
+    {
+      "model": "opus",
+      "motivo": "Skills cujo produto é uma decisão cara de errar (arquitetura e trade-offs, segurança, banco, revisão e arbitragem, promoção de instinto, auditoria externa): camada 2 da cascata.",
+      "skills": [
+        "aprendizado-continuo",
+        "arquiteto-cloud-aws",
+        "arquiteto-dados-streaming",
+        "arquiteto-ia",
+        "arquiteto-minimalista",
+        "arquiteto-performance",
+        "auditoria-skill-externa",
+        "engenheiro-seguranca",
+        "especialista-banco",
+        "review",
+        "senior-dev-cognitive-evolution",
+        "tech-lead-review"
+      ]
+    },
+    {
+      "model": "haiku",
+      "motivo": "Catálogo, consulta e operações mecânicas de infra, observabilidade e conversão: camada 1 no extremo leve, pela decisão D6 do dono (cenário simples de infra pode usar haiku).",
+      "skills": [
+        "anthropics-skills",
+        "dd-apm",
+        "dd-logs",
+        "dd-monitors",
+        "diagramador",
+        "graphify",
+        "localstack-dev",
+        "markitdown",
+        "memoria-sessao"
+      ]
+    },
+    {
+      "model": "sonnet",
+      "motivo": "Implementação padrão, investigação de erro, padrões de código, scaffold, pipeline e especialistas de engenharia: camada 1 econômica, que é o default da cascata.",
+      "skills": [
+        "angular-error-investigator",
+        "aws-lambda-java25-aot",
+        "aws-serverless-eda",
+        "chatbot-comercial",
+        "clean-code-craftsman",
+        "datadog-lambda-java",
+        "dr-jskill",
+        "engenheiro-clean-architect",
+        "engenheiro-devops",
+        "engenheiro-especificacao",
+        "error-investigator",
+        "especialista-qualidade",
+        "java-coding-standards",
+        "java-error-investigator",
+        "java-modernizer",
+        "java-pro",
+        "java25-spring-boot",
+        "lambda-java-cold-start",
+        "mcp-builder",
+        "python-error-investigator",
+        "squad-ai",
+        "squad-pipeline"
+      ]
+    }
+  ],
+  "excecoes_explicitas": "skill com model já declarado nunca é sobrescrita (use --forcar)"
+}

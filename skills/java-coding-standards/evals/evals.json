@@ -1,0 +1,27 @@
+{
+  "skill_name": "java-coding-standards",
+  "descricao": "Evals da skill Java Coding Standards: aplicação dos padrões Java 25/Spring Boot, sinalização de conflito com legado e veto a streams complexos (P1-Simplicidade).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "revisao-optional-get-code-smells",
+      "prompt": "Revisa esse trecho do nosso serviço Spring Boot: public Optional<Market> getMarket(String slug) { Optional<Market> m = marketRepository.findBySlug(slug); return m.get(); } — e tem mais desse estilo espalhado pelo serviço.",
+      "expected_output": "Aplicar o padrão documentado: Optional.get() sem isPresent() é code smell — trocar por encadeamento map/flatMap terminando em orElseThrow(() -> new MarketNotFoundException(slug)); nunca usar Optional em campos de entidade ou parâmetros (usar campo nullable anotado com @Nullable). Se houver outros smells, aplicar a tabela: long parameter list (> 3) → record/DTO; magic numbers → constantes UPPER_SNAKE_CASE; silent catch blocks → log + rethrow; raw types → genéricos.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "legado-em-migracao-sinalizar-conflito",
+      "prompt": "Nosso monolito legado em Java 8 está no meio de uma migração. Aplica todas essas regras de Java 25 no projeto inteiro agora, de uma vez.",
+      "expected_output": "Sinalizar o conflito documentado nos riscos da skill: standards prescritivos podem conflitar com convenções de projetos legados em migração, e a estrutura de pacotes domain-driven pode não caber em monólitos que ainda não são domain-driven. Não forçar a aplicação em massa: propor adoção gradual por módulo e registrar exceções justificadas, em vez de reescrever tudo de uma vez.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "streams-curtos-p1-simplicidade",
+      "prompt": "Troca esse loop por um stream com cinco operações encadeadas e flatMap aninhado — fica muito mais elegante e funcional.",
+      "expected_output": "Recusar o stream complexo: pipelines curtos e legíveis; complexidade acima de 2 operações encadeadas com lógica → usar for/while (P1-Simplicidade). Manter métodos curtos e focados (< 20 linhas). Em pipelines simples, usar filter/map/sorted com .toList() (Java 16+, imutável) e Gatherers do Java 25 (ex.: windowFixed) apenas quando o caso pedir.",
+      "files": []
+    }
+  ]
+}

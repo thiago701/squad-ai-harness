@@ -1,0 +1,41 @@
+{
+  "skill_name": "python-memoria",
+  "descricao": "Evals da doutrina de memória RAM em Python: iterar vs materializar, cache com limite, dados em pedaços, medição certa (RSS vs tracemalloc), produção com limite e a lente rev-mem no review.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "etl-que-estoura-memoria",
+      "prompt": "Meu script lê um CSV de 6 GB com pd.read_csv, faz df.iterrows() para validar linha a linha e no fim pd.concat dos resultados. Estoura memória na máquina de 8 GB. O que mudar?",
+      "expected_output": "Três mudanças, todas da doutrina python-memoria: (1) ler em pedaços — pd.read_csv(usecols=[…], dtype={…} ou dtype_backend=\"pyarrow\", chunksize=100_000) e processar chunk a chunk (ou polars.scan_csv lazy / DuckDB, parquet em vez de CSV); (2) nunca iterrows (uma Series por linha, MEM-09) — vetorizar a validação por chunk, ou itertuples se precisar de loop; (3) acumular os pedaços numa lista e pd.concat UMA vez fora do loop (MEM-10). Antes de otimizar mais: medir o pico com `lint_memoria.py medir --script etl.py --so-rss` e escrever um teste `with orcamento(max_pico_mb=512)` para o caminho quente — o número que vale é o RSS, não o tracemalloc.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "vazamento-lento-em-servico",
+      "prompt": "Minha API FastAPI sobe para 2 GB de RSS depois de um dia e só volta reiniciando. Como achar e evitar?",
+      "expected_output": "Primeiro provar que é retenção e não fragmentação: `orcamento.medir(fn, repeticoes=N)` — `atual_mb` crescendo entre repetições é vazamento; RSS alto com heap estável é fragmentação/arenas (MALLOC_ARENA_MAX=2, jemalloc). Suspeitos clássicos que a lente aponta: @cache/lru_cache(maxsize=None) ou lru_cache em método (MEM-01), listas globais de histórico/erros sem descarte (MEM-12), exceções guardadas em coleção segurando frames (MEM-15), handlers de log duplicados. Localizar com memray run --live / tracemalloc.compare_to entre snapshots. Enquanto corrige: gunicorn --max-requests + --max-requests-jitter (reciclar worker), limite de memória no container. Fechar com teste de orçamento no endpoint quente.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "lambda-memoria-e-custo",
+      "prompt": "Lambda Python com pandas em 128 MB está lenta e às vezes dá OOM. Subo a memória? Não vai ficar mais caro?",
+      "expected_output": "No Lambda memória = CPU: subir MemorySize costuma reduzir duração e o custo total (GB-s) — decidir com AWS Lambda Power Tuning, não com palpite. Antes: cortar o que infla o pico (ler só colunas/dtypes necessários, chunks, parquet; carregar dados/modelo uma vez por processo, fora do handler), evitar logEvent/payload inteiro, /tmp para arquivos grandes. Medir o pico real (`lint_memoria.py medir --so-rss`) e registrar o orçamento no teste. OOM recorrente em 128 MB com pandas é dimensionamento errado, não bug.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "slots-e-estruturas",
+      "prompt": "Tenho 5 milhões de objetos Pedido (dataclass com 6 campos) em memória para um cálculo. Dá para reduzir sem mudar a lógica?",
+      "expected_output": "Sim, em camadas: (1) @dataclass(slots=True) — sem __dict__ por instância, ~40-60 % menos memória e acesso mais rápido (MEM-13); (2) perguntar se os 5 milhões precisam estar vivos ao mesmo tempo — gerador + agregação incremental costuma eliminar o problema (MEM-20); (3) se precisam: colunas homogêneas em array/numpy (int32/float32/category) ou msgspec.Struct(gc=False, array_like=True), em vez de milhões de objetos Python; (4) medir antes/depois com `with orcamento(...)` e travar o número no teste. Nunca `copy.deepcopy` em loop; `frozen=True` dispensa cópia defensiva.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "lente-rev-mem-no-review",
+      "prompt": "Tech lead: como a Squad revisa memória num PR Python?",
+      "expected_output": "Lente determinística + leitura: `python -X utf8 skills/python-memoria/scripts/lint_memoria.py verificar --raiz . --diff <base> --falhar-em necessario --saida .claude/pipeline/<slug>/05d-memoria` (segundos, AST, sem LLM) — 🟡 ativo em código de serviço/volume não limitado = AGUARDANDO (memória não tem veto 🔴); supressões `# mem-ok: motivo` conferidas; depois o checklist P2.MEM (iterar vs materializar, caches com limite, I/O em blocos, dados tipados em pedaços, slots em massa, concorrência com teto, produção com limite, teste de orçamento). Laudo `### Lente rev-mem` com densidade (achados/1k linhas) e o orçamento medido do caminho quente.",
+      "files": []
+    }
+  ]
+}

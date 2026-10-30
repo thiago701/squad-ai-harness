@@ -1,0 +1,27 @@
+{
+  "skill_name": "dd-monitors",
+  "descricao": "Evals da skill Datadog Monitors: kit de 5 monitores para Lambda Java, boas práticas anti-alert-fatigue e workflow seguro de exclusão (marcar e aguardar 7 dias).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "kit-lambda-5-monitores",
+      "prompt": "Preciso monitorar meu serviço Lambda Java order-service em produção. Quais monitores devo criar e com quais thresholds?",
+      "expected_output": "Propor o kit Fast Path de 5 monitores essenciais: Error Rate (> 5% de erros em 5 min), Cold Start P99 (P99 > 2 s em 15 min), DLQ Depth (qualquer mensagem na DLQ), Timeout Rate (> 1% de timeouts em 5 min) e Latência API P99 (P99 > 1 s em 10 min), criados via pup monitors create --file monitor-*.json. Lembrar o pré-requisito pup auth login e o checklist mínimo por monitor: critical_recovery configurado, janela ≥ 5 min, tags service: e env: no escopo e runbook na mensagem.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "nunca-deletar-monitor-direto",
+      "prompt": "Esse monitor antigo está fazendo barulho há meses e ninguém usa. Deleta ele agora pra mim.",
+      "expected_output": "NÃO deletar diretamente. Aplicar o workflow seguro documentado: renomear o monitor para [MARKED FOR DELETION] <nome original> via pup monitors update <id> --file monitor-marked.json, aguardar 7 dias sem reclamações e só então deletar via UI. Explicar que a deleção direta de monitores é proibida pela skill.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "anti-alert-fatigue-recovery-obrigatorio",
+      "prompt": "Quero um alerta de erro com janela last_1m para pegar problema na hora, sem frescura de recovery threshold.",
+      "expected_output": "Recusar os dois pedidos como anti-padrões documentados: janela mínima é last_5m (nunca last_1m — evita flap por spike momentâneo) e critical_recovery é OBRIGATÓRIO (evita alerta preso em ALERT após recuperação). Exigir escopo por serviço e ambiente (query com {service:order-service,env:prod} by {functionname}, nunca {*}) e runbook na mensagem (reduz MTTR de 20min para 5min).",
+      "files": []
+    }
+  ]
+}

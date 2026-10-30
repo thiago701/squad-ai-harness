@@ -1,0 +1,55 @@
+{
+  "skill_name": "rust-async-services",
+  "descricao": "Evals da v1.0.0. Cobrem bloqueio do executor, cancel safety do select!, backpressure/concorrência limitada, shutdown gracioso com readiness, SQL parametrizado + vazamento de erro, MutexGuard atravessando await e retry seguro com idempotência.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "hash-de-senha-bloqueia-o-executor",
+      "prompt": "Meu serviço axum fica lento para TODAS as rotas quando vários usuários fazem login ao mesmo tempo. O handler chama argon2::hash_password direto dentro do async fn. A CPU está em ~100% em poucas threads.",
+      "expected_output": "Diagnosticar bloqueio do executor: hash de senha é CPU-bound síncrono dentro de async e monopoliza as worker threads do tokio, atrasando todas as tarefas. Correção: tokio::task::spawn_blocking (propagando o JoinError, sem unwrap) e limitar a concorrência desse trabalho com Semaphore (para não esgotar o pool de blocking nem a CPU), mantendo timeout/limite de corpo; não resolver aumentando worker_threads. Provar com teste/carga (latência de uma rota leve durante os logins) e métricas de saturação; mencionar std::fs/thread::sleep como outros bloqueios e tokio-console como ferramenta de diagnóstico em ambiente de teste.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "select-com-read-exact-perde-dados",
+      "prompt": "Num loop de conexão uso tokio::select! entre socket.read_exact(&mut buf) e um timer de keepalive. Às vezes recebo mensagens corrompidas/truncadas depois que o timer dispara. Por quê?",
+      "expected_output": "Causa: read_exact NÃO é cancel-safe — quando o ramo do timer vence, o future de read_exact é descartado e os bytes já lidos para o buffer se perdem, dessincronizando o protocolo. Correções: usar um codec/framing (tokio_util::codec Framed/FramedRead) ou um buffer persistente com read() (cancel-safe) acumulando até ter a mensagem completa; ou criar o future de leitura uma vez, fixá-lo com tokio::pin! e reaproveitar &mut fut no select! em vez de recriá-lo a cada volta; ou separar leitura e keepalive em tarefas distintas. Citar quais operações são cancel-safe (read, recv de mpsc, accept, tick) e quais não são (read_exact, write_all, read_line). Teste determinístico com #[tokio::test(start_paused = true)].",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "consumidor-spawn-por-mensagem-oom",
+      "prompt": "Meu worker lê mensagens de uma fila e faz tokio::spawn(process(msg)) para cada uma, usando unbounded_channel entre o leitor e o resto. Em pico a memória explode e o pod morre por OOM.",
+      "expected_output": "Sem backpressure: canal ilimitado e spawn por mensagem transformam o pico em acúmulo de memória. Corrigir com mpsc::channel(N) limitado (o produtor espera quando enche) e concorrência limitada: Semaphore (acquire_owned ANTES do spawn) ou buffer_unordered(n), JoinSet para guardar/aguardar as tarefas e tratar JoinError; timeout por mensagem; CancellationToken para shutdown; ack/delete da mensagem somente após sucesso e handler idempotente (at-least-once). Dimensionar N e o limite por medição e expor métricas de saturação (fila, tarefas em voo). Mostrar código compilável e teste com tempo virtual provando que o pico de concorrência não passa do limite.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "deploy-502-shutdown-gracioso",
+      "prompt": "A cada deploy no Kubernetes meu serviço axum devolve alguns 502. Uso axum::serve(listener, app).await direto e /health sempre responde 200.",
+      "expected_output": "Faltam shutdown gracioso e readiness real: tratar SIGTERM (tokio::signal::unix, e ctrl_c), ao receber derrubar a readiness primeiro (/readyz distinto de /livez), aguardar uma janela de drain (preStop/sleep) para o balanceador retirar o pod, só então cancelar o CancellationToken usado em axum::serve(...).with_graceful_shutdown(...) para drenar as requisições em voo, depois fechar o pool e fazer shutdown/flush da telemetria; tudo dentro de terminationGracePeriodSeconds; ENTRYPOINT em forma exec (PID 1 recebe o sinal). Provar com teste: requisição lenta em voo termina com 200 após o cancel, nova conexão é recusada, readiness cai antes do cancelamento (tempo virtual), e smoke test de delete de pod sob carga com 0 erros.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "sql-format-e-erro-vazado",
+      "prompt": "No meu handler sqlx faço let sql = format!(\"SELECT * FROM usuarios WHERE nome = '{nome}'\"); e quando dá erro retorno e.to_string() no corpo da resposta 500. Está ok?",
+      "expected_output": "Não: SQL montado com format! a partir de entrada externa é injeção de SQL e o texto do erro do driver vaza detalhes internos. Usar consulta parametrizada (sqlx::query_as(\"... WHERE nome = ?\" / $1).bind(nome)); no sqlx 0.9 query(String) nem compila (SqlSafeStr exige &'static str; AssertSqlSafe só após auditoria; filtros dinâmicos com QueryBuilder + push_bind). Mapear erros no limite: RowNotFound → 404, violação de unicidade → 409, o resto → ApiError::Internal com a causa no log (tracing::error) e mensagem genérica ao cliente. Pool com max_connections/acquire_timeout, transação quando houver múltiplas escritas, colunas explícitas em vez de SELECT *, teste cobrindo entrada maliciosa (' OR '1'='1).",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "future-nao-send-mutexguard",
+      "prompt": "Recebo 'future cannot be sent between threads safely ... the trait Send is not implemented for std::sync::MutexGuard' ao fazer tokio::spawn(async move { let g = m.lock().unwrap(); algo().await; *g += 1; }). Troco para Rc ou unsafe impl Send?",
+      "expected_output": "Não usar unsafe impl Send nem Rc: o erro é legítimo — o MutexGuard síncrono atravessa um .await e a tarefa pode migrar de thread (e poderia travar o executor). Correções em ordem: reduzir o escopo do guard (bloco que termina antes do .await; copiar o dado necessário), reestruturar para que o lock não cubra o .await, usar tokio::sync::Mutex somente se o lock realmente precisa cobrir a espera, ou modelo de ator (tarefa dona do estado + mpsc/oneshot). Explicar a causa (note: future is not Send as this value is used across an await) e a regra geral para Rc/RefCell/guards. Mostrar código corrigido compilando.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "retry-em-post-sem-idempotencia",
+      "prompt": "Meu cliente reqwest faz 5 retries imediatos em qualquer erro, inclusive POST /pagamentos, e sem timeout configurado. Há risco?",
+      "expected_output": "Sim: sem timeout uma chamada pode pendurar para sempre (configurar connect_timeout e timeout no Client único e reutilizável); retry imediato amplifica falhas (retry storm) e em POST não idempotente duplica efeito (cobrança em duplicidade). Corrigir: retry só em falhas transitórias (timeout/conexão, 429/503 respeitando Retry-After) e só em operações idempotentes ou com Idempotency-Key aceita pelo servidor; backoff exponencial com full jitter e teto de tentativas/tempo total; não repetir 4xx; limite de concorrência por dependência e circuit breaker; limite do tamanho da resposta. Código compilável (com_retry genérico) e testes com tempo virtual (falha 2x e sucesso na 3ª; erro permanente não repete).",
+      "files": []
+    }
+  ]
+}

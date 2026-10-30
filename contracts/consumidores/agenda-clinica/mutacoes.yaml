@@ -1,0 +1,26 @@
+# Mutações do projeto (Agenda Clínica, Java) para `cr.py bench`. Contrato/Gateway são automáticas.
+mutacoes:
+  - id: java-conflito-de-horario-ignorado
+    tipo: quebra
+    alvo: implementacao
+    arquivo: app/agenda-clinica-lambda/src/main/java/com/squadai/agenda/application/AgendarConsultaUseCase.java
+    descricao: regra central removida — dois pacientes no mesmo horário do mesmo profissional
+    trocas: [{ancora: ".anyMatch(novo::overlapsCom);", antigo: "throw new ConflitoDeHorario(profissionalId, inicio.value());", novo: "// conflito ignorado"}]
+  - id: java-realizada-cancelavel
+    tipo: quebra
+    alvo: implementacao
+    arquivo: app/agenda-clinica-lambda/src/main/java/com/squadai/agenda/domain/model/StatusAgendamento.java
+    descricao: estado terminal REALIZADA passa a aceitar CANCELADA
+    trocas: [{ancora: "case CONFIRMADA ->", antigo: "case CANCELADA, REALIZADA, FALTOU -> false;", novo: "case REALIZADA -> novo == CANCELADA;\n            case CANCELADA, FALTOU -> false;"}]
+  - id: java-criacao-200
+    tipo: quebra
+    alvo: implementacao
+    arquivo: app/agenda-clinica-lambda/src/main/java/com/squadai/agenda/api/AgendamentoRoutes.java
+    descricao: criação devolve 200 em vez de 201
+    trocas: [{ancora: "HttpResult.of(201, AgendamentoResponse.from(criado))", antigo: "HttpResult.of(201,", novo: "HttpResult.of(200,"}]
+  - id: java-erro-sem-problem-json
+    tipo: quebra
+    alvo: implementacao
+    arquivo: app/agenda-clinica-lambda/src/main/java/com/squadai/agenda/api/AgendamentoApiGatewayHandler.java
+    descricao: erros deixam de sair como application/problem+json
+    trocas: [{ancora: "class AgendamentoApiGatewayHandler", antigo: 'PROBLEM_JSON = "application/problem+json"', novo: 'PROBLEM_JSON = "application/json"'}]

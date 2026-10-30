@@ -1,0 +1,20 @@
+{
+  "skill_name": "squad-ai",
+  "descricao": "Evals da orquestradora (Ciclo 7). Cenarios with/without: deve orquestrar projeto completo, mas NAO acionar a squad inteira para tarefa pontual.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "novo-projeto-cqrs-orquestra-fases",
+      "prompt": "Squad AI, quero um novo projeto Java 25 + Spring Boot 4: API de pedidos com CQRS e Outbox. Toque de ponta a ponta.",
+      "expected_output": "Conduzir as 6 fases (Discovery->Design->Build->Test->Review->Deliver) com gates. Discovery: DDD (Aggregate Pedido, Value Objects validados, Domain Events, bounded contexts). Design: Clean Architecture 4 camadas validada por ArchUnit, CQRS in-process + Outbox, Mapa AI-Native, ADRs. Build: TDD (RED->GREEN), scaffold Maven multi-module. GATE 1 (apos plano) e GATE 2 (pre-commit) param para aprovacao humana. Aplica P1>P2>P3. Delega aos especialistas (engenheiro-especificacao, arquitetos, especialista-qualidade, tech-lead-review).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "tarefa-pontual-nao-aciona-squad",
+      "prompt": "Squad AI, corrija este typo na mensagem de log do PedidoController.",
+      "expected_output": "NAO acionar a squad inteira (anti agent-soup). Reconhecer como tarefa trivial/pontual: encaminhar ao especialista direto (ou edicao simples) sem montar as 6 fases nem multiplos agentes. A cerimonia e proporcional ao blast radius; GATE 2 (verificacao-loop) ainda se aplica antes do commit, mas sem pipeline completo.",
+      "files": []
+    }
+  ]
+}

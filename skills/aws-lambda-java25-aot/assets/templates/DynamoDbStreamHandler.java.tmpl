@@ -1,0 +1,132 @@
+package {{ base_package }}.handler;
+
+import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
+import com.amazonaws.services.lambda.runtime.events.DynamodbEvent.DynamodbStreamRecord;
+import com.amazonaws.services.lambda.runtime.events.StreamsEventResponse;
+import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import software.amazon.lambda.powertools.logging.Logging;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import software.amazon.lambda.powertools.tracing.Tracing;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+/**
+ * DynamoDB Streams handler — captura INSERT/MODIFY/REMOVE da tabela
+ * {{ single_table_name }} e roteia por _type (discriminador).
+ *
+ * Stream entrega at-least-once; idempotência fica por conta de cada handler
+ * downstream (use @Idempotent do PowerTools quando publicar para sistema externo).
+ *
+ * BatchSize=100 + ReportBatchItemFailures: a Lambda pode reportar falhas
+ * parciais; records com sucesso não são reprocessados.
+ */
+@Configuration
+public class DynamoDbStreamHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(DynamoDbStreamHandler.class);
+
+    @Bean
+    public Function<DynamodbEvent, StreamsEventResponse> streamHandler() {
+        return this::handle;
+    }
+
+    // PII: logEvent=false — as imagens NEW/OLD do stream carregam o item inteiro (dados pessoais).
+    @Logging(logEvent = false)
+    @Metrics(captureColdStart = true)
+    @Tracing
+    private StreamsEventResponse handle(DynamodbEvent event) {
+        // Honra FunctionResponseTypes: [ReportBatchItemFailures] do SAM. Processa cada
+        // record isoladamente; um que falhar não derruba o lote — só ele é reportado para
+        // reprocessamento (e, esgotados os retries, vai para a DLQ via OnFailure).
+        List<StreamsEventResponse.BatchItemFailure> failures = new ArrayList<>();
+
+        for (DynamodbStreamRecord record : event.getRecords()) {
+            String sequenceNumber = record.getDynamodb().getSequenceNumber();
+            try {
+                String eventName = record.getEventName();
+                Map<String, AttributeValue> newImage = record.getDynamodb().getNewImage();
+                Map<String, AttributeValue> oldImage = record.getDynamodb().getOldImage();
+
+                String type = extractType(newImage, oldImage);
+                switch (eventName) {
+                    case "INSERT" -> onInsert(type, newImage);
+                    case "MODIFY" -> onModify(type, oldImage, newImage);
+                    case "REMOVE" -> onRemove(type, oldImage);
+                    default -> { /* ignore unknown */ }
+                }
+            } catch (Exception e) {
+                // Reporta só este record como falho (itemIdentifier = sequence number).
+                log.error("stream.record.failed seq={}", sequenceNumber, e);
+                failures.add(StreamsEventResponse.BatchItemFailure.builder()
+                    .withItemIdentifier(sequenceNumber)
+                    .build());
+            }
+        }
+
+        return StreamsEventResponse.builder()
+            .withBatchItemFailures(failures)
+            .build();
+    }
+
+{{#each stream_handlers}}
+    // Handler específico para _type = {{ filter_type }}
+    private void on{{ filter_type }}Insert(Map<String, AttributeValue> img) {
+        // TODO: lógica downstream — publicar EventBridge, atualizar cache, etc.
+    }
+
+    private void on{{ filter_type }}Modify(Map<String, AttributeValue> oldImg, Map<String, AttributeValue> newImg) {
+        // TODO: lógica de update — diff, fan-out, etc.
+    }
+
+    private void on{{ filter_type }}Remove(Map<String, AttributeValue> oldImg) {
+        // TODO: lógica de remoção — limpar cache, soft-delete downstream.
+    }
+
+{{/each}}
+
+    // ─── Roteamento por _type ───────────────────────────────────────────
+
+    private void onInsert(String type, Map<String, AttributeValue> img) {
+        switch (type) {
+{{#each stream_handlers}}
+            case "{{ filter_type }}" -> on{{ filter_type }}Insert(img);
+{{/each}}
+            default -> { /* ignore */ }
+        }
+    }
+
+    private void onModify(String type, Map<String, AttributeValue> oldImg, Map<String, AttributeValue> newImg) {
+        switch (type) {
+{{#each stream_handlers}}
+            case "{{ filter_type }}" -> on{{ filter_type }}Modify(oldImg, newImg);
+{{/each}}
+            default -> { /* ignore */ }
+        }
+    }
+
+    private void onRemove(String type, Map<String, AttributeValue> oldImg) {
+        switch (type) {
+{{#each stream_handlers}}
+            case "{{ filter_type }}" -> on{{ filter_type }}Remove(oldImg);
+{{/each}}
+            default -> { /* ignore */ }
+        }
+    }
+
+    private String extractType(Map<String, AttributeValue> newImage, Map<String, AttributeValue> oldImage) {
+        Map<String, AttributeValue> source = newImage != null ? newImage : oldImage;
+        if (source != null && source.containsKey("_type")) {
+            return source.get("_type").getS();
+        }
+        return "UNKNOWN";
+    }
+}

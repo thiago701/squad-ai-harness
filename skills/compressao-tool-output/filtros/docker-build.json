@@ -1,0 +1,34 @@
+{
+  "id": "docker-build",
+  "label": "Docker build",
+  "description": "Preserva o step que falhou, ERROR e o digest final; descarta progresso de camada.",
+  "category": "docker",
+  "priority": 85,
+  "match": {
+    "commands": ["^docker(\\s+buildx)?\\s+build\\b", "^docker[- ]compose\\s+(up|build)\\b"],
+    "patterns": ["^#\\d+ \\[", "^ERROR: failed to solve"]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "dropPatterns": ["^#\\d+ (sha256|extracting|transferring|DONE 0\\.)", "^\\s*=> \\[internal\\]", "^\\s*=> => (transferring|sha256|extracting)", "^\\s*$", "Pulling fs layer", "Waiting$", "Download complete$"],
+    "includePatterns": ["^ERROR", "^#\\d+ ERROR", "failed to solve", "^\\s*=> ERROR", "naming to ", "writing image sha256:", "^Successfully (built|tagged)"],
+    "deduplicate": true,
+    "truncateLineAt": 250,
+    "headLines": 6,
+    "tailLines": 40,
+    "maxLines": 90,
+    "onEmpty": "docker build: saida suprimida (sem erro detectado)"
+  },
+  "preserve": {
+    "errorPatterns": ["ERROR", "failed to solve", "returned a non-zero code"],
+    "summaryPatterns": ["writing image sha256:", "naming to ", "^Successfully"]
+  },
+  "tests": [
+    {
+      "name": "erro de step sobrevive ao ruido de camada",
+      "input": "#5 [internal] load metadata\n#7 sha256:abc extracting\n#9 ERROR: process \"/bin/sh -c pip install\" did not complete\nERROR: failed to solve: process did not complete",
+      "expectedContains": ["ERROR: failed to solve"],
+      "expectedNotContains": ["sha256:abc extracting"]
+    }
+  ]
+}

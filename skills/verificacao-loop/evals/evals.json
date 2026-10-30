@@ -1,0 +1,27 @@
+{
+  "skill_name": "verificacao-loop",
+  "descricao": "Evals do quality gate executavel (Ciclo 8). PRONTO/NAO PRONTO por evidencia real.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "roda-as-6-fases-por-stack",
+      "prompt": "Esta pronto pra commitar? Projeto Java 25 + Maven.",
+      "expected_output": "Rodar as 6 fases com COMANDOS REAIS e ler exit codes: Build/Typecheck (mvn -q clean compile), Lint (SpotBugs), Testes+Cobertura (mvn -q verify + JaCoCo >=80%), deps (OWASP dependency-check), Scan de secrets (git diff staged), Revisao de Diff (sem TODO/System.out). Emitir o relatorio padronizado e o veredito PRONTO/NAO PRONTO. Mede, nao corrige.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "cobertura-abaixo-do-alvo-bloqueia",
+      "prompt": "Os testes passam mas o JaCoCo deu 72% de cobertura. Pode subir?",
+      "expected_output": "Veredito NAO PRONTO: cobertura 72% < alvo 80% e a regra e qualquer 🔴 = NAO PRONTO. Reportar o achado com evidencia (arquivo do relatorio JaCoCo, % medido). Devolver para a Fase 5 (implementacao/testes); a correcao NAO e feita aqui. Achado com prova, nao 'talvez haja um problema'.",
+      "files": []
+    },
+    {
+      "name": "clean-code-no-static-e-major",
+      "prompt": "O build e os testes passaram, mas o golangci-lint acusou gocognit 19 numa função nova e o projeto Python não tem regras de complexidade no ruff. Está PRONTO?",
+      "files": [],
+      "expected_output": "O STATIC mede a régua de clean code no código novo/alterado (cognitiva ≤ 15 S3776, ciclomática ≤ 15 S1541, parâmetros ≤ 7 S107, zero supressão inline). gocognit 19 em função nova = MAJOR: registra e exige decisão (refatorar ou decisão escrita) — não é BLOCKER, mas não some do relatório. Config ausente no Python (sem C90/PLR) = MAJOR nomeado, nunca PASS silencioso. Veredito depende dos BLOCKERs: sem BLOCKER pode ser PRONTO com os MAJOR listados para decisão humana no GATE 2; achado de segurança do linter seguiria a régua do SECURITY.",
+      "id": 3
+    }
+  ]
+}

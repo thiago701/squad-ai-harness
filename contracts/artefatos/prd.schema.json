@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://squad-ai.local/contracts/artefatos/prd.schema.json",
+  "title": "Contrato de artefato PRD (Product Requirements Document)",
+  "description": "Contrato tipado do artefato de fase Intake/Descoberta. Validado na fronteira pelo jev.contrato-artefato (doc evolucao-dsa 03). PT-BR, plano (<=2 niveis), spec enxuta (P1).",
+  "type": "object",
+  "required": ["objetivo", "criterios_aceite"],
+  "properties": {
+    "objetivo": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Objetivo de negocio em uma frase. NAO INVENTE: transcreva o objetivo acordado."
+    },
+    "criterios_aceite": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Criterios de aceite verificaveis (como saber que esta pronto)."
+    },
+    "restricoes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Restricoes tecnicas ou de negocio (opcional)."
+    },
+    "fora_de_escopo": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "O que explicitamente NAO sera feito (opcional)."
+    },
+    "stack": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Stack de referencia quando aplicavel (java-25, python-313, angular...)."
+    },
+    "riscos": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Riscos conhecidos (opcional)."
+    },
+    "versao": {
+      "type": "string",
+      "description": "Versao do documento (opcional, SemVer sugerido)."
+    }
+  },
+  "additionalProperties": true
+}

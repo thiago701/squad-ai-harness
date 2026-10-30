@@ -1,0 +1,24 @@
+package {{ base_package }};
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ImportRuntimeHints;
+
+import {{ base_package }}.config.NativeHints;
+
+/**
+ * Entrypoint Spring Boot 4 — Lambda Native.
+ *
+ * Importa NativeHints para que o GraalVM AOT processing registre reflection
+ * para as entidades do domínio + AWS SDK v2 Enhanced Client. Sem isso,
+ * o binário nativo dispara ClassNotFoundException ao tentar deserializar
+ * itens do DynamoDB.
+ */
+@SpringBootApplication
+@ImportRuntimeHints(NativeHints.class)
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}

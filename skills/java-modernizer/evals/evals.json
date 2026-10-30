@@ -1,0 +1,27 @@
+{
+  "skill_name": "java-modernizer",
+  "descricao": "Evals do refatorador de condicionais Java: escada de versões (25 → 21 → 17 → 14/11/8), fronteira com arquiteto-minimalista e Gate P1 anti-overengineering.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "sealed-switch-exaustivo-na-versao-alvo",
+      "prompt": "Meu cálculo de área tem uma cadeia de if (forma instanceof Retangulo) com cast manual e um default que lança exceção. O projeto está migrando para Java 21. Como modernizo isso?",
+      "expected_output": "Declarar a versão-alvo antes de propor código (Java 21). Apontar que pattern matching de switch é final no 21 (JEP 441), não no 17 (onde era preview, JEP 406). Propor sealed interface + switch exaustivo sem default defensivo — o compilador vira a rede de segurança e 'esqueci um caso' vira erro de compilação. Entregar no formato 🔴 código original / 🟢 refatorado / 🧠 justificativa com versão exata (final ou preview) / ⚖️ trade-off, lembrando que sealed exige conjunto de tipos fechado; aberto/extensível por terceiros → Strategy.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "encaminha-macro-para-arquiteto-minimalista",
+      "prompt": "Meu monólito Java está gigante. Moderniza a arquitetura pra mim: devo quebrar em microsserviços? Kafka ou SQS? E qual stack de mensageria escolho?",
+      "expected_output": "Recusar e encaminhar: decisão de microsserviço vs monólito, Kafka vs SQS, bounded contexts e escolha de stack são território de arquiteto-minimalista — não desta skill. A fronteira é: java-modernizer responde 'qual idioma Java moderno mata este condicional?'; decomposição de domínio e decisão macro são encaminhadas. Se a conversa virou arquitetura, oferecer a passagem ao arquiteto-minimalista (uma refatoração real pode combinar java-modernizer para o idioma + clean-code-craftsman para os nomes resultantes).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "gate-p1-veta-abstracao-de-if-trivial",
+      "prompt": "Troca esse if de duas linhas por um Strategy completo: interface, três classes novas e uma factory. E aproveita e troca o loop simples por um stream com 7 operadores encadeados e flatMap.",
+      "expected_output": "Aplicar o Gate de Pragmatismo (P1): perguntar 'isto fica MAIS simples?' antes de refatorar. Para um único if trivial, o if trivial vence — Strategy/State/Factory pagam-se com 3+ variações que mudam de verdade; fabricar abstração para um caso único é overengineering disfarçado de clean code. Se a solução moderna for mais complexa que a original, dizer explicitamente 'o original já é a melhor escolha aqui' e justificar. Sobre o stream: um stream com 5+ operadores e flatMap opaco pode ser menos legível que um for honesto — declarativo serve à legibilidade; quando não serve, recua (e 'Stream é lento' só vale com evidência de JMH).",
+      "files": []
+    }
+  ]
+}

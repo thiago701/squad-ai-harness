@@ -1,0 +1,20 @@
+{
+  "skill_name": "testes-resiliencia-caos-aws",
+  "descricao": "Cenários qualitativos da skill testes-resiliencia-caos-aws (with/without skill).",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fis-lambda-latencia",
+      "prompt": "Quero testar o que acontece com meu sistema se a Lambda de pagamentos ficar lenta. Como faço com segurança?",
+      "expected_output": "Experimento com hipótese e estado estável medido (SLO), em pré-produção; AWS FIS com ação de falha para Lambda (atraso/erro na invocação) ou injeção na dependência; raio de impacto pequeno (alvo por tag, porcentagem); stop condition em alarme do CloudWatch; papel IAM mínimo para o FIS; observar timeouts, retries, circuit breaker e fila; relatório antes/depois com lição. Produção só com gate humano e regras do banco.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "teste-de-dr",
+      "prompt": "Temos plano de DR com backup do DynamoDB. Como provo que ele funciona?",
+      "expected_output": "Testar restauração de verdade, periodicamente: restaurar backup/PITR num ambiente isolado, validar dados e medir RTO/RPO contra a meta; para failover regional, exercitar com Route 53 ARC/runbook em game day; avaliar a aplicação no AWS Resilience Hub; registrar evidência e corrigir o runbook. Backup nunca testado conta como não comprovado.",
+      "files": []
+    }
+  ]
+}

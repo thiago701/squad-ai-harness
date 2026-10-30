@@ -1,0 +1,39 @@
+{
+  "id": "git-status",
+  "label": "git status",
+  "description": "Preserva branch, divergencia e arquivos alterados; descarta os hints do git.",
+  "category": "git",
+  "priority": 80,
+  "match": {
+    "commands": ["^git\\s+status\\b"],
+    "patterns": ["^On branch ", "^Changes not staged for commit:"]
+  },
+  "rules": {
+    "stripAnsi": true,
+    "matchOutput": [
+      {
+        "when": "nothing to commit, working tree clean",
+        "then": "git status: working tree limpo",
+        "unless": ["Untracked files", "Changes (not staged|to be committed)"]
+      }
+    ],
+    "dropPatterns": ["^\\s*\\(use \"git ", "^\\s*$", "^\\s*\\(commit or discard"],
+    "includePatterns": ["^On branch ", "^Your branch is ", "^\\s+(modified|new file|deleted|renamed):", "^Untracked files", "^\\t"],
+    "deduplicate": false,
+    "truncateLineAt": 200,
+    "maxLines": 60,
+    "onEmpty": "git status: sem alteracoes relevantes"
+  },
+  "preserve": {
+    "errorPatterns": ["^fatal:", "^error:"],
+    "summaryPatterns": ["^On branch ", "^Your branch is "]
+  },
+  "tests": [
+    {
+      "name": "hints saem, arquivos ficam",
+      "input": "On branch master\nChanges not staged for commit:\n  (use \"git add <file>...\" to update)\n\tmodified:   core/app.py",
+      "expectedContains": ["On branch master", "modified:   core/app.py"],
+      "expectedNotContains": ["git add <file>"]
+    }
+  ]
+}

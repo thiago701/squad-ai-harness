@@ -1,0 +1,218 @@
+# Contrato dirigido pelo consumidor — Agenda de Clínica Médica (app/agenda-clinica-lambda).
+# Nasceu de `cr.py iniciar` (rascunho a partir do OpenAPI) e foi REVISADO contra o README da Agenda
+# (regra de conflito de horário, máquina de estados, tabela de rotas, índices ordenados por início) —
+# fonte independente do OpenAPI. O app da recepção (SPA) é hipótese: não há cliente no repositório.
+versao_formato: 1
+
+consumidor:
+  nome: app-recepcao
+  tipo: navegador
+  origem_navegador: https://recepcao.exemplo.local
+  hipotetico: true
+  acesso_ao_codigo: false
+  trata_genericamente: ["5xx", 429]
+  leitor:
+    ignora_campos_desconhecidos: true
+    enums_fechados: [status]
+  limitacao: >-
+    Sem cliente HTTP da recepção no repositório: expectativas do README da Agenda (fonte independente
+    do OpenAPI); perfil navegador é hipótese.
+
+provedor:
+  nome: agenda-clinica
+  raiz: app/agenda-clinica-lambda
+  openapi: app/agenda-clinica-lambda/openapi/openapi.yaml
+  gateway:
+    template: app/agenda-clinica-lambda/template.yaml
+    recurso_api: AgendaHttpApi
+    funcao: AgendaFunction
+  verificador_inprocess:
+    comando: [mvn, -q, -B, -ntp, -o, test, "-Dtest=ConsumerContractVerificationTest", -Dsurefire.failIfNoSpecifiedTests=false, -Djacoco.skip=true]
+    cwd: app/agenda-clinica-lambda
+    observado: app/agenda-clinica-lambda/target/contrato-reverso/observado-app-recepcao.json
+  suite_ampliada:
+    comando: [mvn, -q, -B, -ntp, -o, test]
+    cwd: app/agenda-clinica-lambda
+  suite_existente:
+    comando: [mvn, -q, -B, -ntp, -o, test, "-Dtest=!ConsumerContractVerificationTest", -Dsurefire.failIfNoSpecifiedTests=false, -Djacoco.skip=true]
+    cwd: app/agenda-clinica-lambda
+
+ambientes:
+  local:
+    url_base_padrao: "http://127.0.0.1:3000"
+    producao: false
+  dev:
+    hosts_permitidos: ["*.execute-api.*.amazonaws.com"]
+    producao: false
+
+interacoes:
+  - id: preflight-agendar
+    risco: a recepção (SPA) não consegue nem enviar o agendamento
+    origem: {tipo: hipotese, ref: "perfil navegador do app da recepção (a confirmar)"}
+    requisicao:
+      metodo: OPTIONS
+      caminho: /agendamentos
+      headers:
+        Origin: "{{origem}}"
+        Access-Control-Request-Method: POST
+        Access-Control-Request-Headers: content-type
+    resposta:
+      status: [200, 204]
+      headers:
+        Access-Control-Allow-Origin: ["{{origem}}", "*"]
+
+  - id: agendar-consulta
+    risco: paciente sai sem horário marcado
+    origem: {tipo: documentacao, ref: "app/agenda-clinica-lambda/README.md > HTTP API (POST /agendamentos 201)"}
+    requisicao:
+      metodo: POST
+      caminho: /agendamentos
+      headers: {Content-Type: application/json}
+      corpo: {pacienteId: paciente-123, profissionalId: dr-joao-456, dataHoraInicio: "2026-08-01T14:00:00Z", duracaoMinutos: 30, motivo: Consulta de rotina}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos:
+        id: {tipo: string}
+        status: {tipo: string, enum: [AGENDADA, CONFIRMADA, CANCELADA, REALIZADA, FALTOU], igual: AGENDADA}
+        profissionalId: {tipo: string, eco: profissionalId}
+        dataHoraInicio: {tipo: string, formato: date-time}
+        duracaoMinutos: {tipo: integer, eco: duracaoMinutos}
+    capturar: {consulta: id}
+
+  - id: conflito-de-horario
+    risco: dois pacientes no mesmo horário do mesmo profissional
+    origem: {tipo: documentacao, ref: "README.md > A regra de negócio central: conflito de horário (409)"}
+    requisicao:
+      metodo: POST
+      caminho: /agendamentos
+      headers: {Content-Type: application/json}
+      corpo: {pacienteId: paciente-999, profissionalId: dr-joao-456, dataHoraInicio: "2026-08-01T14:15:00Z", duracaoMinutos: 30, motivo: Retorno}
+    resposta:
+      status: 409
+      content_type: application/problem+json
+      campos:
+        status: {tipo: integer, igual: 409}
+
+  - id: agendar-segunda-consulta
+    risco: agenda do dia não lista consultas em ordem de horário
+    origem: {tipo: documentacao, ref: "README.md > GSI1 agenda do profissional ordenada por início"}
+    requisicao:
+      metodo: POST
+      caminho: /agendamentos
+      headers: {Content-Type: application/json}
+      corpo: {pacienteId: paciente-123, profissionalId: dr-joao-456, dataHoraInicio: "2026-08-01T10:00:00Z", duracaoMinutos: 30, motivo: Exame}
+    resposta:
+      status: 201
+      content_type: application/json
+      campos:
+        id: {tipo: string}
+    capturar: {consulta_cedo: id}
+
+  - id: obter-consulta
+    risco: tela de detalhe quebra
+    origem: {tipo: documentacao, ref: "README.md > HTTP API (GET /agendamentos/{id} 200)"}
+    requisicao:
+      metodo: GET
+      caminho: /agendamentos/{{consulta}}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        id: {tipo: string, igual: "{{consulta}}"}
+        motivo: {tipo: string}
+        createdAt: {tipo: string, formato: date-time}
+
+  - id: agenda-do-profissional
+    risco: recepção vê agenda incompleta ou fora de ordem
+    origem: {tipo: documentacao, ref: "README.md > GET /profissionais/{id}/agendamentos?de=&ate= (GSI1 ordenado)"}
+    requisicao:
+      metodo: GET
+      caminho: /profissionais/dr-joao-456/agendamentos
+      query: {de: "2026-08-01T00:00:00Z", ate: "2026-08-01T23:59:59Z"}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        items:
+          tipo: array
+          contem_capturas: [consulta, consulta_cedo]
+          ordenado_por: {campo: dataHoraInicio, ordem: asc}
+          itens:
+            id: {tipo: string}
+            status: {tipo: string, enum: [AGENDADA, CONFIRMADA, CANCELADA, REALIZADA, FALTOU]}
+            dataHoraInicio: {tipo: string, formato: date-time}
+        count: {tipo: integer, igual_tamanho_de: items}
+
+  - id: historico-do-paciente
+    risco: histórico do paciente incompleto
+    origem: {tipo: documentacao, ref: "README.md > GET /pacientes/{id}/agendamentos (GSI2)"}
+    requisicao:
+      metodo: GET
+      caminho: /pacientes/paciente-123/agendamentos
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        items: {tipo: array, contem_capturas: [consulta, consulta_cedo]}
+        count: {tipo: integer, igual_tamanho_de: items}
+
+  - id: confirmar-consulta
+    risco: confirmação não muda o status
+    origem: {tipo: documentacao, ref: "README.md > Máquina de estados (AGENDADA → CONFIRMADA)"}
+    requisicao:
+      metodo: PATCH
+      caminho: /agendamentos/{{consulta}}/status
+      headers: {Content-Type: application/json}
+      corpo: {novoStatus: CONFIRMADA}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        status: {tipo: string, enum: [AGENDADA, CONFIRMADA, CANCELADA, REALIZADA, FALTOU], igual: CONFIRMADA}
+
+  - id: realizar-consulta
+    risco: atendimento não é registrado
+    origem: {tipo: documentacao, ref: "README.md > Máquina de estados (CONFIRMADA → REALIZADA)"}
+    requisicao:
+      metodo: PATCH
+      caminho: /agendamentos/{{consulta}}/status
+      headers: {Content-Type: application/json}
+      corpo: {novoStatus: REALIZADA}
+    resposta:
+      status: 200
+      content_type: application/json
+      campos:
+        status: {tipo: string, enum: [AGENDADA, CONFIRMADA, CANCELADA, REALIZADA, FALTOU], igual: REALIZADA}
+
+  - id: transicao-de-estado-terminal
+    risco: consulta já realizada volta a ser cancelável
+    origem: {tipo: documentacao, ref: "README.md > Máquina de estados (REALIZADA é terminal → 409)"}
+    requisicao:
+      metodo: PATCH
+      caminho: /agendamentos/{{consulta}}/status
+      headers: {Content-Type: application/json}
+      corpo: {novoStatus: CANCELADA}
+    resposta:
+      status: 409
+      content_type: application/problem+json
+
+  - id: remover-consulta
+    risco: exclusão não confirma
+    origem: {tipo: documentacao, ref: "README.md > HTTP API (DELETE 204)"}
+    requisicao:
+      metodo: DELETE
+      caminho: /agendamentos/{{consulta_cedo}}
+    resposta:
+      status: 204
+      corpo_vazio: true
+
+  - id: obter-removida
+    risco: consulta excluída reaparece
+    origem: {tipo: documentacao, ref: "README.md > HTTP API (GET 404)"}
+    requisicao:
+      metodo: GET
+      caminho: /agendamentos/{{consulta_cedo}}
+    resposta:
+      status: 404
+      content_type: application/problem+json

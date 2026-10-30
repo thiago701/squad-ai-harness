@@ -1,0 +1,52 @@
+[
+  {
+    "name": "{{ base_package }}.model.SingleTableItem",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+{{#each entities}}
+  {
+    "name": "{{ base_package }}.model.{{ name }}",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+{{/each}}
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.BeanTableSchema",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey",
+    "allDeclaredMethods": true
+  }
+]

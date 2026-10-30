@@ -1,0 +1,848 @@
+{
+  "schema": "1.0",
+  "generated_at": "2026-10-28",
+  "skills": [
+    {
+      "name": "ai-evaluation",
+      "version": 3,
+      "created": "2026-09-26",
+      "last_evolution": "2026-10-22",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-09-26",
+          "summary": "Versão inicial catalogada."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-17",
+          "summary": "Novo reference avaliacao-de-modelo-customizado.md: escolha da régua (programático × LLM-juiz) por força de sinal e custo, métricas prontas e customizadas, limites e escolha do juiz, contratos de avaliador em função e checklist de execução. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-22",
+          "summary": "Novo reference auditoria-saude-do-eval.md: auditar o próprio eval antes de confiar no número — casos em 3 degraus, harness sem conflação infra×modelo (errors.jsonl, truncated, oráculo e nulo), higiene de métricas, avaliador e LLM-juiz (vieses, calibração), piso de ruído × efeito buscado, divisão treino/teste sorteada e checklist de aceite. Fonte: anthropics/skills (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "anthropics-skills",
+      "version": 1,
+      "created": "2026-06-20",
+      "last_evolution": "2026-06-20",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-20",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "aprendizado-continuo",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "arquiteto-cloud-aws",
+      "version": 8,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-18",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-10",
+          "summary": "Novo reference lambda-durable-functions.md: quando usar Lambda Durable Functions vs Step Functions, modelo checkpoint+replay (4 regras), callbacks, map/parallel, saga, segurança, testes e troubleshooting. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-11",
+          "summary": "Novo reference lambda-managed-instances.md: quando usar Lambda Managed Instances vs Lambda padrão/SnapStart, dimensionamento a partir de métricas, razões memória:vCPU, escalonamento agendado, checklist de thread-safety por runtime, infraestrutura/cutover e tabela de ajuste por sintoma. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-12",
+          "summary": "Novo reference free-tier-guardrails.md (limites centralizados repo→SSM/AppConfig, contadores mensais no DynamoDB, guarda em ASL JSONata, AWS Budgets com ação IAM Deny como kill switch, orçamento de transições do Step Functions) + seção 'Atualização 2026-10' em bedrock.md (preços Nova/Haiku 4.5, Guardrails, S3 Vectors GA, AgentCore e integração Step Functions↔AgentCore) + heurística e mapa no hub. Origem: pesquisa do projeto agente-ia-devops, fontes citadas."
+        },
+        {
+          "version": 5,
+          "date": "2026-10-15",
+          "summary": "Novo reference serverless-lowcode-sfn-cloudfront-kvs.md (padrão 0 Lambda com Step Functions Express + JSONata timezone -0300/256KiB/StartSyncExecution, auth individual na borda com CloudFront Functions + KVS respeitando 10.240 B em LF e rotas virtuais GET, Sincronia Tripla DynamoDB↔S3↔KVS, Read Models JSON no S3 0 RCU + delta no cliente, isolamento de prefixos privados e --exclude em aws s3 sync --delete). Caso-modelo Consolidador de Treinamentos (LL-0023/0025/0027/0030, EVO-0008)."
+        },
+        {
+          "version": 6,
+          "date": "2026-10-15",
+          "summary": "Novo reference kms-custo-e-decisao.md (matriz owned × managed × CMK, modelo de custo com exemplos, chamadas por serviço e redução — Bucket Key, reuso de data key, cache —, quotas por Região, FinOps de chaves com GetKeyLastUsage, padrões POC × banco × DR) + heurística no hub. Pesquisa KMS do OpsNauta (LL-0032, EVO-0009)."
+        },
+        {
+          "version": 7,
+          "date": "2026-10-16",
+          "summary": "Novo reference deploy-padroes-e-estimativa.md: serviço padrão por tipo de app (Fargate/Amplify/Lambda/Beanstalk), dados e IaC padrão, dev x prod, App Runner em manutenção → ECS Express Mode e estimativa de custo (com armadilhas) antes de gerar IaC. Fonte: awslabs/agent-plugins deploy-on-aws (Apache-2.0), reescrito."
+        },
+        {
+          "version": 8,
+          "date": "2026-10-18",
+          "summary": "Novo reference amazon-location-enderecos.md: qual API para qual pergunta de endereço (Autocomplete+GetPlace × Geocode × Jobs ValidateAddress), armadilhas de entrada, pré-requisitos da Jobs API (trust policy, versionamento, Parquet), triagem aceitar/revisar/rejeitar, chave de API × IAM × Cognito e checklist. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "arquiteto-ia",
+      "version": 5,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-18",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-17",
+          "summary": "Novo reference sandbox-execucao-codigo-agentes.md: decisão MicroVM × Lambda função × EC2/contêiner, snapshot compartilhado e unicidade (CSPRNG, estado no gancho run), ciclo de vida e ganchos, tokens de acesso, papéis build/execução, egress mínimo e padrão de sessão de agente. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-17",
+          "summary": "Novo reference implantacao-modelo-customizado-aws.md: decisão Bedrock × SageMaker para modelo LoRA (custo ocioso), os quatro caminhos Nova/pesos abertos, multi-adaptador com componentes de inferência, licença do modelo-base como portão humano, ordem de limpeza e diagnóstico rápido. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-18",
+          "summary": "Novo reference selecao-tecnica-finetuning-aws.md: pergunta-guia para escolher SFT, DPO, RLVR ou RLAIF, validação da técnica contra o modelo-base, desenho de função de recompensa RLVR em camadas com antifraude e do juiz RLAIF, checklist de gate. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 5,
+          "date": "2026-10-18",
+          "summary": "Novo reference dataset-fine-tuning-validar-e-transformar.md: validação de dataset de treino e de avaliação (formato por técnica e família de modelo, veredito em três saídas, checagem de conteúdo e de região), transformação de esquema por função pura testada em amostra, execução local × gerenciada com aprovação humana, checklist de gate. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "arquiteto-minimalista",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-15",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-15",
+          "summary": "Novo reference diagramas-arquitetura-aws.md: do IaC (ou do zero) ao diagrama legível — escopo mínimo, posicionamento por camada de rede, roteamento de setas, texto alternativo, tema claro/escuro e validação. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "arquiteto-performance",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-15",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-15",
+          "summary": "Novo reference lambda-diagnostico-por-sintoma.md: ordem de investigação, latência, erros, throttling/concorrência (RPS×duração, async nunca rejeitado), ESM por origem, VPC, SnapStart, deploy e API Gateway; corrige a heurística de throttling do hub. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "auditoria-skill-externa",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "aws-lambda-go",
+      "version": 2,
+      "created": "2026-10-28",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-28",
+          "summary": "Versão inicial (separada da aws-lambda-go-rust): Lambda em Go 1.27 sobre provided.al2023 arm64 — SQS com falha parcial (padrão e FIFO) com margem de prazo antes do deadline, Kinesis/DynamoDB Streams ordenados, S3 (URLDecodedKey), EventBridge, HTTP API v2, streaming por Function URL, SnapStart só via imagem de contêiner (label, sem ganchos), durable functions (SDK Go v1.0.0, com ressalva), build no Windows (build-lambda-zip), SAM validado com cfn-lint e role gerada conferida, teste local com Runtime API simulado."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-28",
+          "summary": "Go 1.24 como padrão por decisão do dono (go 1.24.3 + toolchain go1.24.13; aws-lambda-go v1.54.0, pois a v1.55 exige Go 1.26), com seção de fim de suporte e govulncheck (28 achados com 1.24.13 em 2026-10-28; aceite de risco ou caminho para subir), recursos do 1.24 testados (diretiva tool, os.Root, omitzero, b.Loop, synctest experimental, GOFIPS140) e clean code com gate golangci-lint (S3776/S1541/S107, zero supressão inline) e antes→depois verificado (17 achados no exemplo ruim, 0 no lab). os.Root com validação prévia do nome (GO-2026-4970/4602 no 1.24), GOTOOLCHAIN fixo em go1.24.13, gate de supressão cobrindo nolint, lint:ignore, #nosec e NOSONAR, cobertura de internal/ em 99,2%."
+        }
+      ]
+    },
+    {
+      "name": "aws-lambda-go-rust",
+      "version": 2,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: Lambda em Go e Rust sobre provided.al2023 (arm64): SQS com falha parcial (padrão e FIFO), HTTP API v2, init/deadline/concorrência, Managed Instances (Rust), migração go1.x/provided.al2, SAM/Terraform, teste local com Runtime API simulado."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-28",
+          "summary": "Go puro delegado à nova aws-lambda-go (decisão: separar Go e Rust); foco em Rust e na comparação Go × Rust; references/go-lambda.md virou ponteiro; evals ajustados (7 cenários)."
+        }
+      ]
+    },
+    {
+      "name": "aws-lambda-java25-aot",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-11",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-11",
+          "summary": "Novo reference api-gateway.md: HTTP API vs REST API (quando migrar), árvore de autorização (JWT/IAM/Lambda authorizer), armadilhas de cache do authorizer, timeouts 29s/30s com Lambda ainda rodando (idempotência), throttling, custo de log e tabela de sintomas 502/403/CORS. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "aws-lambda-python",
+      "version": 2,
+      "created": "2026-10-28",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-28",
+          "summary": "Versão inicial: Lambda em Python 3.14/3.13 arm64 — handler fino + init reaproveitável, SQS com falha parcial (stdlib e Powertools 3.38, padrão e FIFO), Parser/Idempotency, HTTP API v2 com validação Pydantic, pacote com uv e wheels manylinux (tamanhos e import medidos), SnapStart (ganchos e unicidade), Managed Instances, durable functions (SDK 3.0), migração de python3.10/3.11, SAM validado com cfn-lint + teste de invariantes e contrato com awslambdaric contra Runtime API simulado."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-28",
+          "summary": "Clean code com gate verificável: ruff (C90/PL/FBT/ERA/TRY/T20…) + complexipy 8.3.0, limiares Sonar S3776/S1541 ≤ 15 e S107 ≤ 7, zero supressão inline, mypy --strict também nos testes, exemplo ruim × bom medido e 4 refatorações antes→depois aplicadas ao próprio código."
+        }
+      ]
+    },
+    {
+      "name": "aws-serverless-eda",
+      "version": 2,
+      "created": "2026-09-26",
+      "last_evolution": "2026-10-11",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-09-26",
+          "summary": "Versão inicial catalogada."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-11",
+          "summary": "Novo reference step-functions-jsonata.md: Standard vs Express, JSONata (Arguments/Output, Assign), Retry/Catch com jitter e armadilhas, Map distribuído, padrões (saga, lock, polling), TestState e checklist de revisão. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "clean-code-craftsman",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "dd-monitors",
+      "version": 2,
+      "created": "2026-09-26",
+      "last_evolution": "2026-10-18",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-09-26",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento; data do primeiro commit)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-18",
+          "summary": "Novo reference api-gateway-observabilidade.md: vocabulário REST x HTTP x WebSocket, Latency x IntegrationLatency, conjunto mínimo de monitores, log de acesso x execução (custo, retenção, dado pessoal), diagnóstico de 403 por fase e armadilha do status de integração Lambda. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "engenheiro-clean-architect",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-17",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-17",
+          "summary": "Novo reference campanha-de-migracao-em-lote.md: inventário por sinais, relatório de casamento aprovado, piloto, execução com concorrência limitada e código de saída por repositório, síntese e gates (um PR por repositório). Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "engenheiro-devops",
+      "version": 5,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-15",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-15",
+          "summary": "Reference elastic-beanstalk: EB vs Lambda/ECS/EKS, modo Standard vs Cluster (contrato de estado), defaults, plataformas Java, segredos, verificação de deploy e migração de Heroku (colheita awslabs/agent-plugins, Apache-2.0)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-13",
+          "summary": "Reference iac-serverless-sam-cdk: SAM vs CDK, stacks com/sem estado, convivência e migração incremental, testes de infra (colheita awslabs/agent-plugins, Apache-2.0)."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-11",
+          "summary": "v2 (I17): hub + 10 references novas — IA+DevOps/AIOps, chaos engineering, DevSecOps (Veracode), ChatOps (Teams), Lean, frameworks de TI (ITIL/COBIT/SRE), cultura e aprendizagem, DORA, State of DevOps, CI/CT/CD maduros; 10 evals de banco; model sonnet."
+        },
+        {
+          "version": 5,
+          "date": "2026-10-12",
+          "summary": "v2.1.0: novo reference chatops-power-automate.md (Workflows como substituto dos Office 365 Connectors, tabela Standard×Premium — HTTP/Request/HTTP with Entra ID são Premium —, Outgoing Webhook vigente, limites 25 posts/300 s e 6.000 req/24 h, contratos de payload, padrões de fluxo, checklist) + ponteiros no hub e em chatops.md. Origem: pesquisa do projeto agente-ia-devops, fontes citadas."
+        }
+      ]
+    },
+    {
+      "name": "engenheiro-especificacao",
+      "version": 3,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-14",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-14",
+          "summary": "reference de documentação de código herdado (engenharia reversa com citação verificável, marcadores de incerteza e divergências doc × código)"
+        },
+        {
+          "version": 3,
+          "date": "2026-10-14",
+          "summary": "Reference refinamento-em-rodadas-e-spec-executavel (rodadas de decisão com o dono, restrições do ambiente, trace-the-answer, DoR de onda) + heurísticas/anti-padrões + eval 2. Caso-modelo RadarIAOps (LL-0016/0017/0022)."
+        }
+      ]
+    },
+    {
+      "name": "engenheiro-iac",
+      "version": 5,
+      "created": "2026-06-19",
+      "last_evolution": "2026-10-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-19",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-14",
+          "summary": "Novo reference seguranca-por-ambiente-aws.md: defaults de seguranca dev x prod na AWS (criptografia, S3/OAC, rede privada, SGs, IAM, segredos, portoes pre-apply, logs com retencao, custo antes do codigo)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-14",
+          "summary": "Reference poc-descartavel-aws (conta-base × descartável, tags, destroy limpo, value_wo) + correção: sensitive não tira segredo do state + eval. Caso-modelo RadarIAOps (LL-0018/0019)."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-15",
+          "summary": "Novo reference kms-terraform.md (aws_kms_key: rotação desligada por padrão/janela 30/policy ausente = só root; política idiomática; SSE por serviço com nomes exatos; kms:Decrypt mínimo com PARAMETER_ARN; asserções de terraform test; Checkov × Security Hub) + bullet 'Criptografia em repouso'. Pesquisa KMS do OpsNauta (LL-0032, EVO-0009)."
+        },
+        {
+          "version": 5,
+          "date": "2026-10-16",
+          "summary": "kms-terraform.md §3.1 (o que não automatizar em lote: SNS com serviço publicando, Bucket Key com contexto de objeto, chaves sem rotação possível) e §4.1 (CMK opt-in: bool conhecido no plan × ARN desconhecido, mock_resource no terraform test, Resource da policy com o mesmo tipo nos dois ramos, PendingDeletion na limpeza) + bullet no hub. Onda 6 do OpsNauta (LL-0034, EVO-0010)."
+        }
+      ]
+    },
+    {
+      "name": "engenheiro-seguranca",
+      "version": 6,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-17",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-15",
+          "summary": "Novo references/api-gateway-seguranca.md: segurança de borda no API Gateway (TLS, mTLS e revogação, resource policy, WAF, CORS, cookie HttpOnly, cache/logs) com checklist de auditoria. Fonte: awslabs/agent-plugins (Apache-2.0)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-15",
+          "summary": "Novo reference frontend-csp-edge-auth-e-anti-vazamento.md (SPA estática com CSP A+ sem 'unsafe-inline', zero innerHTML via domEl + classes CSS --pct, magic bytes em upload, auth/RBAC na borda com CloudFront Functions + KVS + cookie HMAC __Host- + guarda CSRF GET, minimização LGPD em pastas compartilhadas e scanner git por digest SHA-256 Inv.9). Caso-modelo Consolidador de Treinamentos (LL-0026/0027/0028/0030, EVO-0008)."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-15",
+          "summary": "Novo reference aws-kms.md (tipos de chave, política em 4 papéis, condition keys incl. kms:TrailingDaysWithoutKeyUsage, encryption context por serviço, rotação automática/sob demanda/manual com custo, GetKeyLastUsage e ciclo de vida, custo/quotas, integração por serviço, ML-DSA/ML-KEM, 12 anti-padrões, modelo de maturidade 0–4, Res. CMN 4.893/5.274, checklist) + 3 heurísticas no hub. Pesquisa KMS do OpsNauta (LL-0032, instinto-0017, EVO-0009)."
+        },
+        {
+          "version": 5,
+          "date": "2026-10-16",
+          "summary": "aws-kms.md §12.1 (operacionalizar a régua de maturidade como DADO: regra com indicador + nível + remediação, validador que recusa correção que reduz segurança, achados que abrem/fecham, um próximo passo, motor sem nuvem, medir a própria plataforma) + pergunta 11 do checklist. Onda 6 do OpsNauta (LL-0033, instinto-0018, EVO-0010)."
+        },
+        {
+          "version": 6,
+          "date": "2026-10-17",
+          "summary": "aws-kms.md §12.2 (sondar o parser antes de confiar nele: Deny × permissão, política de recurso × identidade, Principal em lista, data aws_kms_key alias/aws/*, SSE inline do provider 3.x, índice em referência, chave assimétrica sem rotação, variações de texto no validador, squad ≤ repo mais fraco, item com teto de bytes). Revisão independente da Onda 6 do OpsNauta (LL-0035)."
+        }
+      ]
+    },
+    {
+      "name": "especialista-banco",
+      "version": 3,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-15",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-11",
+          "summary": "Novo reference aurora-dsql.md: retry OCC (40001, marcadores OC000/OC001), limites que mudam o desenho, recusas de DDL, migração com NOT VALID/ASYNC e checklist P1.DB para DSQL. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-15",
+          "summary": "Novo reference aurora-dsql-diagnostico-consultas.md: fluxo de diagnóstico de consulta lenta no DSQL (plano fresco, camadas de filtro, Storage Lookup/INCLUDE, coerção de tipo, DPU como métrica), reescritas e experimentos de join. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "especialista-frontend",
+      "version": 3,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-17",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-17",
+          "summary": "Novo reference amplify-gen2-fullstack.md: detecção Gen1×Gen2, configuração no ponto de entrada (Angular em main.ts), modelo de dados e autorização coerentes, Cognito (triggers registrados, segredos, convidado), amplify.yml com baseDirectory do Angular, monorepo e checklist de segurança. Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-16",
+          "summary": "Novo reference websocket-tempo-real-aws.md: cliente WebSocket resiliente (máquina de estados, backoff com jitter, heartbeat, ressincronização, deduplicação), identidade/sessão por connectionId, limites de duração/ociosidade, autorização só na conexão, throttling por rota e checklist. Fonte: awslabs/agent-plugins api-gateway (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "especialista-qualidade",
+      "version": 4,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-16",
+          "summary": "Novo reference step-functions-testes-state-machine.md: teste de state machines Step Functions sem implantar (mock como contrato, modos NONE/PRESENT/STRICT, .sync/callback/Map/Parallel, Retry/Catch, encadeamento e cuidados com segredos). Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-14",
+          "summary": "Reference e2e-oraculo-e-nuvem-simulada (gabarito independente, moto server + AWS_ENDPOINT_URL, fakes gravados, skip×fail) + eval. Caso-modelo RadarIAOps (LL-0017/0020)."
+        },
+        {
+          "version": 4,
+          "date": "2026-10-15",
+          "summary": "Novo reference ratchet-invariantes-e-qualidade-continua-serverless.md (Catraca de Qualidade Contínua Inv.1..12 + Baterias Q1..Q5, execução local de CloudFront Functions em node vm sem deploy, paridade N-way por fixture norm-casos.json e oráculo de matriz contra golden-baseline.json no S3). Caso-modelo Consolidador de Treinamentos (LL-0024..0031, EVO-0008)."
+        }
+      ]
+    },
+    {
+      "name": "go-cloud-services",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: serviço Go cloud-native de produção (HTTP/gRPC, config 12-factor, health/readiness, shutdown gracioso, pgx, AWS SDK v2, OpenTelemetry, resiliência, contêiner/Kubernetes)."
+        }
+      ]
+    },
+    {
+      "name": "go-concurrency-expert",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: concorrência Go (goroutines, channels, context, errgroup, sync, synctest, race detector), vazamentos e padrões de pipeline/worker pool/backpressure."
+        }
+      ]
+    },
+    {
+      "name": "go-error-investigator",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: investigação de causa raiz em Go (build/módulos, vet/test, race, pânico, vazamento de goroutine, runtime/GC, supply chain), com catálogo de erros."
+        }
+      ]
+    },
+    {
+      "name": "go-performance-engineer",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: desempenho Go orientado por medição (benchmarks, pprof, trace, PGO, alocações/GC, GOMEMLIMIT) com protocolo de prova antes/depois."
+        }
+      ]
+    },
+    {
+      "name": "golang-pro",
+      "version": 3,
+      "created": "2026-10-01",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-01",
+          "summary": "Versão inicial (Go 1.26, hub único com referência go-1.26)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-03",
+          "summary": "v2.0.0: Go 1.27; hub enxuto com references (go-1.27, idiomas e padrões, testes, tooling e qualidade); roteamento para as skills Go especializadas; evals ampliados (6)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-28",
+          "summary": "Gate canônico de clean code em Go (references/clean-code-e-lint.md: .golangci.yml do golangci-lint v2 com limiares S3776/S1541/S107, zero supressão inline e a armadilha do ! grep), validado no v2.8.0 e no v2.15.0; a config reduzida e a permissão de //nolint saíram do tooling-e-qualidade."
+        }
+      ]
+    },
+    {
+      "name": "java25-spring-boot",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-16",
+          "summary": "Novo reference lambda-managed-instances-java.md: Java em Lambda Managed Instances (multi-concorrência por ambiente), checklist de thread-safety para Java/Spring/SDK/pools//tmp, configuração (concorrência, razão memória:vCPU, escala por agenda) e operação por sintoma. Fonte: awslabs/agent-plugins aws-lambda-managed-instances (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "lambda-java-cold-start",
+      "version": 2,
+      "created": "2026-09-26",
+      "last_evolution": "2026-10-13",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-09-26",
+          "summary": "Versão inicial catalogada."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-13",
+          "summary": "Reference right-sizing-custo: memória×CPU, Power Tuning, alavancas de custo, calibragem de ESM e response streaming (colheita awslabs/agent-plugins, Apache-2.0)."
+        }
+      ]
+    },
+    {
+      "name": "localstack-dev",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "markitdown",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "memoria-sessao",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "orquestrador-multiagente",
+      "version": 2,
+      "created": "2026-09-26",
+      "last_evolution": "2026-10-12",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-09-26",
+          "summary": "Versão inicial catalogada."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-12",
+          "summary": "Novo reference lambda-microvms-sandbox.md: sandbox de agente em AWS Lambda MicroVMs (quando usar vs Lambda comum, idle por tráfego de entrada, ganchos, unicidade de snapshot, tokens/egress/shell, checklist). Fonte: awslabs/agent-plugins (Apache-2.0), reescrito."
+        }
+      ]
+    },
+    {
+      "name": "rust-async-services",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: serviços Rust async (tokio, axum 0.8, observabilidade, shutdown, cancelamento, backpressure, banco)."
+        }
+      ]
+    },
+    {
+      "name": "rust-error-investigator",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: investigação de causa raiz em Rust (rustc/borrow checker, cargo/resolver, trait bounds, linker, pânico, async/Send, tokio) com catálogo de erros."
+        }
+      ]
+    },
+    {
+      "name": "rust-performance-engineer",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: desempenho Rust orientado por medição (divan/criterion, perf/flamegraph, dhat, PGO, perfil de release, tamanho de binário)."
+        }
+      ]
+    },
+    {
+      "name": "rust-pro",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: Rust 1.99 / edição 2024 — idiomas, ownership, erros tipados, Cargo e qualidade (fmt/clippy/deny), testes."
+        }
+      ]
+    },
+    {
+      "name": "rust-unsafe-security",
+      "version": 1,
+      "created": "2026-10-03",
+      "last_evolution": "2026-10-03",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-03",
+          "summary": "Versão inicial: unsafe/FFI na edição 2024, Miri/ASAN/fuzzing e supply chain (cargo-deny/audit, vet), hardening."
+        }
+      ]
+    },
+    {
+      "name": "squad-ai",
+      "version": 1,
+      "created": "2026-06-16",
+      "last_evolution": "2026-06-16",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        }
+      ]
+    },
+    {
+      "name": "squad-pipeline",
+      "version": 3,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-14",
+          "summary": "Reference entrega-em-ondas-e-loop-operacional (GATE 2 por onda, loop com oráculo e nuvem simulada, pasta do dono) + eval. Caso-modelo RadarIAOps (LL-0019/0021)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-28",
+          "summary": "Clean code na escrita: config do linter no scaffold, refatoração estrutural antes da comportamental, validação incremental e lente rev-clean (05d-clean.md) antes do GATE 2."
+        }
+      ]
+    },
+    {
+      "name": "tech-lead-review",
+      "version": 3,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-15",
+          "summary": "Bloco P1.SL em fluxo-review-5-passos.md (Serverless Low-Code, Edge CloudFront Functions + KVS < 10.240 B LF + GET virtual, Sincronia Tripla, JSONata -0300, aws s3 sync --delete --exclude e SPA CSP A+ zero innerHTML/AbortController) + 5 heurísticas no hub. Caso-modelo Consolidador de Treinamentos (LL-0023..0031, EVO-0008)."
+        },
+        {
+          "version": 3,
+          "date": "2026-10-28",
+          "summary": "Lente rev-clean (PASSO 1e): régua única S3776/S1541/S107 medida pelo linter da stack no código tocado, laudo 05d-clean.md, checklist P1.CLEAN e regra estrutural × comportamental (tidy first, small CLs do Google eng-practices)."
+        }
+      ]
+    },
+    {
+      "name": "trace2local",
+      "version": 1,
+      "created": "2026-10-01",
+      "last_evolution": "2026-10-01",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-10-01",
+          "summary": "Versão inicial: instalar/configurar/usar o Trace2Local (embedded, Lambda + Station), Mock Connect e MCP (perfil core, somente leitura). ADR-015 (proposto)."
+        }
+      ]
+    },
+    {
+      "name": "verificacao-loop",
+      "version": 2,
+      "created": "2026-06-16",
+      "last_evolution": "2026-10-28",
+      "history": [
+        {
+          "version": 1,
+          "date": "2026-06-16",
+          "summary": "Versão inicial catalogada (baseline do sistema de versionamento)."
+        },
+        {
+          "version": 2,
+          "date": "2026-10-28",
+          "summary": "STATIC mede a régua de clean code (S3776/S1541/S107, zero supressão inline) com golangci-lint (Go) e ruff + complexipy (Python); achado = MAJOR; nota de Go 1.24 para projetos Lambda."
+        }
+      ]
+    }
+  ]
+}

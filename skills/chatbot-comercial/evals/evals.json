@@ -1,0 +1,100 @@
+{
+  "skill_name": "chatbot-comercial",
+  "descricao": "Teste de disparo: 5 frases-alvo devem ativar a skill; 5 frases-controle NÃO devem. Controle escolhido para ser adjacente (mesmo domínio, skill diferente) — controle distante não prova nada.",
+  "ultima_execucao": {
+    "quando": "2026-08-08",
+    "metodo": "roteamento às cegas por um segundo agente: recebeu 12 descriptions (chatbot-comercial + 11 skills adjacentes: learn, minimalist-architect, verificacao-loop, skill-creator, squad-pipeline, especialista-qualidade, tech-lead-review, find-skills, engenheiro-especificacao, arquiteto-ia, clean-code-craftsman) e as 10 frases embaralhadas, SEM rótulo de alvo/controle e SEM o resultado esperado",
+    "alvos_acertados": "5/5",
+    "controles_que_dispararam": "0/5",
+    "roteamento_dos_controles": {
+      "controle-quality-gate": "verificacao-loop",
+      "controle-evoluir-o-nucleo": "minimalist-architect",
+      "controle-conceito-de-rag": "learn",
+      "controle-criar-skill": "skill-creator",
+      "controle-bot-interno-sem-vertical-comercial": "arquiteto-ia"
+    },
+    "observacao": "Os cinco controles foram barrados pelas exclusões da `description` (a cláusula 'NÃO use para'), não por sorte — o juiz citou a exclusão em cada caso."
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "alvo-chatbot-pousada-whatsapp",
+      "tipo": "alvo",
+      "prompt": "Preciso de um chatbot no WhatsApp para a pousada de um cliente meu, que responda sobre diárias e política de cancelamento usando os documentos dele.",
+      "expected_output": "DISPARA. Faz no máximo 5 perguntas (vertical, canais, volume, quem opera o painel, infra) antes de gerar. Depois roda scripts/scaffold.py com --vertical pousada --canais whatsapp,web. Não inventa as respostas.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "alvo-scaffold-multi-tenant",
+      "tipo": "alvo",
+      "prompt": "Gera o scaffold do chatbot comercial multi-tenant com RAG, captura de lead e painel de auditoria.",
+      "expected_output": "DISPARA. Confirma vertical/canais/volume/operador/infra, gera o projeto com os 5 módulos (M1..M5), roda make eval e publica a taxa de acerto no README.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "alvo-novo-vertical-pack",
+      "tipo": "alvo",
+      "prompt": "Quero adicionar o vertical de clínica no chatbot: persona, intenções e ferramentas próprias.",
+      "expected_output": "DISPARA. Lê references/verticais.md, cria verticais/clinica.json + dados/clinica/ + golden/clinica.json + seção em verticais.md. Não altera nenhum arquivo de app/. Alerta que dado de saúde é sensível (art. 11): consentimento explícito e retenção curta.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "alvo-bot-com-escalonamento-e-lead",
+      "tipo": "alvo",
+      "prompt": "Montar um atendente virtual para a clínica que capture o lead, escale para a recepcionista quando não souber, e me deixe auditar o que ele respondeu.",
+      "expected_output": "DISPARA. Reconhece M1 (escalonamento com contexto), M3 (lead) e M5 (trilha + dashboard) como o pedido. Pergunta os 5 pontos e gera o projeto.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "alvo-chatbot-base-de-conhecimento-do-estabelecimento",
+      "tipo": "alvo",
+      "prompt": "O restaurante me mandou o cardápio em PDF e um export do WhatsApp. Dá pra fazer um bot que responda só com base nisso, citando de onde tirou?",
+      "expected_output": "DISPARA. Reconhece M2 (ingestão PDF + export WhatsApp, citação obrigatória). Avisa que PDF escaneado não tem texto extraível e pede CSV/export do PDV. Faz as 5 perguntas antes de gerar.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "controle-conceito-de-rag",
+      "tipo": "controle",
+      "prompt": "Me explica como funciona busca híbrida em RAG e por que ela costuma bater embedding puro.",
+      "expected_output": "NÃO DISPARA. Pergunta conceitual sem projeto a gerar — território de `learn`. Responder é adequado; abrir scaffold, não.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "controle-evoluir-o-nucleo",
+      "tipo": "controle",
+      "prompt": "Vale a pena extrair o rag-kit do n7-ai-core para um pacote separado agora?",
+      "expected_output": "NÃO DISPARA. Decisão de arquitetura e regra de três para extração — território de `minimalist-architect`. A skill chatbot-comercial CONSOME o núcleo, não decide sobre ele.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "controle-quality-gate",
+      "tipo": "controle",
+      "prompt": "Roda os checks no projeto do chatbot e me diz se está pronto pra subir.",
+      "expected_output": "NÃO DISPARA. Executar o gate de um projeto já existente é `verificacao-loop`. Gerar não é o pedido.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "controle-bot-interno-sem-vertical-comercial",
+      "tipo": "controle",
+      "prompt": "Quero um bot interno que responda dúvidas de RH dos nossos funcionários sobre férias e benefícios.",
+      "expected_output": "NÃO DISPARA. Não é estabelecimento comercial, não é multi-tenant, não há lead nem canal de cliente. Pode reusar rag_kit/conversation_core direto; os 5 módulos deste gerador seriam peso morto.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "controle-criar-skill",
+      "tipo": "controle",
+      "prompt": "Cria uma skill nova para padronizar como escrevemos ADR no time.",
+      "expected_output": "NÃO DISPARA. Criação de skill é `skill-creator`. A palavra 'criar' não é gatilho; o objeto do pedido é.",
+      "files": []
+    }
+  ]
+}

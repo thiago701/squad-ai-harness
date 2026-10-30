@@ -1,0 +1,22 @@
+# FIXTURE SINTÉTICA — configuração ERRADA de propósito (selftest LOG-06).
+# Perfil padrão (vai para produção) com wire logging, request details e bind params expostos.
+spring:
+  application:
+    name: pedidos
+  mvc:
+    log-request-details: true          # LOG-06: loga headers (Authorization, Cookie) e corpo
+  jpa:
+    show-sql: true                     # LOG-06: SQL com parâmetros no stdout
+
+logging:
+  level:
+    root: DEBUG                        # LOG-06
+    org.apache.http.wire: DEBUG        # LOG-06: corpo e headers de toda chamada HTTP
+    org.springframework.security: TRACE # LOG-06: detalhes de autenticação
+    org.hibernate.orm.jdbc.bind: TRACE # LOG-06: valores dos binds (CPF, e-mail...)
+
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: FULL              # LOG-06

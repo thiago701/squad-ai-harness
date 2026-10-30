@@ -1,0 +1,30 @@
+{
+  "id": "generic-output",
+  "label": "Saida generica",
+  "description": "Fallback conservador: mantem erros e recorta o miolo.",
+  "category": "generic",
+  "priority": 1,
+  "match": { "patterns": [".*"] },
+  "rules": {
+    "stripAnsi": true,
+    "dropPatterns": ["^\\s*$"],
+    "includePatterns": ["(?i)(error|erro|fail|falha|warn|exception|denied|refused|timeout)"],
+    "deduplicate": true,
+    "truncateLineAt": 300,
+    "headLines": 25,
+    "tailLines": 25,
+    "maxLines": 80,
+    "onEmpty": "saida suprimida (nenhuma linha acionavel)"
+  },
+  "preserve": {
+    "errorPatterns": ["(?i)(error|exception|fail|denied|refused|timeout)"],
+    "summaryPatterns": []
+  },
+  "tests": [
+    {
+      "name": "erro sobrevive ao corte",
+      "input": "linha1\nlinha2\nERROR: algo quebrou\nlinha3",
+      "expectedContains": ["ERROR: algo quebrou"]
+    }
+  ]
+}

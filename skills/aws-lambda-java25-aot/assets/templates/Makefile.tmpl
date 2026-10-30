@@ -1,0 +1,34 @@
+# Lambda Java 25 + Native — build pipeline
+# `sam build` chama o target build-<FunctionName> automaticamente.
+
+.PHONY: build deploy invoke clean native-test
+
+build-ApiGatewayFunction:
+	mvn -Pnative native:compile -DskipTests
+	cp target/bootstrap $(ARTIFACTS_DIR)/bootstrap
+	chmod +x $(ARTIFACTS_DIR)/bootstrap
+
+{{#if has_streams}}
+build-StreamHandlerFunction:
+	mvn -Pnative native:compile -DskipTests
+	cp target/bootstrap $(ARTIFACTS_DIR)/bootstrap
+	chmod +x $(ARTIFACTS_DIR)/bootstrap
+{{/if}}
+
+# Convenience targets
+
+build:
+	sam build --use-container
+
+deploy: build
+	sam deploy
+
+invoke:
+	sam local invoke ApiGatewayFunction --event events/get-user.json
+
+native-test:
+	mvn -Pnative test
+
+clean:
+	mvn clean
+	rm -rf .aws-sam target/

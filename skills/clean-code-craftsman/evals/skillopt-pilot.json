@@ -1,0 +1,68 @@
+{
+  "skill_name": "clean-code-craftsman",
+  "eval_kind": "objective-identification (hard-reward, held-out gate)",
+  "comment": "Eval held-out do piloto SkillOpt-Sleep (ADR-004). Tarefa: identificar o code smell DOMINANTE de um trecho, respondendo com o codigo do catalogo Clean Code (C/E/F/G/N/T + numero). Sinal de recompensa OBJETIVO que o gate held-out do SkillOpt exige (ao contrario do evals.json qualitativo ao lado). 'reference' = codigo esperado; 'split' = train (propoe edicoes) | heldout (GATE, nunca usado para propor). O grade.py extrai o 1o codigo da resposta e compara. Vocabulario alinhado aos 6 smells mais comuns da skill: F1, N1, G5, G30, G6, C5.",
+  "answer_contract": "Responda comecando com o codigo do catalogo do smell DOMINANTE (ex.: 'F1 — Argumentos demais: ...').",
+  "tasks": [
+    {
+      "id": 1, "reference": "F1", "split": "train", "lang": "java",
+      "prompt": "Identifique o code smell DOMINANTE.\n```java\nvoid createUser(String name, String email, String phone, String street, String city, String zip, int age) {\n    repo.save(new User(name, email, phone, street, city, zip, age));\n}\n```",
+      "expected_output": "F1 (Argumentos demais): 7 parametros -> agrupar em objeto (Address / UserData)."
+    },
+    {
+      "id": 2, "reference": "N1", "split": "train", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef do_it(d, t):\n    x = d * t\n    return x\n```",
+      "expected_output": "N1 (Nomes pouco descritivos): do_it/d/t/x nao revelam intencao."
+    },
+    {
+      "id": 3, "reference": "G5", "split": "train", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\nif user.tier == 'gold':\n    price = base * 0.8\n    log.info('desconto aplicado')\nif user.tier == 'silver':\n    price = base * 0.8\n    log.info('desconto aplicado')\n```",
+      "expected_output": "G5 (Duplicacao): blocos identicos -> extrair funcao/tabela de tiers."
+    },
+    {
+      "id": 4, "reference": "G30", "split": "train", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef register(order):\n    if not order.items: raise ValueError('vazio')\n    db.save(order)\n    smtp.send(order.user.email, 'recibo', render(order))\n    return order.id\n```",
+      "expected_output": "G30 (Fazer mais de uma coisa): valida + persiste + envia email."
+    },
+    {
+      "id": 5, "reference": "G6", "split": "train", "lang": "java",
+      "prompt": "Identifique o code smell DOMINANTE.\n```java\nvoid checkout(Cart cart) {\n    BigDecimal total = pricing.total(cart);\n    byte[] buf = new byte[1024];\n    socket.getOutputStream().write(buf, 0, buf.length);\n}\n```",
+      "expected_output": "G6 (Nivel de abstracao misturado): negocio e I/O de bytes na mesma funcao."
+    },
+    {
+      "id": 6, "reference": "C5", "split": "train", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef total(items):\n    # old = sum(i.price for i in items) * 1.1\n    # return round(old, 2)\n    return sum(i.price for i in items)\n```",
+      "expected_output": "C5 (Codigo comentado): bloco comentado deve ser deletado (esta no git)."
+    },
+    {
+      "id": 7, "reference": "F1", "split": "heldout", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef schedule(day, month, year, hour, minute, room, owner, title):\n    return Booking(day, month, year, hour, minute, room, owner, title)\n```",
+      "expected_output": "F1 (Argumentos demais): 8 parametros -> objeto (DateTime + BookingRequest)."
+    },
+    {
+      "id": 8, "reference": "N1", "split": "heldout", "lang": "java",
+      "prompt": "Identifique o code smell DOMINANTE.\n```java\nint p(int a, int b) {\n    int r = a + b;\n    return r;\n}\n```",
+      "expected_output": "N1 (Nomes pouco descritivos): p/a/b/r nao revelam intencao."
+    },
+    {
+      "id": 9, "reference": "G5", "split": "heldout", "lang": "java",
+      "prompt": "Identifique o code smell DOMINANTE.\n```java\nif (name == null || name.isBlank()) throw new IllegalArgumentException(\"name\");\nif (email == null || email.isBlank()) throw new IllegalArgumentException(\"email\");\nif (phone == null || phone.isBlank()) throw new IllegalArgumentException(\"phone\");\n```",
+      "expected_output": "G5 (Duplicacao): validacao repetida -> helper require(campo, valor)."
+    },
+    {
+      "id": 10, "reference": "G30", "split": "heldout", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef report(rows):\n    parsed = [parse(r) for r in rows]\n    total = sum(p.value for p in parsed)\n    html = '<h1>' + str(total) + '</h1>'\n    log.info('relatorio gerado')\n    return html\n```",
+      "expected_output": "G30 (Fazer mais de uma coisa): parse + agrega + formata + loga."
+    },
+    {
+      "id": 11, "reference": "G6", "split": "heldout", "lang": "python",
+      "prompt": "Identifique o code smell DOMINANTE.\n```python\ndef publish(event):\n    bus.dispatch(event)\n    f = open('/var/log/app.bin', 'ab')\n    f.write(event.to_bytes())\n    f.close()\n```",
+      "expected_output": "G6 (Nivel de abstracao misturado): dispatch de dominio + escrita de bytes."
+    },
+    {
+      "id": 12, "reference": "C5", "split": "heldout", "lang": "java",
+      "prompt": "Identifique o code smell DOMINANTE.\n```java\npublic BigDecimal net(Invoice inv) {\n    // return inv.gross().subtract(inv.tax());\n    return inv.gross().subtract(inv.tax()).subtract(inv.discount());\n}\n```",
+      "expected_output": "C5 (Codigo comentado): linha antiga comentada deve sair."
+    }
+  ]
+}

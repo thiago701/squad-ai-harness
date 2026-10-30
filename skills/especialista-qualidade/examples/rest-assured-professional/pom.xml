@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.squadai.qa</groupId>
+  <artifactId>rest-assured-professional</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>Squad AI :: RestAssured Professional (reference impl)</name>
+
+  <!--
+    Prova executável da reference `rest-assured-api-testing.md` (skill especialista-qualidade).
+    Roda 100% offline após o download das dependências: a "API sob teste" é um WireMock
+    in-process (sem Docker, sem servidor externo).
+
+    NOTA DE STACK: este exemplo compila em Java 11 (ambiente do sandbox) e usa a linha
+    RestAssured 5.5.x. Em produção a Squad AI usa Java 25 + Spring Boot 4 / Jackson 3, cujo
+    alvo é RestAssured 6.0.0 (baseline Java 17+). Ver README.md §Compatibilidade de versões.
+  -->
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>11</maven.compiler.release>
+    <rest-assured.version>5.5.6</rest-assured.version>
+    <wiremock.version>3.9.2</wiremock.version>
+    <junit.version>5.11.4</junit.version>
+    <surefire.version>3.5.2</surefire.version>
+  </properties>
+
+  <dependencies>
+    <!-- DSL principal: given().when().then() -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>${rest-assured.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Validação de contrato por JSON Schema (matchesJsonSchemaInClasspath) -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>${rest-assured.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- API "sob teste": WireMock in-process, shaded (evita conflito de Jetty/Jackson) -->
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>${wiremock.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Runner de testes -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>

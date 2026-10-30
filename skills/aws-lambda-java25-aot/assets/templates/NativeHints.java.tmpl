@@ -1,0 +1,76 @@
+package {{ base_package }}.config;
+
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
+import software.amazon.awssdk.enhanced.dynamodb.mapper.BeanTableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+
+import {{ base_package }}.model.SingleTableItem;
+{{#each entities}}
+import {{ base_package }}.model.{{ name }};
+{{/each}}
+
+/**
+ * Registra reflection hints para GraalVM Native Image.
+ *
+ * Cobre:
+ * 1. AWS SDK v2 Enhanced Client (BeanTableSchema, StaticTableSchema)
+ * 2. Anotações do Enhanced Client (@DynamoDbBean, @DynamoDbPartitionKey, etc.)
+ * 3. SingleTableItem + cada record de entidade do domínio
+ *
+ * Sem estes hints o binário nativo falha em runtime com NPE ou
+ * ClassNotFoundException ao tentar mapear items do DynamoDB para POJOs.
+ */
+public class NativeHints implements RuntimeHintsRegistrar {
+
+    @Override
+    public void registerHints(@NonNull RuntimeHints hints, @Nullable ClassLoader classLoader) {
+        // Enhanced Client internals
+        Class<?>[] sdkInternals = {
+            BeanTableSchema.class,
+            StaticTableSchema.class,
+            software.amazon.awssdk.enhanced.dynamodb.mapper.ImmutableTableSchema.class
+        };
+        for (Class<?> c : sdkInternals) {
+            hints.reflection().registerType(c,
+                MemberCategory.INVOKE_DECLARED_METHODS,
+                MemberCategory.INVOKE_DECLARED_CONSTRUCTORS);
+        }
+
+        // Anotações usadas pelo BeanTableSchema via reflection em runtime
+        Class<?>[] annotations = {
+            DynamoDbBean.class,
+            DynamoDbPartitionKey.class,
+            DynamoDbSortKey.class,
+            DynamoDbSecondaryPartitionKey.class,
+            DynamoDbSecondarySortKey.class,
+            DynamoDbAttribute.class,
+            DynamoDbConvertedBy.class
+        };
+        for (Class<?> c : annotations) {
+            hints.reflection().registerType(c, MemberCategory.INVOKE_DECLARED_METHODS);
+        }
+
+        // Modelo do single-table + cada entidade do domínio
+        Class<?>[] modelClasses = {
+            SingleTableItem.class,
+{{#each entities}}
+            {{ name }}.class,
+{{/each}}
+        };
+        for (Class<?> c : modelClasses) {
+            hints.reflection().registerType(c,
+                MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+                MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
+                MemberCategory.DECLARED_FIELDS,
+                MemberCategory.PUBLIC_FIELDS,
+                MemberCategory.INVOKE_DECLARED_METHODS,
+                MemberCategory.INVOKE_PUBLIC_METHODS);
+        }
+    }
+}

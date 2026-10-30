@@ -1,0 +1,20 @@
+{
+  "skill_name": "engenheiro-langgraph",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Cobrem a arbitragem de abstração e o contrato de falha por nó — o conhecimento distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "recusa-abstracao-desnecessaria",
+      "prompt": "Vou fazer um endpoint que recebe uma foto, chama a API de IA para aplicar um efeito e devolve a imagem. Monto isso em LangGraph?",
+      "expected_output": "Não. Uma chamada, um modelo, resposta direta = SDK direto (nível 0 da escada). LangGraph só se paga quando há estado explícito + resiliência por etapa + retomada após crash; nada disso está no pedido. A resposta correta recusa a abstração, propõe `async def` com `asyncio.timeout` e um Protocol de provider (~40 LOC) se houver necessidade real de trocar de fornecedor, e separa a preocupação ortogonal: inferência acima de ~10s não deve ficar pendurada num request HTTP — isso pede fila + worker, independentemente de LangGraph. Deve citar o teste de honestidade (escreva como função; só migre quando a função acumular >=3 sintomas) e exigir ADR se ainda assim se optar por LangGraph.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "contrato-de-falha-por-no",
+      "prompt": "Meu grafo LangGraph às vezes trava numa etapa e o pipeline inteiro fica pendurado. Coloquei retry em todos os nós com max_attempts=3. O que mais falta?",
+      "expected_output": "Retry genérico é parte do problema, não a solução. Faltam quatro coisas: (1) timeout por nó — `asyncio.timeout` em todo I/O; sem teto, 'trava' nunca vira 'falha rápida'. (2) Taxonomia de erro: `retry_on` deve distinguir transitório (429/503/timeout de rede) de permanente (401/400/arquivo ausente); repetir erro determinístico só torna a falha 3x mais lenta e cara. (3) Fallback como aresta condicional visível no grafo, não `except` escondido — todo caminho de falha termina em degradação graciosa (resultado determinístico), nunca em exceção para a UI. (4) Métrica por nó (`ms`, `status`, `attempt`, `cost_usd`), sem a qual não se sabe qual etapa trava. Deve também alertar sobre State: dado binário e handle de dispositivo não podem viver no State (quebram checkpoint e vazam dado pessoal para o banco de checkpoint — LGPD).",
+      "files": []
+    }
+  ]
+}

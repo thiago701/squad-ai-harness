@@ -1,0 +1,20 @@
+{
+  "skill_name": "nodejs-pro",
+  "descricao": "Evals mínimos (dívida priorizada do padrão-skill: >=1 cenário with/without). Detectam regressão de prompt e cobrem o conhecimento version-current distintivo da skill.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "event-loop-bloqueio-worker-threads",
+      "prompt": "Meu endpoint Node.js trava toda a aplicação sob carga quando processa um cálculo pesado (hash/round de imagem). Como resolver?",
+      "expected_output": "É bloqueio do event loop: trabalho CPU-bound no thread principal congela TODAS as requisições. Mover o cálculo para worker_threads (ou um pool). Nunca computar pesado numa coroutine/handler; usar streams para dados grandes (não carregar tudo em memória); AbortController/signal para timeout. Confirmar alvo Node 24 LTS para produção. Medir com node --prof/clinic antes de otimizar.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "nativas-sem-deps-supply-chain",
+      "prompt": "Preciso adicionar node-fetch, dotenv e jest ao meu projeto Node novo?",
+      "expected_output": "Provavelmente não — Node moderno já traz nativo: fetch/Request/Response globais (sem node-fetch), --env-file=.env (sem dotenv), e node:test + node --watch como test runner nativo (sem Jest para o caso comum). Minimizar dependências reduz superfície de supply chain (cada uma é risco). Projeto novo em ESM (\"type\":\"module\"). Para suites grandes/legadas, vitest é a alternativa; evitar adicionar Jest a projeto novo.",
+      "files": []
+    }
+  ]
+}
