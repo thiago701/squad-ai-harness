@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/thiago701/squad-ai-harness/internal/gates"
 	"github.com/thiago701/squad-ai-harness/internal/security/fsguard"
 	"github.com/thiago701/squad-ai-harness/internal/security/secretscan"
 )
@@ -77,7 +78,7 @@ func PreToolUse(repoRoot string, stdin io.Reader) (int, string) {
 	return 0, ""
 }
 
-// CheckDangerousCommand blocks --no-verify, force pushes, and destructive shell pipelines.
+// CheckDangerousCommand blocks --no-verify, force pushes, foreign package managers, and destructive shell pipelines.
 func CheckDangerousCommand(cmd string) (bool, string) {
 	lower := strings.ToLower(cmd)
 	if strings.Contains(lower, "--no-verify") {
@@ -89,10 +90,20 @@ func CheckDangerousCommand(cmd string) (bool, string) {
 	if strings.Contains(lower, "core.hookspath=") {
 		return true, "proibido desativar core.hooksPath"
 	}
+	foreignToolPrefixes := []string{
+		"pip install", "pip3 install", "poetry init", "poetry add", "uv init", "uv add",
+		"npm init", "npm install", "pnpm add", "pnpm install", "yarn add", "yarn install",
+		"cargo init", "mvn archetype:generate",
+	}
+	for _, fp := range foreignToolPrefixes {
+		if strings.Contains(lower, fp) {
+			return true, fmt.Sprintf("[Go-Exclusive Lock] comando '%s' bloqueado — o SquadAI Harness é exclusivo em Go (Golang 1.24.3+, CGO_ENABLED=0)", fp)
+		}
+	}
 	return false, ""
 }
 
-// PostToolUse scans edited/written files in < 15ms for secrets, PII in logs, and Trojan Source.
+// PostToolUse scans edited/written files in < 15ms for Go-exclusive source purity, secrets, PII in logs, and Trojan Source.
 func PostToolUse(repoRoot string, stdin io.Reader) (int, string) {
 	data := readHookStdin(stdin)
 	var input ToolHookInput
@@ -115,6 +126,10 @@ func PostToolUse(repoRoot string, stdin io.Reader) (int, string) {
 			return 2, fmt.Sprintf("🛑 [SquadAI Harness PostToolUse] Caminho fora do workspace: %v", err)
 		}
 		absTarget = safe
+	}
+
+	if allowed, reason := gates.CheckFilePathAllowed(repoRoot, absTarget); !allowed {
+		return 2, fmt.Sprintf("🛑 [SquadAI Harness Go-Exclusive Lock] %s", reason)
 	}
 
 	content, err := os.ReadFile(absTarget)

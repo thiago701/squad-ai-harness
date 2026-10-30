@@ -1,0 +1,8 @@
+{
+  "project": "SquadAI Harness (squad-ai-harness)",
+  "author": "Thiago (@thiago701)",
+  "email": "thiago701@gmail.com",
+  "github": "https://github.com/thiago701/squad-ai-harness",
+  "created_at": "2026-10-30",
+  "exclusive_language": "Go (Golang 1.24.3+, CGO_ENABLED=0)"
+}

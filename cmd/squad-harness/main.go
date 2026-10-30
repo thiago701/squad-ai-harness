@@ -66,15 +66,19 @@ func runCLI(args []string) int {
 	case "version", "--version", "-v":
 		mem, _ := jobobject.ProbeSystemMemory()
 		out := map[string]any{
-			"product":       contracts.ProductName,
-			"technical_id":  contracts.TechnicalName,
-			"version":       contracts.Version,
-			"full_identity": contracts.FullIdentity,
-			"go_version":    runtime.Version(),
-			"os_arch":       runtime.GOOS + "/" + runtime.GOARCH,
-			"cpu_cores":     runtime.NumCPU(),
-			"avail_ram_mb":  mem.AvailPhysMB,
-			"total_ram_mb":  mem.TotalPhysMB,
+			"product":            contracts.ProductName,
+			"technical_id":       contracts.TechnicalName,
+			"version":            contracts.Version,
+			"full_identity":      contracts.FullIdentity,
+			"author":             contracts.AuthorName,
+			"author_email":       contracts.AuthorEmail,
+			"created_at":         contracts.CreatedAt,
+			"exclusive_language": contracts.ExclusiveLanguage,
+			"go_version":         runtime.Version(),
+			"os_arch":            runtime.GOOS + "/" + runtime.GOARCH,
+			"cpu_cores":          runtime.NumCPU(),
+			"avail_ram_mb":       mem.AvailPhysMB,
+			"total_ram_mb":       mem.TotalPhysMB,
 		}
 		printJSON(out)
 		return 0
@@ -366,6 +370,19 @@ func runUnifiedGateDAG(rootDir string) int {
 	})
 
 	_ = eng.AddNode(dag.Node{
+		ID:          "stage1.go_exclusive_lock",
+		Description: "Bloqueio exclusivo Go 1.24.3+ (zero Python/Node/CGO no fonte do harness) e validação de autoria (.author)",
+		Deps:        []string{"stage0.catalog_load"},
+		Action: func(ctx context.Context) error {
+			rep := gates.VerifyGoExclusiveLock(rootDir)
+			if !rep.Passed {
+				return fmt.Errorf("violação do Go-Exclusive Lock / Autoria: %v", rep.Violations)
+			}
+			return nil
+		},
+	})
+
+	_ = eng.AddNode(dag.Node{
 		ID:          "stage1.sekg_build",
 		Description: "Indexação determinística do Software Engineering Knowledge Graph (CSR + Leiden)",
 		Deps:        []string{"stage0.catalog_load"},
@@ -381,7 +398,7 @@ func runUnifiedGateDAG(rootDir string) int {
 	_ = eng.AddNode(dag.Node{
 		ID:          "stage2.delivery_gates",
 		Description: "Gates de entrega (environment-infrastructure-gate + database-schema-gate + interop)",
-		Deps:        []string{"stage1.catalog_validate", "stage1.jev_tribunal"},
+		Deps:        []string{"stage1.catalog_validate", "stage1.jev_tribunal", "stage1.go_exclusive_lock"},
 		Action: func(ctx context.Context) error {
 			dec := gates.DecidirEntrega(ctx, rootDir, "review", "")
 			if !dec.Authorized {

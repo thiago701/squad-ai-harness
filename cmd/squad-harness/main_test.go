@@ -133,10 +133,10 @@ func TestHotPathHooks(t *testing.T) {
 		t.Fatalf("expected safe command to pass, got %d", codeSafe)
 	}
 
-	// 3. PostToolUse blocks file containing secret
+	// 3. PostToolUse blocks Go file containing secret / env dump
 	tmp := t.TempDir()
-	badFile := filepath.Join(tmp, "bad.py")
-	_ = os.WriteFile(badFile, []byte("logger.info(os.environ)\n"), 0o644)
+	badFile := filepath.Join(tmp, "bad.go")
+	_ = os.WriteFile(badFile, []byte("package main\nfunc x() { logger.info(os.environ) }\n"), 0o644)
 	payload, _ := json.Marshal(map[string]any{
 		"tool_name":  "Write",
 		"tool_input": map[string]string{"file_path": badFile},
@@ -144,6 +144,38 @@ func TestHotPathHooks(t *testing.T) {
 	codePost, msgPost := hooks.PostToolUse(tmp, bytes.NewReader(payload))
 	if codePost != 2 || !strings.Contains(msgPost, "LOG-ENV-DUMP") {
 		t.Fatalf("expected PostToolUse to block LOG-ENV-DUMP, got code=%d msg=%q", codePost, msgPost)
+	}
+
+	// 4. PostToolUse & PreToolUse enforce Go-Exclusive Source Lock
+	foreignPy := filepath.Join(tmp, "internal", "script.py")
+	_ = os.MkdirAll(filepath.Dir(foreignPy), 0o755)
+	_ = os.WriteFile(foreignPy, []byte("print('hello')\n"), 0o644)
+	pyPayload, _ := json.Marshal(map[string]any{
+		"tool_name":  "Write",
+		"tool_input": map[string]string{"file_path": foreignPy},
+	})
+	codePy, msgPy := hooks.PostToolUse(tmp, bytes.NewReader(pyPayload))
+	if codePy != 2 || !strings.Contains(msgPy, "Go-Exclusive Lock") {
+		t.Fatalf("expected PostToolUse to block Python file in harness source, got code=%d msg=%q", codePy, msgPy)
+	}
+
+	codePip, msgPip := hooks.PreToolUse(root, strings.NewReader(`{"tool_name":"Bash","tool_input":{"command":"pip install requests"}}`))
+	if codePip != 2 || !strings.Contains(msgPip, "Go-Exclusive Lock") {
+		t.Fatalf("expected PreToolUse to block pip install, got code=%d msg=%q", codePip, msgPip)
+	}
+}
+
+func TestGoExclusiveLockAndAuthorMetadata(t *testing.T) {
+	root := repoRootForTest(t)
+	rep := gates.VerifyGoExclusiveLock(root)
+	if !rep.Passed || !rep.AuthorValid || len(rep.Violations) != 0 {
+		t.Fatalf("expected VerifyGoExclusiveLock to pass with 0 violations, got %+v", rep)
+	}
+	if ok, _ := gates.CheckFilePathAllowed(root, filepath.Join(root, "internal", "foo.py")); ok {
+		t.Fatal("expected internal/foo.py to be blocked by Go-Exclusive Lock")
+	}
+	if ok, _ := gates.CheckFilePathAllowed(root, filepath.Join(root, "package.json")); ok {
+		t.Fatal("expected package.json to be blocked by Go-Exclusive Lock")
 	}
 }
 

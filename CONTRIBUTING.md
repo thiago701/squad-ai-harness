@@ -37,11 +37,11 @@ refactor(squad): extrai conductor para módulo próprio
 
 Cada skill precisa do contrato completo (Nome, Propósito, Inputs, Outputs, Exemplos, Restrições, Critérios de qualidade, Checklist de revisão, Notas de evolução). Comece copiando `templates/skill-template.md`. Antes de criar, **verifique se uma skill existente já resolve o problema** — duplicação fere o princípio de não-conflito.
 
-## Ambiente de desenvolvimento
+## Ambiente de desenvolvimento e Trava Exclusiva Go (`Go-Exclusive Lock`)
 
-- Python 3.13+ · Git
-- O repositório suporta múltiplos clientes de IA (Claude Code, Codex, Windsurf, Devin) via configs versionadas. Use o que preferir; o comportamento canônico vive nas skills, não na IDE.
-- Rode os checks locais antes do PR: testes (`pytest`) e lint (`ruff`).
+- **Linguagem Exclusiva do Harness:** **Go 1.24.3+ (`CGO_ENABLED=0`, zero dependências externas no `go.mod`)**.
+- **Proibido misturar outras linguagens no fonte do harness:** O gate `stage1.go_exclusive_lock` e os hooks `PreToolUse`/`PostToolUse` bloqueiam automaticamente qualquer arquivo `.py`, `.js`, `.ts`, `.java`, `.rs`, `.cs`, `.ps1`, `.sh`, `package.json`, `pyproject.toml` ou `requirements.txt` fora dos catálogos passivos (`skills/` e `templates/`).
+- Rode os checks locais antes do PR: `go vet ./...`, `go test ./...` e `.\squad-harness.exe gate`.
 
 ## O que não fazer
 

@@ -5,12 +5,12 @@
 
   **Gated Autonomous Software Engineering · Runtime Nativo em Go 1.24.3 (`CGO_ENABLED=0`)**
 
-  [![Go Version](https://img.shields.io/badge/Go-1.24.3-00ADD8?style=flat-square&logo=go)](go.mod)
+  [![Go Version](https://img.shields.io/badge/Go-1.24.3%20Exclusive-00ADD8?style=flat-square&logo=go)](go.mod)
   [![Dependencies](https://img.shields.io/badge/Dependencies-Zero%20External-success?style=flat-square)](go.mod)
   [![Canonical Skills](https://img.shields.io/badge/Skills-106%20Canonical-0EA5E9?style=flat-square)](governance/registry/registry.json)
   [![JEV Tribunal](https://img.shields.io/badge/JEV%20Specialists-25%20Deterministic-8B5CF6?style=flat-square)](internal/jev/)
-  [![Security Policy](https://img.shields.io/badge/Security-Prompt%20Defense%20Verified-10B981?style=flat-square)](SECURITY.md)
-  [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+  [![Author](https://img.shields.io/badge/Author-Thiago%20(%40thiago701)-38BDF8?style=flat-square)](https://github.com/thiago701)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
 </div>
 
 ---
@@ -169,8 +169,9 @@ squad-ai-harness/
 
 ---
 
-## 🛡️ Segurança, Governança e Conformidade
+## 🔒 Trava Exclusiva Go (`Go-Exclusive Source Lock`) & Segurança
 
+- **Fonte do Harness 100% Exclusivo em Go (`Go 1.24.3+`, `CGO_ENABLED=0`)**: O estágio `stage1.go_exclusive_lock` ([`internal/gates/gopurity.go`](internal/gates/gopurity.go)) e os hooks em tempo real (`PreToolUse` / `PostToolUse`) **bloqueiam automaticamente (`Exit Code 2 / GateBlocked`)** qualquer tentativa de misturar código ou manifestos de outras linguagens (Python `.py`, Node/JS/TS `.js/.ts`, Java `.java`, Rust `.rs`, C# `.cs`, scripts `.ps1/.sh/.bat` ou `package.json`/`pyproject.toml`/`requirements.txt`) no fonte do harness.
 - **Zero Dependências Externas (`go.mod` limpo)**: superfície de supply chain reduzida a zero no runtime compilado.
 - **Linha de Defesa de Prompt Obrigatória**: validada em 100% das 106 skills a cada execução do `squad-harness gate`.
 - **Varredura Pré-Commit Nativa (`secretscan`)**: bloqueia chaves privadas, credenciais AWS (`AKIA`), tokens de API (`sk-`, `ghp_`), strings de conexão e arquivos `.env`/`.tfstate`.
@@ -178,6 +179,15 @@ squad-ai-harness/
 
 ---
 
+## 👤 Autor e Criador
+
+- **Autor:** **Thiago** ([@thiago701](https://github.com/thiago701))
+- **E-mail:** `thiago701@gmail.com`
+- **Data de Criação:** `2026-10-30` (`30/10/2026`)
+- **Registro Canônico de Autoria:** verificado automaticamente pelo gate sobre o arquivo oculto [`.author`](.author) na raiz do repositório.
+
+---
+
 ## 📄 Licença
 
-Distribuído sob a licença **MIT**. Veja [`LICENSE`](LICENSE) para detalhes.
+Copyright © 2026 **Thiago (`thiago701@gmail.com`)**. Distribuído sob a licença **Apache 2.0**. Veja [`LICENSE`](LICENSE) para detalhes.
