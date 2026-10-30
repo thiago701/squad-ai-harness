@@ -18,11 +18,11 @@ const (
 	// TrustedOrigin is the immutable provenance key across all canonical skills.
 	TrustedOrigin = "squad-ai"
 	// AuthorName is the creator and principal author of SquadAI Harness.
-	AuthorName = "Thiago (@thiago701)"
+	AuthorName = "Thiago Gonçalo"
 	// AuthorEmail is the official contact email of the author.
 	AuthorEmail = "thiago701@gmail.com"
 	// CreatedAt is the canonical creation date of SquadAI Harness.
-	CreatedAt = "2026-10-30"
+	CreatedAt = "30/10/2026"
 	// ExclusiveLanguage enforces the Go-only source code policy for the harness runtime.
 	ExclusiveLanguage = "Go (Golang 1.24.3+, CGO_ENABLED=0)"
 )
