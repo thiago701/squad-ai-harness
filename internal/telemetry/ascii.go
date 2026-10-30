@@ -244,7 +244,7 @@ func renderASCIICore(rep Report, signature string) string {
 		rep.TotalSavedHours, formatHoursMinutes(rep.TotalSavedHours), rep.ProductivityMultiplier))
 	boxRow(fmt.Sprintf("★ TOKENS ECONOMIZADOS (MÊS X TOTAL): %s tok mês x %s tok total (%.1f%%)",
 		formatIntBR(curMonth.TokensSaved), formatIntBR(rep.TotalTokensSaved), pctTokens))
-	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL): US$ %.2f (R$ %.2f) mês x US$ %.2f (R$ %.2f) total",
+	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL): US$ %.2f / R$ %.2f mês x US$ %.2f / R$ %.2f total",
 		curMonth.SavingsUSD, curMonth.SavingsBRL, rep.TotalSavingsUSD, rep.TotalSavingsBRL))
 	line(boxBorderBot)
 	b.WriteString(hrBot)
