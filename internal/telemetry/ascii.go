@@ -142,6 +142,18 @@ func renderASCIICore(rep Report, signature string) string {
 			bar,
 		))
 	}
+	line("  ----------+------+------+---------+-----------+-----------------+---------+----------+---------")
+	line(fmt.Sprintf("  %-9s |  %2d  | %4d | %6.2fh |  %7.2fh | %15s | %7.2f | %8.2f | %.1fx",
+		"TOTAL 3M",
+		rep.ActiveDaysCount,
+		rep.TotalOperations,
+		rep.TotalWorkedHours,
+		rep.TotalSavedHours,
+		formatIntBR(rep.TotalTokensSaved),
+		rep.TotalSavingsUSD,
+		rep.TotalSavingsBRL,
+		rep.ProductivityMultiplier,
+	))
 	b.WriteString(hrMid)
 
 	// SECTION 3: DAILY BREAKDOWN (AGRUPADO POR DIA)
@@ -166,6 +178,17 @@ func renderASCIICore(rep Report, signature string) string {
 			truncateStr(d.TopOps, 8),
 		))
 	}
+	line("  -----------+------+---------+-----------+-----------------+------------+------------+----------")
+	line(fmt.Sprintf("  %-10s | %4d | %6.2fh |  %7.2fh | %15s | US$ %6.2f | R$ %7.2f | %d dias",
+		"TOTAL 3M",
+		rep.TotalOperations,
+		rep.TotalWorkedHours,
+		rep.TotalSavedHours,
+		formatIntBR(rep.TotalTokensSaved),
+		rep.TotalSavingsUSD,
+		rep.TotalSavingsBRL,
+		rep.ActiveDaysCount,
+	))
 	b.WriteString(hrMid)
 
 	// SECTION 4: OFFLINE QUANTUM ID DISCOVERY & PUBLIC MCP ACCESS FOR MANAGERS
@@ -177,6 +200,53 @@ func renderASCIICore(rep Report, signature string) string {
 	line(fmt.Sprintf("  • HTTP LAN / Loopback : http://127.0.0.1:9090/api/telemetry/ascii?quid=%s", rep.Identity.QUID))
 	line(fmt.Sprintf("  • Assinatura Quântica : SHA512-SPONGE:%s | Digest: %s...",
 		signature, truncateStr(rep.Identity.QuantumDigest, 20)))
+	b.WriteString(hrMid)
+
+	// SECTION 5: EXECUTIVE FOOTER CONSOLIDATOR (CURRENT MONTH VS TOTAL ACCUMULATED)
+	var curMonth MonthSummary
+	curMonth.MonthLabel = "Mês Atual"
+	if len(rep.Monthly) > 0 {
+		curMonth = rep.Monthly[len(rep.Monthly)-1]
+	}
+	pctHours := 0.0
+	if rep.TotalWorkedHours > 0 {
+		pctHours = (curMonth.WorkedHours / rep.TotalWorkedHours) * 100.0
+	}
+	pctTokens := 0.0
+	if rep.TotalTokensSaved > 0 {
+		pctTokens = (float64(curMonth.TokensSaved) / float64(rep.TotalTokensSaved)) * 100.0
+	}
+
+	const boxInner = 92
+	boxBorderTop := "  ┌" + strings.Repeat("─", boxInner) + "┐"
+	boxBorderBot := "  └" + strings.Repeat("─", boxInner) + "┘"
+	boxRow := func(text string) {
+		r := []rune(text)
+		if len(r) > boxInner-2 {
+			r = r[:boxInner-2]
+		}
+		pad := (boxInner - 2) - len(r)
+		if pad < 0 {
+			pad = 0
+		}
+		line("  │ " + string(r) + strings.Repeat(" ", pad) + " │")
+	}
+
+	line(fmt.Sprintf("[5] RODAPÉ CONSOLIDADOR EM DESTAQUE — MÊS ATUAL (%s) X TOTAL ACUMULADO (%d MESES)",
+		strings.ToUpper(curMonth.MonthLabel), rep.WindowMonths))
+	b.WriteString(hrSep)
+	line(boxBorderTop)
+	boxRow(fmt.Sprintf("★ HORAS USANDO IA (MÊS X TOTAL)     : %6.2f h (%s) no mês  x  %6.2f h (%s) total (%4.1f%%)",
+		curMonth.WorkedHours, formatHoursMinutes(curMonth.WorkedHours),
+		rep.TotalWorkedHours, formatHoursMinutes(rep.TotalWorkedHours), pctHours))
+	boxRow(fmt.Sprintf("★ HORAS ECONOMIZADAS (MÊS X TOTAL)  : %6.2f h (%s) no mês  x  %6.2f h (%s) total (%.1fx)",
+		curMonth.SavedHours, formatHoursMinutes(curMonth.SavedHours),
+		rep.TotalSavedHours, formatHoursMinutes(rep.TotalSavedHours), rep.ProductivityMultiplier))
+	boxRow(fmt.Sprintf("★ TOKENS ECONOMIZADOS (MÊS X TOTAL) : %s tok no mês  x  %s tok total (%4.1f%%)",
+		formatIntBR(curMonth.TokensSaved), formatIntBR(rep.TotalTokensSaved), pctTokens))
+	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL) : US$ %.2f (R$ %.2f) no mês  x  US$ %.2f (R$ %.2f) total",
+		curMonth.SavingsUSD, curMonth.SavingsBRL, rep.TotalSavingsUSD, rep.TotalSavingsBRL))
+	line(boxBorderBot)
 	b.WriteString(hrBot)
 
 	return b.String()

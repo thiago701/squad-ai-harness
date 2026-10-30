@@ -71,6 +71,11 @@ func TestQuantumIDAndExecutiveASCIIReport(t *testing.T) {
 	if !strings.Contains(rep.ASCII, id1.QUID) || !strings.Contains(rep.ASCII, "US$") || !strings.Contains(rep.ASCII, "R$") {
 		t.Fatalf("ASCII report missing expected sections:\n%s", rep.ASCII)
 	}
+	if !strings.Contains(rep.ASCII, "RODAPÉ CONSOLIDADOR EM DESTAQUE") ||
+		!strings.Contains(rep.ASCII, "HORAS USANDO IA (MÊS X TOTAL)") ||
+		!strings.Contains(rep.ASCII, "TOKENS ECONOMIZADOS (MÊS X TOTAL)") {
+		t.Fatalf("ASCII report missing footer consolidator:\n%s", rep.ASCII)
+	}
 
 	// Test offline QUID resolution
 	resolved, ok := ResolveByQUID(id1.ShortID, tmpDir)
