@@ -236,15 +236,15 @@ func renderASCIICore(rep Report, signature string) string {
 		strings.ToUpper(curMonth.MonthLabel), rep.WindowMonths))
 	b.WriteString(hrSep)
 	line(boxBorderTop)
-	boxRow(fmt.Sprintf("★ HORAS USANDO IA (MÊS X TOTAL)     : %6.2fh (%s) no mês x %6.2fh (%s) total (%.1f%%)",
+	boxRow(fmt.Sprintf("★ HORAS USANDO IA (MÊS X TOTAL)    : %.2fh (%s) mês x %.2fh (%s) total (%.1f%%)",
 		curMonth.WorkedHours, formatHoursMinutes(curMonth.WorkedHours),
 		rep.TotalWorkedHours, formatHoursMinutes(rep.TotalWorkedHours), pctHours))
-	boxRow(fmt.Sprintf("★ HORAS ECONOMIZADAS (MÊS X TOTAL)  : %6.2fh (%s) no mês x %6.2fh (%s) total (%.1fx)",
+	boxRow(fmt.Sprintf("★ HORAS ECONOMIZADAS (MÊS X TOTAL) : %.2fh (%s) mês x %.2fh (%s) total (%.1fx)",
 		curMonth.SavedHours, formatHoursMinutes(curMonth.SavedHours),
 		rep.TotalSavedHours, formatHoursMinutes(rep.TotalSavedHours), rep.ProductivityMultiplier))
-	boxRow(fmt.Sprintf("★ TOKENS ECONOMIZADOS (MÊS X TOTAL) : %s tok no mês  x  %s tok total (%.1f%%)",
+	boxRow(fmt.Sprintf("★ TOKENS ECONOMIZADOS (MÊS X TOTAL): %s tok mês x %s tok total (%.1f%%)",
 		formatIntBR(curMonth.TokensSaved), formatIntBR(rep.TotalTokensSaved), pctTokens))
-	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL) : US$ %.2f (R$ %.2f) mês x US$ %.2f (R$ %.2f) total",
+	boxRow(fmt.Sprintf("★ ECONOMIA FINANCEIRA (MÊS X TOTAL): US$ %.2f (R$ %.2f) mês x US$ %.2f (R$ %.2f) total",
 		curMonth.SavingsUSD, curMonth.SavingsBRL, rep.TotalSavingsUSD, rep.TotalSavingsBRL))
 	line(boxBorderBot)
 	b.WriteString(hrBot)
