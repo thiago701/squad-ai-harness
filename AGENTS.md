@@ -131,45 +131,35 @@ nesta ordem (fontes: registry gerado do disco + camada JEV — nada inventado):
 > determinístico); o Jev real (TypeSafe) é validação pendente. Nunca apresentar a camada JEV
 > como substituição do LLM onde o benchmark não a aprovou (regra: nada sem evidência).
 
-### 3.3. Gatilho de Instalação e Multi-Estação — "instale squad ai" / "instalei as skills"
+### 3.3. Gatilho de Instalação e Multi-Estação — "instale squad ai" / "instalei as skills" (100% Go Nativo)
 
-Quando o usuário pedir variações de **"instale squad ai"**, **"instalar squad ai"**, **"instale as skills"** ou **"instalei as skills"** (em qualquer PC, com ou sem GPU/NPU), acione a skill **`instalar-skills`** (`/squad-install`) e siga este protocolo exato:
+Quando o usuário pedir variações de **"instale squad ai"**, **"instalar squad ai"**, **"instale as skills"** ou **"instalei as skills"** (em qualquer PC, com ou sem GPU/NPU), acione a skill **`instalar-skills`** (`/squad-install`) e siga este protocolo 100% Go nativo:
 
 1. **Se o pedido for `"instale squad ai"` ou `"instale as skills"` (instalar / atualizar na máquina atual):**
    ```powershell
-   # 1. Detectar ferramentas agênticas presentes (.claude, .dsh, RAI, Codex, Gemini, Antigravity, Cursor...)
-   python install-squad-ai.py detectar
-
-   # 2. Instalar/atualizar em paralelo nos destinos presentes (com porta de segurança, backup e manifesto)
-   python install-squad-ai.py instalar-todos
-
-   # 3. Diagnosticar o hardware deste PC (CPU pura, cpu+igpu, cpu+npu, cpu+dgpu — somente leitura)
-   python install-squad-ai.py estacao
-
-   # 4. Garantir o binário nativo Go 1.24.3 (Camada C0, zero dependências externas, funciona sem GPU/NPU)
+   # 1. Garantir o binário nativo Go 1.24.3 (Camada C0, zero dependências externas, funciona sem GPU/NPU)
    if (-not (Test-Path .\squad-harness.exe)) {
        $env:CGO_ENABLED="0"; go build -o squad-harness.exe ./cmd/squad-harness
    }
+
+   # 2. Detectar ferramentas agênticas presentes (~/.claude, ~/.gemini/config, ~/.dsh, ~/.resolveai)
+   .\squad-harness.exe install detect
+
+   # 3. Instalar/sincronizar concorrentemente em todos os destinos presentes (com porta de segurança e manifesto SHA-256)
+   .\squad-harness.exe install
+
+   # 4. Diagnosticar o hardware deste PC (CPU pura, cpu+igpu, cpu+npu, cpu+dgpu)
    .\squad-harness.exe compute
    ```
 2. **Se o usuário disser `"instalei as skills"` (validação pós-instalação e adaptação ao PC):**
    ```powershell
-   # 1. Verificar integridade (SHA-256) da instalação e rodar o gate unificado em Go
-   python install-squad-ai.py verify
+   # 1. Verificar integridade byte-a-byte (LF normalizado) da instalação e rodar o gate unificado em Go
+   .\squad-harness.exe install verify
    .\squad-harness.exe gate
 
    # 2. Inspecionar a rota de hardware ativa neste PC (C0 Go Nativo / C1 Neural Assist / C2 LLM)
    .\squad-harness.exe compute
-   python install-squad-ai.py estacao
-
-   # 3. Conferir modelos locais em ~/.squad-ai/models (opcional; PC somente CPU opera 100% em C0 Go Nativo)
-   python -m scripts.accel.model_cards list
    ```
-3. **Se o usuário quiser ativar/calibrar aceleração neural local no PC atual (CPU OpenVINO/ORT, iGPU, NPU ou RTX CUDA):**
-   ```powershell
-   python install-squad-ai.py estacao --aplicar --calibrar --rapido
-   ```
-   *(Para baixar modelos ausentes em `~/.squad-ai/models/`: `python -m scripts.accel.model_cards download-all` e `download-npu-llms`).*
 
 
 ---

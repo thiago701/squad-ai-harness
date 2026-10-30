@@ -27,6 +27,8 @@ Na versão **v0.8.0**, toda a infraestrutura de orquestração, validação, mem
 - **Tribunal JEV de 25 Especialistas (`< 1 ms`)**: Avaliação concorrente determinística (custo US$ 0) com *Critic/Judge* anti-regressão sob a função de arbitragem imutável:
   $$\text{Segurança (inegociável)} \gg \text{P1 Simplicidade} > \text{P2 Performance} > \text{P3 Custo Baixo}$$
 - **Cognitive Compute Router Multi-Estação (`C0` / `C1` / `C2`)**: Adapta-se automaticamente ao hardware de cada máquina (PC corporativo somente CPU, notebook com NPU Intel AI Boost, estação com iGPU Arc ou servidor com GPU NVIDIA RTX).
+- **Catálogo Interativo Web & Monitor de Recursos (`.\squad-harness.exe ui`)**: Interface gráfica web 100% nativa (`net/http` + `embed`, tema Dark + Azul Celeste Claro) com busca via `HybridRouter`, filtros dinâmicos por tecnologia, telemetria em tempo real (`Heap`, `GOMEMLIMIT`, `RAM Livre Host`, `Skills`, `Nós SEKG`), botão **`📂 Abrir skill`** no Windows Explorer e **Validador de Sincronização** integrado.
+- **Instalador e Sincronizador Multi-Alvo 100% Go Nativo (`.\squad-harness.exe install`)**: Substitui o antigo instalador Python por sincronização concorrente em Go com porta de segurança *fail-closed* e manifesto `SHA-256` em `~/.claude/skills`, `~/.gemini/config/skills`, `~/.dsh/skills` e `~/.resolveai/skills`.
 
 ---
 
@@ -50,9 +52,11 @@ Medições empíricas auditáveis ([`docs/BENCHMARKS-V080.md`](docs/BENCHMARKS-V
 
 ```mermaid
 flowchart LR
-    CLI["squad-harness CLI / MCP"] --> DAG["DAG Engine (Goroutines)"]
+    CLI["squad-harness CLI / MCP / UI"] --> DAG["DAG Engine (Goroutines)"]
     CLI --> COG["Camada 0 CognitiveHarness"]
     CLI --> COMP["Compute Router (C0 / C1 / C2)"]
+    CLI --> INST["Installer Go Nativo (Multi-Target)"]
+    CLI --> WEB["Web UI Nativa (127.0.0.1:9090)"]
 
     DAG --> CAT["Catalog Loader (106 Skills)"]
     DAG --> JEV["JEV Tribunal (25 Specialists)"]
@@ -101,15 +105,32 @@ CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o squad-harness ./cmd/squad-h
 
 # 7. Executar a suíte de benchmarks ao vivo na estação atual
 .\squad-harness.exe bench
+
+# 8. Iniciar o Control Center Web Nativo embutido (http://127.0.0.1:9090)
+.\squad-harness.exe ui
 ```
 
-### 3. Distribuir as 106 Skills para seus Agentes Locais (Claude Code, Antigravity, Codex, Cursor)
+### 3. Distribuir as 106 Skills para seus Agentes Locais (100% Go Nativo — Claude Code, Antigravity, DeepSeek, Resolve AI)
 
 ```powershell
-python install-squad-ai.py detectar
-python install-squad-ai.py instalar-todos
-python install-squad-ai.py verify
+# 1. Detectar os ambientes agênticos instalados na máquina (~/.claude, ~/.gemini/config, ~/.dsh, ~/.resolveai)
+.\squad-harness.exe install detect
+
+# 2. Instalar/sincronizar concorrentemente as 106 skills (com porta de segurança e manifesto SHA-256)
+.\squad-harness.exe install
+
+# 3. Verificar integridade byte-a-byte (LF normalizado) de todas as skills instaladas
+.\squad-harness.exe install verify
 ```
+
+### 4. Catálogo Interativo de Skills & Monitor de Recursos (`.\squad-harness.exe ui`)
+
+O binário `squad-harness.exe` incorpora uma GUI Web zero-dependência (`net/http` + `//go:embed`, tema Dark `#060b14` com Azul Celeste Claro `#7dd3fc`) acessível em `http://127.0.0.1:9090`:
+
+- **Monitor de Recursos 100% Dinâmico**: lê em tempo real `runtime.ReadMemStats` (`Heap`), `debug.SetMemoryLimit(-1)` (`GOMEMLIMIT`), sensores de memória física do SO (`RAM Livre Host`), contagem de skills carregadas do disco e nós do grafo `SEKG`.
+- **Pesquisa via `HybridRouter` + Filtros Dinâmicos por Tecnologia**: filtra por stack tecnológica (`Java / Spring / Quarkus`, `AWS / Cloud / IaC`, `Go & Rust`, `Python`, `Angular / TS / Web`, `.NET / C#`, `Banco / Dados`, `IA & Agentes`, `Segurança, QA & Obs`) com contadores calculados dinamicamente.
+- **Aviso Validador de Sincronização**: verifica automaticamente se as skills estão instaladas e atualizadas em `~/.claude/skills`, `~/.gemini/config/skills` e `~/.dsh/skills`, oferecendo o botão **`⚡ Sincronizar Skills (Go Nativo)`** em 1 clique.
+- **Botão `📂 Abrir skill`**: abre o Windows Explorer (`explorer.exe` / `open` / `xdg-open`) diretamente na pasta `skills/<nome-da-skill>/`.
 
 ---
 
@@ -118,7 +139,7 @@ python install-squad-ai.py verify
 ```text
 squad-ai-harness/
 ├── assets/                     # Logomarca e identidade visual oficial (JPG + SVG)
-├── cmd/squad-harness/          # CLI unificado (version, gate, preflight, sekg, sync, jev, compute, hook, mcp, bench)
+├── cmd/squad-harness/          # CLI unificado (version, gate, preflight, sekg, sync, jev, compute, hook, mcp, bench, install, ui)
 ├── internal/
 │   ├── aws/                    # Linter determinístico de AWS Step Functions (ASL) e API Gateway (VTL)
 │   ├── catalog/                # Loader concorrente e validador UTF-8/Frontmatter/Defesa das 106 skills
@@ -128,12 +149,14 @@ squad-ai-harness/
 │   ├── gates/                  # Função canônica DecidirEntrega (env-infra, db-schema, config-compat, interop)
 │   ├── git/                    # Planejador determinístico de sincronização Git (JEV)
 │   ├── hooks/                  # Hooks PreToolUse, PostToolUse e Stop (< 1ms)
+│   ├── installer/              # Instalador e sincronizador multi-alvo 100% Go nativo (~/.claude, ~/.gemini, ~/.dsh)
 │   ├── jev/                    # Tribunal determinístico com 25 especialistas + Critic/Judge
 │   ├── mcp/                    # Servidor MCP JSON-RPC 2.0 nativo via stdio
 │   ├── runtime/                # Coletor Git concorrente e sensores de memória física do SO
 │   ├── scheduler/              # Agendador inteligente 8D + IMO
 │   ├── security/               # SecretScan (14 classes de segredos) + FSGuard
-│   └── sonar/                  # Analisador estático Sonar-First (complexidade cognitiva e calistenia)
+│   ├── sonar/                  # Analisador estático Sonar-First (complexidade cognitiva e calistenia)
+│   └── ui/                     # Control Center Web Nativo embutido via //go:embed (127.0.0.1:9090)
 ├── pkg/contracts/              # Contratos tipados imutáveis (GateState, ProvenanceTag, Identidade v0.8.0)
 ├── skills/                     # Catálogo canônico de 106 skills especializadas auditáveis
 ├── governance/                 # Políticas de autonomia (N0-N3), padrão de skill, gates e registry gerado

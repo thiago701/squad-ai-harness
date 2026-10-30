@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,9 +25,11 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/gates"
 	"github.com/thiago701/squad-ai-harness/internal/git"
 	"github.com/thiago701/squad-ai-harness/internal/hooks"
+	"github.com/thiago701/squad-ai-harness/internal/installer"
 	"github.com/thiago701/squad-ai-harness/internal/jev"
 	"github.com/thiago701/squad-ai-harness/internal/mcp"
 	"github.com/thiago701/squad-ai-harness/internal/runtime/jobobject"
+	"github.com/thiago701/squad-ai-harness/internal/ui"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
 )
 
@@ -220,6 +223,96 @@ func runCLI(args []string) int {
 	case "bench":
 		return runLiveBenchmarkSuite(rootDir)
 
+	case "install":
+		sub := "all"
+		if len(args) > 1 {
+			sub = strings.ToLower(strings.TrimSpace(args[1]))
+		}
+		cat, err := catalog.Load(rootDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "erro ao carregar catálogo para install: %v\n", err)
+			return 1
+		}
+		switch sub {
+		case "detect", "detectar":
+			targets := installer.DetectTargets()
+			printJSON(map[string]any{
+				"targets_detected": len(targets),
+				"targets":          targets,
+			})
+			return 0
+		case "verify", "verificar":
+			rep := installer.Verify(cat, nil)
+			printJSON(rep)
+			if !rep.AllSynced {
+				return 1
+			}
+			return 0
+		case "all", "instalar-todos", "sync":
+			sum, err := installer.InstallToTargets(cat, nil)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "erro ao instalar skills: %v\n", err)
+				return 1
+			}
+			printJSON(sum)
+			if len(sum.BlockedSkills) > 0 {
+				return 1
+			}
+			return 0
+		default:
+			fmt.Fprintf(os.Stderr, "uso: squad-harness install [all|detect|verify]\n")
+			return 2
+		}
+
+	case "ui":
+		addr := "127.0.0.1:9090"
+		smoke := false
+		for i := 1; i < len(args); i++ {
+			switch args[i] {
+			case "--smoke":
+				smoke = true
+			case "--addr", "-a":
+				if i+1 < len(args) {
+					addr = args[i+1]
+					i++
+				}
+			default:
+				if strings.HasPrefix(args[i], "127.0.0.1:") || strings.HasPrefix(args[i], "localhost:") || strings.HasPrefix(args[i], ":") {
+					addr = args[i]
+				}
+			}
+		}
+		srv, err := ui.NewServer(rootDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "erro ao inicializar servidor UI: %v\n", err)
+			return 1
+		}
+		if smoke {
+			printJSON(map[string]any{
+				"status":       "UI_READY",
+				"bind_url":     "http://" + addr,
+				"identity":     contracts.FullIdentity,
+				"skills_count": srv.SkillsCount(),
+				"sekg_nodes":   srv.SEKGNodesCount(),
+			})
+			return 0
+		}
+		fmt.Println("======================================================================")
+		fmt.Printf(" %s — Catálogo Interativo (%d Skills · %d Nós SEKG)\n", contracts.FullIdentity, srv.SkillsCount(), srv.SEKGNodesCount())
+		fmt.Printf(" Acesse no navegador: http://%s\n", addr)
+		fmt.Println(" Pressione Ctrl+C para encerrar.")
+		fmt.Println("======================================================================")
+		httpSrv := &http.Server{
+			Addr:              addr,
+			Handler:           srv.Handler(),
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Fprintf(os.Stderr, "erro no servidor HTTP: %v\n", err)
+			return 1
+		}
+		return 0
+
 	default:
 		fmt.Fprintf(os.Stderr, "subcomando desconhecido: %s\n", cmd)
 		printUsage()
@@ -412,4 +505,6 @@ func printUsage() {
 	fmt.Println("  hook <pre-tool|post-tool|stop> Executa os hooks de sessão ultra-rápidos (< 15ms)")
 	fmt.Println("  mcp                           Inicia o servidor MCP JSON-RPC 2.0 unificado via stdio")
 	fmt.Println("  bench                         Executa a suíte de benchmarks reais na estação (RAM + Latência)")
+	fmt.Println("  install [all|detect|verify]   Instala/sincroniza as skills em todos os ambientes agênticos (Go nativo)")
+	fmt.Println("  ui [--addr 127.0.0.1:9090]    Inicia o Control Center Web nativo embutido no binário")
 }

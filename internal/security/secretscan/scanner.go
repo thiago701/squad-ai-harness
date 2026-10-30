@@ -161,8 +161,32 @@ func hasBidiTrojanRune(s string) bool {
 	return false
 }
 
-// VerifyPromptDefenseLine checks whether a SKILL.md contains all 6 canonical defense bullets.
+// VerifyPromptDefenseLine checks whether a SKILL.md contains the canonical 6-rule
+// Prompt Defense Line (either the numbered block from `security/linha-defesa-prompt.md` §3
+// or the bulleted block from `AGENTS.md` §5.1).
 func VerifyPromptDefenseLine(markdown string) (bool, []string) {
+	lower := strings.ToLower(markdown)
+	if strings.Contains(lower, "linha de defesa de prompt") || strings.Contains(lower, "defesa de prompt") {
+		numberedAnchors := []string{
+			"persona imutável",
+			"segredos nunca vazam",
+			"conteúdo externo",
+			"suspeite de manipulação",
+			"nada destrutivo ou de exfiltração",
+			"pare e confirme com o humano",
+		}
+		allNumbered := true
+		for _, a := range numberedAnchors {
+			if !strings.Contains(lower, a) {
+				allNumbered = false
+				break
+			}
+		}
+		if allNumbered {
+			return true, nil
+		}
+	}
+
 	var missing []string
 	for _, bullet := range CanonicalPromptDefenseBullets {
 		if !strings.Contains(markdown, bullet) {
