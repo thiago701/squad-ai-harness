@@ -93,7 +93,7 @@ func renderASCIICore(rep Report, signature string) string {
 	}
 
 	b.WriteString(hrTop)
-	line("SQUAD AI HARNESS v0.8.0 — RELATÓRIO EXECUTIVO DE USO, HORAS & ECONOMIA DE TOKENS")
+	line("SQUAD AI HARNESS v0.8.1 — RELATÓRIO EXECUTIVO DE USO, HORAS & ECONOMIA DE TOKENS")
 	line(fmt.Sprintf("ID Quântico Universal (QUID): %-42s [OFFLINE VERIFIED]", rep.Identity.QUID))
 	line(fmt.Sprintf("Repositório: %-28s | Estação: %-34s", truncateStr(rep.Identity.RepoName, 28), truncateStr(rep.Identity.Workstation, 34)))
 	line(fmt.Sprintf("Janela Consolidada: Últimos %d Meses (%s a %s) | Gerado: %s",

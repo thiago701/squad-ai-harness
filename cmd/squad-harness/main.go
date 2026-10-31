@@ -1,4 +1,4 @@
-// Command squad-harness is the unified static binary for SquadAI Harness v0.8.0 (Go 1.24.3, CGO_ENABLED=0).
+// Command squad-harness is the unified static binary for SquadAI Harness v0.8.1 (Go 1.24.3, CGO_ENABLED=0).
 // It consolidates the pipeline DAG runner, delivery gates, Layer 0 CognitiveHarness,
 // SEKG + GraphRAG engine, 25-specialist JEV tribunal, Sonar-First analyzer, hot-path hooks,
 // 8D Intelligent Task Scheduler + IMO, and native MCP stdio server.
@@ -16,12 +16,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/thiago701/squad-ai-harness/internal/aiops"
 	"github.com/thiago701/squad-ai-harness/internal/catalog"
+	"github.com/thiago701/squad-ai-harness/internal/cognitive/cultivator"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/graphrag"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/sekg"
 	"github.com/thiago701/squad-ai-harness/internal/compute"
 	"github.com/thiago701/squad-ai-harness/internal/dag"
+	"github.com/thiago701/squad-ai-harness/internal/evallab"
 	"github.com/thiago701/squad-ai-harness/internal/gates"
 	"github.com/thiago701/squad-ai-harness/internal/git"
 	"github.com/thiago701/squad-ai-harness/internal/hooks"
@@ -128,6 +131,27 @@ func runCLI(args []string) int {
 		}
 		res := eng.RunPreflight(query, nil)
 		telemetry.RecordOperation(rootDir, "preflight", res.TotalDurMs)
+		if isMonitor, monAct := aiops.MatchNaturalTrigger(query); isMonitor {
+			monEng, err := aiops.NewEngine(rootDir, rootDir)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "erro ao inicializar engine AIOps: %v\n", err)
+				return 1
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			if monAct == "down" {
+				_ = monEng.StopLocalStack(ctx)
+			} else {
+				_ = monEng.EnsureLocalStack(ctx, monAct == "up")
+				_ = monEng.DiscoverWorkspace(rootDir)
+			}
+			printJSON(map[string]any{
+				"preflight":     res,
+				"aiops_trigger": monAct,
+				"aiops_monitor": monEng.Snapshot(),
+			})
+			return 0
+		}
 		printJSON(res)
 		return 0
 
@@ -195,17 +219,22 @@ func runCLI(args []string) int {
 		switch sub {
 		case "index":
 			dbPath := filepath.Join(rootDir, ".squad-harness", "sekg.db")
+			kdgPath := filepath.Join(rootDir, ".squad-harness", "sekg.kdg")
 			digest, err := eng.Graph().SaveAtomic(dbPath)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "erro ao salvar SEKG: %v\n", err)
 				return 1
 			}
+			_ = eng.Graph().SaveKDGAtomic(kdgPath)
+			kdgBytes := len(eng.Graph().MarshalKDGBytes())
 			printJSON(map[string]any{
-				"db_path":     dbPath,
-				"sha256":      digest,
-				"nodes":       len(eng.Graph().Nodes),
-				"edges":       len(eng.Graph().Edges),
-				"communities": len(eng.Graph().Communities),
+				"db_path":          dbPath,
+				"kdg_path":         kdgPath,
+				"kdg_binary_bytes": kdgBytes,
+				"sha256":           digest,
+				"nodes":            len(eng.Graph().Nodes),
+				"edges":            len(eng.Graph().Edges),
+				"communities":      len(eng.Graph().Communities),
 			})
 		case "query":
 			q := "arquitetura geral"
@@ -271,10 +300,22 @@ func runCLI(args []string) int {
 		decC0 := compute.RouteWorkload(prof, cb, "jev.review", 1, 64, false)
 		decC1 := compute.RouteWorkload(prof, cb, "embed.query", 1, 64, false)
 		decC2 := compute.RouteWorkload(prof, cb, "architecture.arbitration", 1, 4000, true)
+		mvPlan := compute.SelectMultiVendorExecutionBackend(prof, "reranker.cross_encoder")
 		printJSON(map[string]any{
-			"workstation": prof,
-			"routes":      []compute.RouteDecision{decC0, decC1, decC2},
+			"workstation":       prof,
+			"multi_vendor_plan": mvPlan,
+			"routes":            []compute.RouteDecision{decC0, decC1, decC2},
 		})
+		return 0
+
+	case "cultivator":
+		prof := compute.DetectWorkstation()
+		pqlRep, err := cultivator.EvaluatePredictiveFailurePOC001(prof, nil, 0)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "erro no cultivator POC-001: %v\n", err)
+			return 1
+		}
+		printJSON(pqlRep)
 		return 0
 
 	case "mcp":
@@ -413,9 +454,164 @@ func runCLI(args []string) int {
 		}
 		return 0
 
+	case "monitor", "aiops":
+		return runMonitorCLI(rootDir, args[1:])
+
+	case "evallab", "eval-agentic-api":
+		rep := evallab.RunEndToEndAgenticEvaluation(20)
+		for _, a := range args[1:] {
+			if a == "--export" || a == "-e" {
+				outDir := filepath.Join(rootDir, "docs", "auditoria-eval-agentic-api-2026-10-31")
+				_ = os.MkdirAll(outDir, 0755)
+				raw, _ := json.MarshalIndent(rep, "", "  ")
+				_ = os.WriteFile(filepath.Join(outDir, "resultados-experimentais-brutos.json"), raw, 0644)
+			}
+		}
+		printJSON(rep)
+		return 0
+
+	case "skilleval", "skill-eval":
+		return runSkillEvalCLI(rootDir, args[1:])
+
 	default:
 		fmt.Fprintf(os.Stderr, "subcomando desconhecido: %s\n", cmd)
 		printUsage()
+		return 2
+	}
+}
+
+func runMonitorCLI(rootDir string, args []string) int {
+	sub := "up"
+	addr := aiops.DefaultMonitorAddr
+	workspaceDir := rootDir
+	if envWs := os.Getenv("SQUAD_WORKSPACE"); envWs != "" {
+		workspaceDir = envWs
+	}
+	smoke := false
+	var restArgs []string
+
+	for i := 0; i < len(args); i++ {
+		a := strings.TrimSpace(args[i])
+		switch strings.ToLower(a) {
+		case "up", "start", "ligar", "ativar", "status", "discover", "descoberta", "chat", "teach", "ensinar", "down", "stop", "desligar":
+			if len(restArgs) == 0 && i == 0 {
+				sub = strings.ToLower(a)
+			} else {
+				restArgs = append(restArgs, a)
+			}
+		case "--smoke":
+			smoke = true
+		case "--addr", "-a":
+			if i+1 < len(args) {
+				addr = args[i+1]
+				i++
+			}
+		case "--workspace", "-w":
+			if i+1 < len(args) {
+				workspaceDir = args[i+1]
+				i++
+			}
+		default:
+			if strings.HasPrefix(a, "--addr=") {
+				addr = strings.TrimPrefix(a, "--addr=")
+			} else if strings.HasPrefix(a, "--workspace=") {
+				workspaceDir = strings.TrimPrefix(a, "--workspace=")
+			} else {
+				restArgs = append(restArgs, a)
+			}
+		}
+	}
+
+	eng, err := aiops.NewEngine(rootDir, workspaceDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "erro ao inicializar engine AIOps: %v\n", err)
+		return 1
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	switch sub {
+	case "status":
+		_ = eng.EnsureLocalStack(ctx, false)
+		_ = eng.DiscoverWorkspace(workspaceDir)
+		printJSON(eng.Snapshot())
+		return 0
+
+	case "discover", "descoberta":
+		disc := eng.DiscoverWorkspace(workspaceDir)
+		printJSON(disc)
+		return 0
+
+	case "chat":
+		q := strings.Join(restArgs, " ")
+		if strings.TrimSpace(q) == "" {
+			q = "Qual a saúde atual da arquitetura e quais drifts existem?"
+		}
+		_ = eng.DiscoverWorkspace(workspaceDir)
+		resp := eng.Chat(q, "", "monitor", "")
+		telemetry.RecordOperation(rootDir, "aiops.chat", 1.8)
+		printJSON(resp)
+		return 0
+
+	case "teach", "ensinar":
+		instr := strings.Join(restArgs, " ")
+		sk, err := eng.TeachSkill(instr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "erro ao cadastrar habilidade: %v\n", err)
+			return 1
+		}
+		telemetry.RecordOperation(rootDir, "aiops.teach", 1.2)
+		printJSON(map[string]any{
+			"status": "CREATED",
+			"skill":  sk,
+		})
+		return 0
+
+	case "down", "stop", "desligar":
+		st := eng.StopLocalStack(ctx)
+		printJSON(map[string]any{
+			"status":     "MONITOR_STOPPED",
+			"localstack": st,
+		})
+		return 0
+
+	case "up", "start", "ligar", "ativar":
+		ls := eng.EnsureLocalStack(ctx, true)
+		disc := eng.DiscoverWorkspace(workspaceDir)
+		snap := eng.Snapshot()
+		snap["bind_url"] = "http://" + addr
+		telemetry.RecordOperation(rootDir, "aiops.monitor.up", 12.5)
+		if smoke {
+			printJSON(snap)
+			return 0
+		}
+		fmt.Println("======================================================================")
+		fmt.Printf(" %s — Monitor AIOps Lite v2.0 + LocalStack ($0.00 AWS)\n", contracts.FullIdentity)
+		fmt.Printf(" LocalStack Mode : %s (%s)\n", ls.Mode, ls.Endpoint)
+		fmt.Printf(" Monitor GraphRAG: http://%s\n", addr)
+		fmt.Printf(" Descoberta Local: %d arquivos IaC (.tf) · %d arquivos OpenAPI · %d nós descobertos\n",
+			disc.TerraformFiles,
+			disc.OpenAPIFiles,
+			disc.DiscoveredNodes,
+		)
+		fmt.Println(" Pressione Ctrl+C para encerrar.")
+		fmt.Println("======================================================================")
+		httpSrv := &http.Server{
+			Addr:              addr,
+			Handler:           eng.Handler(),
+			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       15 * time.Second,
+			WriteTimeout:      30 * time.Second,
+			IdleTimeout:       60 * time.Second,
+		}
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Fprintf(os.Stderr, "erro no servidor Monitor AIOps: %v\n", err)
+			return 1
+		}
+		return 0
+
+	default:
+		fmt.Fprintf(os.Stderr, "uso: squad-harness monitor <up|status|discover|chat|teach|down> [--workspace <dir>] [--addr 127.0.0.1:8765]\n")
 		return 2
 	}
 }
@@ -492,9 +688,22 @@ func runUnifiedGateDAG(rootDir string) int {
 	})
 
 	_ = eng.AddNode(dag.Node{
+		ID:          "stage1.skill_continuous_eval",
+		Description: "Suíte contínua de avaliação de skills (Modelo Agentic Eval G1-G7 + pass^5 + selo SHA-256)",
+		Deps:        []string{"stage0.catalog_load"},
+		Action: func(ctx context.Context) error {
+			rep := evallab.EvaluateAllSkillsContinuously(loadedCat, "")
+			if rep.OverallVerdict != evallab.VerdictProvenSuccess {
+				return fmt.Errorf("falha na suíte contínua de skills: verdict=%s failed=%d", rep.OverallVerdict, rep.FailedCount)
+			}
+			return nil
+		},
+	})
+
+	_ = eng.AddNode(dag.Node{
 		ID:          "stage2.delivery_gates",
 		Description: "Gates de entrega (environment-infrastructure-gate + database-schema-gate + interop)",
-		Deps:        []string{"stage1.catalog_validate", "stage1.jev_tribunal", "stage1.go_exclusive_lock"},
+		Deps:        []string{"stage1.catalog_validate", "stage1.jev_tribunal", "stage1.go_exclusive_lock", "stage1.skill_continuous_eval"},
 		Action: func(ctx context.Context) error {
 			dec := gates.DecidirEntrega(ctx, rootDir, "review", "")
 			if !dec.Authorized {
@@ -613,9 +822,11 @@ func printJSON(v any) {
 func printUsage() {
 	fmt.Printf("%s (%s) — Runtime Nativo em Go 1.24.3\n\n", contracts.FullIdentity, contracts.TechnicalName)
 	fmt.Println("Subcomandos disponíveis:")
-	fmt.Println("  version                       Exibe identidade, versão v0.8.0, toolchain Go e memória livre do host")
+	fmt.Println("  version                       Exibe identidade, versão v0.8.1, toolchain Go e memória livre do host")
 	fmt.Println("  gate                          Executa a pipeline de qualidade unificada em DAG (goroutines)")
 	fmt.Println("  preflight [query]             Executa os 10 estágios do CognitiveHarness Camada 0 (< 25ms)")
+	fmt.Println("  evallab [--export]            Executa o Agentic Software Engineering Evaluation Lab (Experimentos A-E)")
+	fmt.Println("  skilleval [skill] [--init]    Executa a suíte contínua G1-G7 (pass^5 + SHA-256) para novas skills ou evoluções")
 	fmt.Println("  sekg <status|index|query|impact> Opera o Software Engineering Knowledge Graph e GraphRAG")
 	fmt.Println("  sync                          Classifica o estado Git via JEV e gera plano de sincronização")
 	fmt.Println("  jev [diff]                    Executa os 25 especialistas JEV + Tribunal Critic/Judge")
@@ -626,4 +837,70 @@ func printUsage() {
 	fmt.Println("  install [all|detect|verify]   Instala/sincroniza as skills em todos os ambientes agênticos (Go nativo)")
 	fmt.Println("  report [--quid <id>] [--json] Gera o Relatório Executivo ASCII de Uso, Horas e Economia de Tokens (QUID)")
 	fmt.Println("  ui [--addr 127.0.0.1:9090]    Inicia o Control Center Web nativo embutido no binário")
+	fmt.Println("  monitor [up|status|discover|chat|teach|down] Liga o Monitor AIOps Lite + LocalStack ($0.00 AWS)")
+}
+
+func runSkillEvalCLI(rootDir string, args []string) int {
+	cat, err := catalog.Load(rootDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "erro ao carregar catálogo: %v\n", err)
+		return 1
+	}
+
+	initMode := false
+	fullMode := false
+	filterSkill := ""
+	for _, a := range args {
+		trimmed := strings.TrimSpace(a)
+		if trimmed == "--init" || trimmed == "-i" {
+			initMode = true
+		} else if trimmed == "--full" || trimmed == "-f" {
+			fullMode = true
+		} else if !strings.HasPrefix(trimmed, "-") && filterSkill == "" {
+			filterSkill = trimmed
+		}
+	}
+
+	if initMode {
+		return initSkillEvalTemplateFile(cat, filterSkill)
+	}
+
+	rep := evallab.EvaluateAllSkillsContinuously(cat, filterSkill)
+	if !fullMode && filterSkill == "" {
+		rep.Results = nil // Summary view by default when running across all 108 skills
+	}
+	printJSON(rep)
+	if rep.OverallVerdict != evallab.VerdictProvenSuccess {
+		return 1
+	}
+	return 0
+}
+
+func initSkillEvalTemplateFile(cat *catalog.Catalog, skillName string) int {
+	if skillName == "" {
+		fmt.Fprintln(os.Stderr, "uso: squad-harness skilleval --init <nome-da-skill>")
+		return 2
+	}
+	for _, sk := range cat.Skills {
+		if strings.EqualFold(sk.Name, skillName) {
+			tpl := evallab.GenerateCanonicalSkillEvalTemplate(sk)
+			evalDir := filepath.Join(sk.DirPath, "evals")
+			_ = os.MkdirAll(evalDir, 0755)
+			outPath := filepath.Join(evalDir, "evals.json")
+			raw, _ := json.MarshalIndent(tpl, "", "  ")
+			if err := os.WriteFile(outPath, raw, 0644); err != nil {
+				fmt.Fprintf(os.Stderr, "erro ao gravar %s: %v\n", outPath, err)
+				return 1
+			}
+			printJSON(map[string]any{
+				"status":      "TEMPLATE_CREATED",
+				"skill_name":  sk.Name,
+				"output_path": outPath,
+				"template":    tpl,
+			})
+			return 0
+		}
+	}
+	fmt.Fprintf(os.Stderr, "skill não encontrada: %s\n", skillName)
+	return 1
 }

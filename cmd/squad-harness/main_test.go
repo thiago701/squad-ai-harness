@@ -45,7 +45,7 @@ func repoRootForTest(t testing.TB) string {
 }
 
 func TestContractsAndGatePrecedence(t *testing.T) {
-	if contracts.Version != "0.8.0" || contracts.TechnicalName != "squad-ai-harness" {
+	if contracts.Version != "0.8.1" || contracts.TechnicalName != "squad-ai-harness" {
 		t.Fatalf("unexpected identity: %s v%s", contracts.TechnicalName, contracts.Version)
 	}
 	merged := contracts.MergeGateStates(contracts.GatePass, contracts.GateInconclusive, contracts.GateStale)

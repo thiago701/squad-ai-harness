@@ -1,4 +1,4 @@
-# SquadAI Harness v0.8.0 — Clean Go 1.24.3 Repository
+# SquadAI Harness v0.8.1 — Clean Go 1.24.3 Repository
 # Compiled binaries & local runtime state
 /squad-harness
 /squad-harness.exe
@@ -9,6 +9,7 @@
 coverage.out
 dist/
 bin/
+**/target/
 
 # Environment & Secrets (NEVER commit .env; only .env.example is allowed)
 .env

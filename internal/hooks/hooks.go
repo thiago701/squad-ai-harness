@@ -159,7 +159,7 @@ func StopHook(repoRoot string, stdin io.Reader) (int, string) {
 	if input.TranscriptPath != "" {
 		_ = appendTailTelemetry(repoRoot, input.TranscriptPath)
 	}
-	return 0, "✅ [SquadAI Harness v0.8.0] Turno registrado (telemetria SLI atualizada em streaming)."
+	return 0, "✅ [SquadAI Harness v0.8.1] Turno registrado (telemetria SLI atualizada em streaming)."
 }
 
 func appendTailTelemetry(repoRoot, transcriptPath string) error {

@@ -3,6 +3,8 @@
   "author": "Thiago Gonçalo",
   "email": "thiago701@gmail.com",
   "linkedin": "https://www.linkedin.com/in/thiago-gon%C3%A7alo",
+  "legacy_created_at": "02/06/2026",
   "created_at": "30/10/2026",
+  "migrated_to_go_at": "30/10/2026",
   "exclusive_language": "Go (Golang 1.24.3+, CGO_ENABLED=0)"
 }

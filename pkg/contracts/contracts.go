@@ -1,5 +1,5 @@
 // Package contracts defines the canonical types, version identity, gate verdicts,
-// epistemic trust tiers, and JEV typed decision contracts for SquadAI Harness v0.8.0.
+// epistemic trust tiers, and JEV typed decision contracts for SquadAI Harness v0.8.1.
 package contracts
 
 import "time"
@@ -10,9 +10,9 @@ const (
 	// TechnicalName is the canonical repository and binary identifier (Addendum 02).
 	TechnicalName = "squad-ai-harness"
 	// Version is the official release version (Addendum 01).
-	Version = "0.8.0"
+	Version = "0.8.1"
 	// FullIdentity is the complete versioned product string.
-	FullIdentity = "SquadAI Harness v0.8.0"
+	FullIdentity = "SquadAI Harness v0.8.1"
 	// GoToolchainTarget is the locked Go toolchain version from GATE 1 (ADR-020).
 	GoToolchainTarget = "go1.24.3"
 	// TrustedOrigin is the immutable provenance key across all canonical skills.
@@ -21,7 +21,9 @@ const (
 	AuthorName = "Thiago Gonçalo"
 	// AuthorEmail is the official contact email of the author.
 	AuthorEmail = "thiago701@gmail.com"
-	// CreatedAt is the canonical creation date of SquadAI Harness.
+	// LegacyCreatedAt is the original creation date of the legacy Python repository.
+	LegacyCreatedAt = "02/06/2026"
+	// CreatedAt is the canonical Go migration creation date of SquadAI Harness.
 	CreatedAt = "30/10/2026"
 	// ExclusiveLanguage enforces the Go-only source code policy for the harness runtime.
 	ExclusiveLanguage = "Go (Golang 1.24.3+, CGO_ENABLED=0)"
