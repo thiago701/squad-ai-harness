@@ -1,0 +1,31 @@
+[package]
+name = "mcp-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../gpu-runtime" }
+cpu-baselines = { path = "../cpu-baselines" }
+kumo-adapter = { path = "../kumo-adapter" }
+telemetry = { path = "../telemetry" }
+benchmark-core = { path = "../benchmark-core" }
+poc-001-predictive-failure = { path = "../../pocs/poc-001-predictive-failure" }
+poc-002-dependency-impact = { path = "../../pocs/poc-002-dependency-impact" }
+poc-003-gpu-code-intelligence = { path = "../../pocs/poc-003-gpu-code-intelligence" }
+poc-004-cognitive-graph-accel = { path = "../../pocs/poc-004-cognitive-graph-accel" }
+poc-005-intelligent-scheduler = { path = "../../pocs/poc-005-intelligent-scheduler" }
+poc-006-semantic-retrieval = { path = "../../pocs/poc-006-semantic-retrieval" }
+poc-007-predictive-quality = { path = "../../pocs/poc-007-predictive-quality" }
+poc-008-gpu-batch-engine = { path = "../../pocs/poc-008-gpu-batch-engine" }
+poc-009-agent-perf-predictor = { path = "../../pocs/poc-009-agent-perf-predictor" }
+poc-010-anomaly-intelligence = { path = "../../pocs/poc-010-anomaly-intelligence" }
+
+[lib]
+name = "mcp_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "squad-gpu-lab-mcp"
+path = "src/main.rs"

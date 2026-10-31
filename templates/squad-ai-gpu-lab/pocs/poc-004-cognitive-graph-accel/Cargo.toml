@@ -1,0 +1,14 @@
+[package]
+name = "poc-004-cognitive-graph-accel"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../../crates/gpu-runtime" }
+cpu-baselines = { path = "../../crates/cpu-baselines" }
+
+[lib]
+name = "poc_004_cognitive_graph_accel"
+path = "src/lib.rs"

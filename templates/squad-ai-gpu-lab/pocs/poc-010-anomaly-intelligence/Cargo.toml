@@ -1,0 +1,15 @@
+[package]
+name = "poc-010-anomaly-intelligence"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../../crates/gpu-runtime" }
+cpu-baselines = { path = "../../crates/cpu-baselines" }
+telemetry = { path = "../../crates/telemetry" }
+
+[lib]
+name = "poc_010_anomaly_intelligence"
+path = "src/lib.rs"

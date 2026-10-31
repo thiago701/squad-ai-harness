@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "laboratory": "squad-ai-gpu-lab",
+  "protocol": "MCP JSON-RPC 2.0 + Binary .kdg Zero-Copy Arena",
+  "transports": [
+    {
+      "id": "stdio",
+      "description": "Standard input/output JSON-RPC 2.0 stream (--serve-stdio)"
+    },
+    {
+      "id": "tcp_loopback_keepalive",
+      "description": "Persistent TCP 127.0.0.1 NDJSON stream eliminating CreateProcessW (~45ms) and cuCtxCreate_v2 (~120ms) overhead per call"
+    },
+    {
+      "id": "kdg_binary_arena",
+      "description": "64-byte aligned SKDG v1 CSR binary graph snapshot shared between Go SEKG and Rust/CUDA"
+    }
+  ],
+  "tools": [
+    {
+      "name": "lab_gpu_probe",
+      "poc_id": "INFRA-000",
+      "description": "Probes physical NVIDIA GPU via nvcuda.dll Driver API, reporting Compute Capability, VRAM budget (ADR-017), and PTX smoke test timings."
+    },
+    {
+      "name": "lab_poc_001_predictive_failure",
+      "poc_id": "POC-001",
+      "description": "Predictive Failure Engine using Kumo-inspired PQL + RelGT 5D tokens + ICL attention with strict temporal cut-off."
+    },
+    {
+      "name": "lab_poc_002_dependency_impact",
+      "poc_id": "POC-002",
+      "description": "Dependency Impact Predictor over .kdg binary CSR graphs with edge-type coupling weights and temporal attenuation."
+    },
+    {
+      "name": "lab_poc_003_gpu_code_intel",
+      "poc_id": "POC-003",
+      "description": "GPU Code Intelligence comparing 32D structural AST/CFG feature vectors and interprocedural taint propagation."
+    },
+    {
+      "name": "lab_poc_004_cognitive_graph",
+      "poc_id": "POC-004",
+      "description": "Cognitive Graph Accelerator computing 20-iteration CSR PageRank & structural blast radius on CPU and CUDA GPU."
+    },
+    {
+      "name": "lab_poc_005_task_scheduler",
+      "poc_id": "POC-005",
+      "description": "Intelligent Task Scheduler & IMO Peak RAM Predictor using 8D Ridge + Quantile P95 regression."
+    },
+    {
+      "name": "lab_poc_006_semantic_retrieval",
+      "poc_id": "POC-006",
+      "description": "Semantic Retrieval Accelerator scoring 128D dense embeddings over full skill catalog and GraphRAG corpora with resident VRAM."
+    },
+    {
+      "name": "lab_poc_007_predictive_quality",
+      "poc_id": "POC-007",
+      "description": "Predictive Quality Analyzer estimating post-merge regression probability from cyclomatic delta, test hop distance, and defect rate."
+    },
+    {
+      "name": "lab_poc_008_gpu_batch_gemm",
+      "poc_id": "POC-008",
+      "description": "GPU Batch Processing & Quantization Parity Engine evaluating tiled GEMM (FP32) and INT8/INT4 cosine parity."
+    },
+    {
+      "name": "lab_poc_009_agent_predictor",
+      "poc_id": "POC-009",
+      "description": "Agent Performance Predictor comparing lightweight CPU Empirical Bayes against heavy relational GNN."
+    },
+    {
+      "name": "lab_poc_010_anomaly_intel",
+      "poc_id": "POC-010",
+      "description": "Continuous Anomaly Intelligence executing fused multivariate Mahalanobis + Z-score scoring over telemetry windows."
+    }
+  ]
+}

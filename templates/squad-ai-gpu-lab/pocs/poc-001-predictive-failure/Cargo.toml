@@ -1,0 +1,15 @@
+[package]
+name = "poc-001-predictive-failure"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+kumo-adapter = { path = "../../crates/kumo-adapter" }
+telemetry = { path = "../../crates/telemetry" }
+benchmark-core = { path = "../../crates/benchmark-core" }
+
+[lib]
+name = "poc_001_predictive_failure"
+path = "src/lib.rs"

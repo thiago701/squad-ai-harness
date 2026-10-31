@@ -1,0 +1,34 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/gpu-runtime",
+    "crates/cpu-baselines",
+    "crates/kumo-adapter",
+    "crates/mcp-server",
+    "crates/benchmark-core",
+    "crates/telemetry",
+    "pocs/poc-001-predictive-failure",
+    "pocs/poc-002-dependency-impact",
+    "pocs/poc-003-gpu-code-intelligence",
+    "pocs/poc-004-cognitive-graph-accel",
+    "pocs/poc-005-intelligent-scheduler",
+    "pocs/poc-006-semantic-retrieval",
+    "pocs/poc-007-predictive-quality",
+    "pocs/poc-008-gpu-batch-engine",
+    "pocs/poc-009-agent-perf-predictor",
+    "pocs/poc-010-anomaly-intelligence",
+    "tools/gpu-probe",
+    "tools/reproducibility",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["SquadAI GPU Intelligence Lab <thiago701@gmail.com>"]
+license = "Proprietary"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

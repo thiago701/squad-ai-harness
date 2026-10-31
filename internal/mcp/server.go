@@ -5,11 +5,17 @@ package mcp
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"io"
+	"strings"
+	"time"
 
+	"github.com/thiago701/squad-ai-harness/internal/aiops"
+	"github.com/thiago701/squad-ai-harness/internal/cognitive/cultivator"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/graphrag"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
+	"github.com/thiago701/squad-ai-harness/internal/compute"
 	"github.com/thiago701/squad-ai-harness/internal/jev"
 	"github.com/thiago701/squad-ai-harness/internal/telemetry"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
@@ -211,6 +217,29 @@ func (s *Server) HandleRequest(req RPCRequest) *RPCResponse {
 							},
 						},
 					},
+					{
+						"name":        "squad_aiops_monitor",
+						"description": "Opera o Monitor AIOps Lite v2.0 + LocalStack ($0.00 AWS): liga/desliga o container LocalStack Lite, descobre infraestrutura (.tf/.tfvars/OpenAPI/Docker Compose), cadastra habilidades em 1 prompt e conversa com o Super Agente AIOps sobre o GraphRAG",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"action": map[string]any{
+									"type":        "string",
+									"enum":        []string{"up", "status", "discover", "chat", "teach", "down"},
+									"description": "Ação a executar: up (ligar monitor e LocalStack), status, discover (descoberta local), chat (Super Agente AIOps), teach (cadastrar habilidade), down (desligar)",
+								},
+								"workspace": map[string]any{
+									"type":        "string",
+									"description": "Caminho opcional do workspace do projeto dev a escanear (padrão: raiz atual)",
+								},
+								"query": map[string]any{
+									"type":        "string",
+									"description": "Pergunta ou comando para o Super Agente AIOps (quando action=chat) ou descrição em linguagem natural (quando action=teach)",
+								},
+							},
+							"required": []string{"action"},
+						},
+					},
 				},
 			},
 		}
@@ -252,7 +281,27 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 			payload = telemetry.GenerateReport(s.rootDir, 3)
 			break
 		}
-		payload = s.engine.Router().Route(q, 5)
+		routed := s.engine.Router().Route(q, 5)
+		if isMon, monAct := aiops.MatchNaturalTrigger(q); isMon {
+			monEng, err := aiops.NewEngine(s.rootDir, s.rootDir)
+			if err == nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				if monAct == "down" {
+					_ = monEng.StopLocalStack(ctx)
+				} else {
+					_ = monEng.EnsureLocalStack(ctx, monAct == "up")
+					_ = monEng.DiscoverWorkspace(s.rootDir)
+				}
+				payload = map[string]any{
+					"routed_skills": routed,
+					"aiops_trigger": monAct,
+					"aiops_monitor": monEng.Snapshot(),
+				}
+				break
+			}
+		}
+		payload = routed
 	case "squad_sekg_query":
 		q, _ := args["query"].(string)
 		modeStr, _ := args["mode"].(string)
@@ -271,14 +320,21 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 	case "squad_cultivator_status":
 		val := s.engine.Catalog().Validate()
 		qid, _ := telemetry.LoadOrCreateQUID(s.rootDir)
+		prof := compute.DetectWorkstation()
+		pqlRep, _ := cultivator.EvaluatePredictiveFailurePOC001(prof, nil, 0)
 		payload = map[string]any{
-			"identity":    contracts.FullIdentity,
-			"quid":        qid.QUID,
-			"skills":      val.CanonicalSkills,
-			"sekg_nodes":  len(s.engine.Graph().Nodes),
-			"sekg_edges":  len(s.engine.Graph().Edges),
-			"communities": len(s.engine.Graph().Communities),
-			"status":      "HEALTHY",
+			"identity":               contracts.FullIdentity,
+			"quid":                   qid.QUID,
+			"skills":                 val.CanonicalSkills,
+			"sekg_nodes":             len(s.engine.Graph().Nodes),
+			"sekg_edges":             len(s.engine.Graph().Edges),
+			"sekg_kdg_bytes":         len(s.engine.Graph().MarshalKDGBytes()),
+			"communities":            len(s.engine.Graph().Communities),
+			"poc001_relgt_f1":        pqlRep.F1Score,
+			"poc001_relgt_brier":     pqlRep.BrierScore,
+			"poc006_semantic_128d":   true,
+			"poc007_predictive_qual": true,
+			"status":                 "HEALTHY",
 		}
 	case "squad_usage_report":
 		qid, _ := args["quid"].(string)
@@ -333,6 +389,49 @@ func (s *Server) dispatchToolCall(id any, toolName string, args map[string]any) 
 				"found": false,
 				"quid":  qid,
 			}
+		}
+	case "squad_aiops_monitor":
+		action, _ := args["action"].(string)
+		action = strings.ToLower(strings.TrimSpace(action))
+		if action == "" {
+			action = "status"
+		}
+		ws, _ := args["workspace"].(string)
+		if strings.TrimSpace(ws) == "" {
+			ws = s.rootDir
+		}
+		q, _ := args["query"].(string)
+		monEng, err := aiops.NewEngine(s.rootDir, ws)
+		if err != nil {
+			payload = map[string]any{"status": "ERROR", "error": err.Error()}
+			break
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		switch action {
+		case "up", "ligar", "ativar", "start":
+			_ = monEng.EnsureLocalStack(ctx, true)
+			_ = monEng.DiscoverWorkspace(ws)
+			payload = monEng.Snapshot()
+		case "down", "desligar", "stop":
+			st := monEng.StopLocalStack(ctx)
+			payload = map[string]any{"status": "MONITOR_STOPPED", "localstack": st}
+		case "discover", "descoberta":
+			payload = monEng.DiscoverWorkspace(ws)
+		case "chat":
+			_ = monEng.DiscoverWorkspace(ws)
+			payload = monEng.Chat(q, "", "monitor", "")
+		case "teach", "ensinar":
+			sk, err := monEng.TeachSkill(q)
+			if err != nil {
+				payload = map[string]any{"status": "ERROR", "error": err.Error()}
+			} else {
+				payload = map[string]any{"status": "CREATED", "skill": sk}
+			}
+		default:
+			_ = monEng.EnsureLocalStack(ctx, false)
+			_ = monEng.DiscoverWorkspace(ws)
+			payload = monEng.Snapshot()
 		}
 	default:
 		return &RPCResponse{

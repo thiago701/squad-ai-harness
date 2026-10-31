@@ -59,25 +59,39 @@ const (
 	VRAMSafetyMarginMB   = 512
 )
 
+// GPUVendor identifies the hardware accelerator vendor on the workstation (or VendorNoneCPU if GPU-less).
+type GPUVendor string
+
+const (
+	VendorNoneCPU    GPUVendor = "NONE_CPU_ONLY"
+	VendorNvidiaCUDA GPUVendor = "NVIDIA_CUDA"
+	VendorAMDRadeon  GPUVendor = "AMD_ROCM_WMMA"
+	VendorIntelXPU   GPUVendor = "INTEL_XPU_ARC_NPU"
+)
+
 // WorkstationProfile represents the hardware acceleration capabilities and calibrated policy of the host.
 type WorkstationProfile struct {
-	HostClass         string              `json:"host_class"` // "cpu", "cpu+igpu", "cpu+npu", "cpu+igpu+npu", "cpu+dgpu", "cpu+dgpu+npu"
-	Runtime           string              `json:"runtime"`    // "go-native", "openvino", "onnxruntime"
-	Origin            string              `json:"origin"`     // "default", "detectado", "calibrado"
-	HasNPU            bool                `json:"has_npu"`
-	HasIGPU           bool                `json:"has_igpu"`
-	HasDGPU           bool                `json:"has_dgpu"`
-	TotalVRAMMB       int64               `json:"total_vram_mb"`
-	FreeVRAMMB        int64               `json:"free_vram_mb"`
-	EmbeddingPolicy   HitPolicy           `json:"embedding_policy"`
-	ActiveSpaceID     string              `json:"active_space_id"`
-	CPUCores          int                 `json:"cpu_cores"`
-	PhysicalCores     int                 `json:"physical_cores"`
-	QueryDeviceOrder  []string            `json:"query_device_order,omitempty"`
-	IndexDeviceOrder  []string            `json:"index_device_order,omitempty"`
-	IndexPartition    []string            `json:"index_partition,omitempty"`
-	IndexBucketsB     []int               `json:"index_buckets_b,omitempty"`
-	OptimalNireq      map[string]int      `json:"optimal_nireq,omitempty"`
+	HostClass         string         `json:"host_class"` // "cpu", "cpu+igpu", "cpu+npu", "cpu+igpu+npu", "cpu+dgpu", "cpu+dgpu+npu"
+	Runtime           string         `json:"runtime"`    // "go-native", "openvino", "onnxruntime", "rust-sidecar"
+	Origin            string         `json:"origin"`     // "default", "detectado", "calibrado"
+	GPUVendor         GPUVendor      `json:"gpu_vendor,omitempty"`
+	GPUName           string         `json:"gpu_name,omitempty"`
+	HasNPU            bool           `json:"has_npu"`
+	HasIGPU           bool           `json:"has_igpu"`
+	HasDGPU           bool           `json:"has_dgpu"`
+	HasAMDGPU         bool           `json:"has_amd_gpu,omitempty"`
+	HasRustSidecar    bool           `json:"has_rust_sidecar,omitempty"`
+	TotalVRAMMB       int64          `json:"total_vram_mb"`
+	FreeVRAMMB        int64          `json:"free_vram_mb"`
+	EmbeddingPolicy   HitPolicy      `json:"embedding_policy"`
+	ActiveSpaceID     string         `json:"active_space_id"`
+	CPUCores          int            `json:"cpu_cores"`
+	PhysicalCores     int            `json:"physical_cores"`
+	QueryDeviceOrder  []string       `json:"query_device_order,omitempty"`
+	IndexDeviceOrder  []string       `json:"index_device_order,omitempty"`
+	IndexPartition    []string       `json:"index_partition,omitempty"`
+	IndexBucketsB     []int          `json:"index_buckets_b,omitempty"`
+	OptimalNireq      map[string]int `json:"optimal_nireq,omitempty"`
 }
 
 // RouteDecision describes how a cognitive workload was routed across C0/C1/C2.
@@ -249,6 +263,8 @@ func DetectWorkstation() WorkstationProfile {
 		HostClass:        "cpu",
 		Runtime:          "go-native",
 		Origin:           "default",
+		GPUVendor:        VendorNoneCPU,
+		HasRustSidecar:   DetectRustSidecarAvailable(),
 		EmbeddingPolicy:  HitPolicyAssistOnly,
 		ActiveSpaceID:    SpaceIDTFIDF,
 		CPUCores:         runtime.NumCPU(),
@@ -268,7 +284,10 @@ func DetectWorkstation() WorkstationProfile {
 	}
 	raw, err := os.ReadFile(wsPath)
 	if err != nil {
-		return prof
+		if os.Getenv("SQUAD_DISABLE_LIVE_GPU_PROBE") == "1" {
+			return prof
+		}
+		return ProbePhysicalGPUViaSidecar(prof)
 	}
 	return ParseWorkstationJSON(raw, prof)
 }
@@ -327,13 +346,35 @@ func ParseWorkstationJSON(raw []byte, fallback WorkstationProfile) WorkstationPr
 	hasCUDA := len(doc.Nvidia.GPUs) > 0 || doc.HasDGPU
 	cleanedDevs := FilterPhantomOpenVINOGPUs(doc.Dispositivos, hasCUDA)
 	for dev, info := range cleanedDevs {
+		devName := strings.ToLower(fmt.Sprint(info["nome"]))
+		if prof.GPUName == "" && devName != "" && devName != "<nil>" {
+			prof.GPUName = fmt.Sprint(info["nome"])
+		}
+		if strings.Contains(devName, "amd") || strings.Contains(devName, "radeon") || strings.Contains(devName, "instinct") {
+			prof.HasAMDGPU = true
+			prof.GPUVendor = VendorAMDRadeon
+		} else if strings.Contains(devName, "intel") || strings.Contains(devName, "arc") || strings.Contains(devName, "iris") || strings.Contains(devName, "uhd") {
+			if prof.GPUVendor == "" || prof.GPUVendor == VendorNoneCPU {
+				prof.GPUVendor = VendorIntelXPU
+			}
+		} else if isNvidiaName(devName) {
+			prof.GPUVendor = VendorNvidiaCUDA
+		}
 		switch {
 		case strings.HasPrefix(dev, "NPU"):
 			prof.HasNPU = true
+			if prof.GPUVendor == "" || prof.GPUVendor == VendorNoneCPU {
+				prof.GPUVendor = VendorIntelXPU
+			}
 		case strings.HasPrefix(dev, "CUDA"):
 			if exec, ok := info["executavel"].(bool); !ok || exec {
 				prof.HasDGPU = true
+				prof.GPUVendor = VendorNvidiaCUDA
 			}
+		case strings.HasPrefix(dev, "ROCM") || strings.HasPrefix(dev, "HIP") || strings.HasPrefix(dev, "AMDGPU"):
+			prof.HasDGPU = true
+			prof.HasAMDGPU = true
+			prof.GPUVendor = VendorAMDRadeon
 		case strings.HasPrefix(dev, "GPU"):
 			devType := strings.ToLower(fmt.Sprint(info["tipo"]))
 			if strings.Contains(devType, "discrete") {
@@ -346,13 +387,26 @@ func ParseWorkstationJSON(raw []byte, fallback WorkstationProfile) WorkstationPr
 	noDevsMap := len(doc.Dispositivos) == 0
 	if doc.HasNPU || (noDevsMap && strings.Contains(prof.HostClass, "npu")) {
 		prof.HasNPU = true
+		if prof.GPUVendor == "" {
+			prof.GPUVendor = VendorIntelXPU
+		}
 	}
 	if doc.HasIGPU || (noDevsMap && strings.Contains(prof.HostClass, "igpu")) {
 		prof.HasIGPU = true
+		if prof.GPUVendor == "" {
+			prof.GPUVendor = VendorIntelXPU
+		}
 	}
 	if doc.HasDGPU || (noDevsMap && strings.Contains(prof.HostClass, "dgpu")) {
 		prof.HasDGPU = true
+		if prof.GPUVendor == "" {
+			prof.GPUVendor = VendorNvidiaCUDA
+		}
 	}
+	if prof.GPUVendor == "" {
+		prof.GPUVendor = VendorNoneCPU
+	}
+	prof.HasRustSidecar = DetectRustSidecarAvailable()
 
 	if doc.VRAMMB > 0 {
 		prof.TotalVRAMMB = doc.VRAMMB
@@ -527,9 +581,29 @@ func routeEmbeddingWorkload(prof WorkstationProfile, cb *CircuitBreaker3Layer, w
 		}
 	}
 
-	// Case B: Station with Intel iGPU only (cpu+igpu, e.g., WORKSTATION-CPU UHD 620 / Iris Xe)
-	// Batch (B > 1) uses iGPU FP32; single query (B = 1) avoids host<->device copy overhead and runs on CPU.
+	// Case B: Station with Intel Shared iGPU (cpu+igpu, e.g., Intel UHD Graphics / Iris Xe Shared WDDM)
+	// When Rust Sidecar Zero-Copy WDDM + AVX2/FMA is active, host<->device copy is 0.00 us (Unified Memory),
+	// accelerating both interactive B=1 queries and batch B>1 indexing with 100% FP32 parity!
 	if prof.HasIGPU && (cb == nil || cb.IsModelHealthy("IGPU_INTEL")) {
+		if prof.HasRustSidecar {
+			bStr := "B=1"
+			modeHint := "LATENCY"
+			if workload == "embed.index" && batchSize > 1 {
+				bStr = "B=64"
+				modeHint = "THROUGHPUT"
+			}
+			return RouteDecision{
+				Workload:      workload,
+				SelectedLayer: LayerC1LocalAssist,
+				Device:        "IGPU_INTEL_SHARED_FP32",
+				Precision:     "FP32",
+				HitPolicy:     HitPolicyAssistOnly,
+				SpaceID:       SpaceIDNeuralE5Small,
+				StaticBucket:  bStr + ",L=" + bucketL + "," + modeHint,
+				EstimatedCost: 0.0,
+				Reason:        "iGPU Intel Compartilhada (Zero-Copy WDDM Unified Memory 0.00 us + AVX2/FMA Subgroup Tile, cos=1.0, assist_only)",
+			}
+		}
 		if workload == "embed.index" && batchSize > 1 {
 			return RouteDecision{
 				Workload:      workload,

@@ -1,0 +1,13 @@
+[package]
+name = "poc-005-intelligent-scheduler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+telemetry = { path = "../../crates/telemetry" }
+
+[lib]
+name = "poc_005_intelligent_scheduler"
+path = "src/lib.rs"

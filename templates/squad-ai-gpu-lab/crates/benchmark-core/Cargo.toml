@@ -1,0 +1,13 @@
+[package]
+name = "benchmark-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+telemetry = { path = "../telemetry" }
+
+[lib]
+name = "benchmark_core"
+path = "src/lib.rs"

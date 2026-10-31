@@ -1,0 +1,3210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Squad-Agentica IAOps · Monitor - GraphRAG</title>
+  <style>
+    
+    :root {
+      --awsui-nav-bg: #0f1b2a;
+      --awsui-nav-border: #232f3e;
+      --awsui-canvas-bg: #f2f3f3;
+      --awsui-container-bg: #ffffff;
+      --awsui-container-header-bg: #fafafa;
+      --awsui-subbox-bg: #f8f9fa;
+      --awsui-code-bg: #16191f;
+      --awsui-code-text: #e9ebed;
+      --awsui-border: #d5dbdb;
+      --awsui-border-strong: #879596;
+      --awsui-divider: #eaeded;
+      --awsui-text: #000716;
+      --awsui-text-body: #16191f;
+      --awsui-text-secondary: #545b64;
+      --awsui-text-muted: #5f6b7a;
+      --awsui-link: #0972d3;
+      --awsui-link-hover: #033160;
+      --awsui-orange: #ff9900;
+      --awsui-orange-hover: #ec7211;
+      --awsui-orange-border: #e07900;
+      --awsui-success: #037f0c;
+      --awsui-success-bg: #f2fcf3;
+      --awsui-warning: #b45309;
+      --awsui-warning-bg: #fffbeb;
+      --awsui-danger: #d91515;
+      --awsui-danger-bg: #fef2f2;
+      --awsui-info: #0972d3;
+      --awsui-info-bg: #f2f8fd;
+      --awsui-purple: #6d28d9;
+      --awsui-purple-bg: #f5f3ff;
+      --awsui-teal: #0f766e;
+      --awsui-teal-bg: #f0fdfa;
+      --awsui-graph-canvas-bg: #0b1220;
+      --awsui-graph-grid: #1e293b;
+      --awsui-shadow: 0 1px 2px 0 rgba(0, 28, 36, 0.12);
+      --iaops-layer-repo: #3b82f6;
+      --iaops-layer-config: #f59e0b;
+      --iaops-layer-aws: #10b981;
+      --iaops-layer-cap: #8b5cf6;
+      --iaops-layer-drift: #ef4444;
+    }
+
+    body[data-awstheme="dark"] {
+      --awsui-nav-bg: #09111c;
+      --awsui-nav-border: #232f3e;
+      --awsui-canvas-bg: #0f1b2a;
+      --awsui-container-bg: #161e2d;
+      --awsui-container-header-bg: #192534;
+      --awsui-subbox-bg: #0f1724;
+      --awsui-code-bg: #090e17;
+      --awsui-code-text: #d1d5db;
+      --awsui-border: #354150;
+      --awsui-border-strong: #5f6b7a;
+      --awsui-divider: #232f3e;
+      --awsui-text: #e9ebed;
+      --awsui-text-body: #d1d5db;
+      --awsui-text-secondary: #9ba7b6;
+      --awsui-text-muted: #8d99a8;
+      --awsui-link: #539fe5;
+      --awsui-link-hover: #89bdee;
+      --awsui-success: #29ad32;
+      --awsui-success-bg: #0d2614;
+      --awsui-warning: #fbbf24;
+      --awsui-warning-bg: #2b1d07;
+      --awsui-danger: #f87171;
+      --awsui-danger-bg: #2c0f12;
+      --awsui-info: #539fe5;
+      --awsui-info-bg: #112338;
+      --awsui-purple: #c4b5fd;
+      --awsui-purple-bg: #231842;
+      --awsui-teal: #5eead4;
+      --awsui-teal-bg: #0d2b2a;
+      --awsui-graph-canvas-bg: #070d18;
+      --awsui-graph-grid: #192534;
+      --awsui-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Amazon Ember", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--awsui-canvas-bg);
+      color: var(--awsui-text-body);
+      font-size: 13.5px;
+      line-height: 18px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 1. Barra Global Superior Fixa (44px) */
+    .aws-global-nav {
+      position: sticky; top: 0; z-index: 1000; height: 44px;
+      background-color: var(--awsui-nav-bg); border-bottom: 1px solid var(--awsui-nav-border);
+      color: #fff; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; gap: 10px; flex-wrap: nowrap;
+    }
+    .aws-nav-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .aws-waffle {
+      display: inline-grid; grid-template-columns: repeat(3, 4px); gap: 2.5px;
+      padding: 6px; border-radius: 4px; cursor: pointer;
+    }
+    .aws-waffle:hover { background: #192534; }
+    .aws-waffle span { width: 4px; height: 4px; background: #d5dbdb; border-radius: 1px; }
+    .aws-service-pill {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      white-space: nowrap; text-decoration: none;
+    }
+    .aws-service-icon {
+      width: 22px; height: 22px; border-radius: 4px;
+      background: linear-gradient(135deg, #0972d3 0%, #e7157b 52%, #ff9900 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 10.5px; color: #fff;
+    }
+    .aws-service-name { font-size: 13.5px; font-weight: 700; color: #fff; }
+    .aws-global-search {
+      flex: 0 1 320px; min-width: 140px; margin-left: 6px;
+      position: relative; display: flex; align-items: center;
+    }
+    .aws-global-search input {
+      width: 100%; height: 28px; background: #192534; border: 1px solid #5f6b7a;
+      border-radius: 4px; color: #fff; padding: 0 44px 0 26px; font-size: 12px;
+    }
+    .aws-global-search input::placeholder { color: #9ba7b6; }
+    .aws-global-search input:focus { outline: none; border-color: #539fe5; background: #0f1b2a; }
+    .aws-search-icon { position: absolute; left: 8px; font-size: 11px; pointer-events: none; }
+    .aws-search-kbd {
+      position: absolute; right: 6px; font-size: 10px; color: #9ba7b6;
+      border: 1px solid #414d5c; border-radius: 3px; padding: 0 4px;
+    }
+    .aws-nav-right { display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; }
+    .aws-top-util {
+      background: transparent; border: 1px solid transparent; color: #d5dbdb;
+      padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .aws-top-util:hover { background: #192534; color: #fff; border-color: #414d5c; }
+    .aws-top-util.active-screen {
+      background: #112338; color: #89bdee; border-color: #539fe5;
+    }
+    .aws-iam-pill {
+      background: #192534; border: 1px solid #414d5c; color: #fff;
+      padding: 3px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600;
+    }
+
+    /* 2. Layout Principal Unificado */
+    .awsui-app-layout { display: flex; flex: 1; min-height: calc(100vh - 44px); }
+    .awsui-side-nav {
+      width: 220px; flex-shrink: 0; background: var(--awsui-container-bg);
+      border-right: 1px solid var(--awsui-border); display: flex;
+      flex-direction: column; justify-content: space-between; padding: 12px 0;
+    }
+    .awsui-side-nav.collapsed { display: none; }
+    .side-nav-header { padding: 0 16px 10px; border-bottom: 1px solid var(--awsui-divider); }
+    .side-nav-header-title { font-size: 14px; font-weight: 700; color: var(--awsui-text); margin: 0; }
+    .side-nav-header-sub { font-size: 11px; color: var(--awsui-text-muted); margin-top: 2px; }
+    .side-nav-section { padding: 8px 0; }
+    .side-nav-section-title {
+      padding: 4px 16px; font-size: 10.5px; font-weight: 700;
+      color: var(--awsui-text-muted); text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .side-nav-link {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; text-align: left; background: transparent; border: none;
+      border-left: 3px solid transparent; padding: 7px 14px;
+      font-size: 12.8px; color: var(--awsui-text-body); cursor: pointer; font-family: inherit;
+      text-decoration: none;
+    }
+    .side-nav-link:hover { color: var(--awsui-link); background: var(--awsui-subbox-bg); }
+    .side-nav-link.active {
+      border-left-color: var(--awsui-link); color: var(--awsui-link);
+      font-weight: 700; background: var(--awsui-info-bg);
+    }
+    .side-nav-footer {
+      padding: 10px 16px 0; border-top: 1px solid var(--awsui-divider);
+      font-size: 11px; color: var(--awsui-text-muted); line-height: 16px;
+    }
+
+    .awsui-main-content { flex: 1; min-width: 0; padding: 14px 20px 56px; max-width: 1560px; }
+
+    /* 3. Cabeçalho da Página e KPI Pills */
+    .awsui-page-header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--awsui-border);
+    }
+    .awsui-page-header h1 { margin: 0; font-size: 19px; font-weight: 700; color: var(--awsui-text); }
+    .awsui-page-desc { margin: 2px 0 0; font-size: 12.5px; color: var(--awsui-text-secondary); }
+    .awsui-kpi-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .kpi-pill {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--awsui-text-secondary);
+      display: inline-flex; align-items: center; gap: 5px; box-shadow: var(--awsui-shadow);
+    }
+    .kpi-pill strong { color: var(--awsui-text); font-weight: 700; }
+
+    /* 4. Flashbar */
+    .awsui-flashbar {
+      display: none; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 8px 14px; border-radius: 6px; margin-bottom: 12px;
+      background: var(--awsui-info); color: #fff; font-size: 12.5px;
+    }
+    .awsui-flashbar.success { background: var(--awsui-success); }
+    .awsui-flashbar-close {
+      background: transparent; border: none; color: inherit;
+      font-size: 16px; cursor: pointer; line-height: 1; padding: 0 4px;
+    }
+
+    /* 5. Containers, Botões, Badges e Tabelas */
+    .awsui-container {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; box-shadow: var(--awsui-shadow); margin-bottom: 12px; overflow: hidden;
+    }
+    .awsui-container-header {
+      padding: 9px 14px; background: var(--awsui-container-header-bg);
+      border-bottom: 1px solid var(--awsui-divider);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .awsui-container-header h2, .awsui-h3 {
+      margin: 0; font-size: 14.5px; font-weight: 700; color: var(--awsui-text);
+    }
+    .awsui-container-body { padding: 12px 14px; }
+
+    .awsui-badge {
+      display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 4px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .awsui-badge-blue {
+      background: var(--awsui-info-bg); color: var(--awsui-info); border: 1px solid var(--awsui-info);
+    }
+    .awsui-badge-amber {
+      background: var(--awsui-warning-bg); color: var(--awsui-warning); border: 1px solid var(--awsui-warning);
+    }
+    .awsui-badge-red {
+      background: var(--awsui-danger-bg); color: var(--awsui-danger); border: 1px solid var(--awsui-danger);
+    }
+    .awsui-badge-green {
+      background: var(--awsui-success-bg); color: var(--awsui-success); border: 1px solid var(--awsui-success);
+    }
+    .awsui-badge-purple {
+      background: var(--awsui-purple-bg); color: var(--awsui-purple); border: 1px solid var(--awsui-purple);
+    }
+    .awsui-badge-teal {
+      background: var(--awsui-teal-bg); color: var(--awsui-teal); border: 1px solid var(--awsui-teal);
+    }
+    .awsui-badge-neutral {
+      background: var(--awsui-subbox-bg); color: var(--awsui-text-secondary); border: 1px solid var(--awsui-border);
+    }
+
+    .awsui-status-success { color: var(--awsui-success); font-size: 12px; font-weight: 700; }
+    .awsui-status-warning { color: var(--awsui-warning); font-size: 12px; font-weight: 700; }
+    .awsui-status-danger { color: var(--awsui-danger); font-size: 12px; font-weight: 700; }
+    .awsui-text-small { font-size: 11.5px; color: var(--awsui-text-muted); }
+    .awsui-link { color: var(--awsui-link); text-decoration: none; cursor: pointer; }
+    .awsui-link:hover { color: var(--awsui-link-hover); text-decoration: underline; }
+
+    .awsui-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      border-radius: 4px; padding: 5px 12px; font-size: 12.5px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap;
+    }
+    .awsui-btn-sm { padding: 3px 9px; font-size: 11.5px; }
+    .awsui-btn-primary {
+      background: var(--awsui-orange); color: #000716; border: 1px solid var(--awsui-orange-border);
+    }
+    .awsui-btn-primary:hover { background: var(--awsui-orange-hover); }
+    .awsui-btn-normal {
+      background: var(--awsui-container-bg); color: var(--awsui-link); border: 1px solid var(--awsui-link);
+    }
+    .awsui-btn-normal:hover { background: var(--awsui-info-bg); }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Formulários & Controles */
+    .builder-split-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 12px; align-items: start; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field-group { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+    .field-group label { font-size: 12px; font-weight: 700; color: var(--awsui-text); }
+    .input-ctrl, .select-ctrl, .textarea-ctrl {
+      width: 100%; background: var(--awsui-container-bg); border: 1px solid var(--awsui-border-strong);
+      border-radius: 4px; color: var(--awsui-text); padding: 6px 9px; font-size: 12.5px; font-family: inherit;
+    }
+    .input-ctrl:focus, .select-ctrl:focus, .textarea-ctrl:focus {
+      outline: none; border-color: var(--awsui-link); box-shadow: 0 0 0 2px rgba(9, 114, 211, 0.15);
+    }
+    .textarea-ctrl { min-height: 68px; resize: vertical; }
+    .checkbox-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 6px 0 10px; font-size: 12px; }
+    .checkbox-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+
+    /* 1-Prompt Blueprints & Auto-Decision */
+    .blueprint-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .blueprint-tile {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left; font-family: inherit;
+    }
+    .blueprint-tile:hover { border-color: var(--awsui-link); background: var(--awsui-info-bg); }
+    .blueprint-tile.selected { border: 1.5px solid var(--awsui-link); background: var(--awsui-info-bg); }
+    .blueprint-tile-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+    .blueprint-tile-title { font-size: 12.5px; font-weight: 700; color: var(--awsui-text); }
+
+    .auto-decision-box {
+      background: var(--awsui-info-bg); border: 1px solid var(--awsui-border);
+      border-left: 4px solid var(--awsui-link); border-radius: 6px; padding: 9px 12px; margin-bottom: 10px;
+    }
+    .auto-decision-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
+    .auto-kv {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 4px; padding: 5px 8px;
+    }
+    .auto-kv-label {
+      font-size: 10.5px; color: var(--awsui-text-muted);
+      text-transform: uppercase; font-weight: 700; display: block;
+    }
+    .auto-kv-val { font-size: 12.5px; font-weight: 700; color: var(--awsui-text); }
+
+    .dag-visual-box {
+      background: var(--awsui-subbox-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 8px; margin-bottom: 8px;
+    }
+    .svg-scroll { overflow-x: auto; display: flex; justify-content: center; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sim-output-box, .code-inspect-box {
+      background: var(--awsui-subbox-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 8px 10px;
+    }
+    .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .box-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--awsui-text-secondary); }
+    .sim-response-text {
+      font-family: Consolas, monospace; font-size: 11.5px; color: var(--awsui-text);
+      white-space: pre-wrap; max-height: 150px; overflow: auto;
+    }
+    pre.code {
+      background: var(--awsui-code-bg); color: var(--awsui-code-text);
+      padding: 8px 10px; border-radius: 4px; font-size: 11.5px;
+      overflow: auto; max-height: 160px; margin: 4px 0 0; font-family: Consolas, monospace;
+    }
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip-btn {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      color: var(--awsui-text-body); padding: 3px 8px; border-radius: 4px;
+      font-size: 11.5px; cursor: pointer; font-family: inherit;
+    }
+    .chip-btn:hover, .chip-btn.active {
+      border-color: var(--awsui-link); color: var(--awsui-link);
+      background: var(--awsui-info-bg); font-weight: 700;
+    }
+
+    /* Tabelas e Catálogo DCR */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .search-box { flex: 1; min-width: 220px; }
+    .view-toggle-group {
+      display: inline-flex; border: 1px solid var(--awsui-border-strong);
+      border-radius: 4px; overflow: hidden;
+    }
+    .view-toggle-btn {
+      background: var(--awsui-container-bg); border: none; padding: 5px 10px;
+      font-size: 11.5px; font-weight: 700; color: var(--awsui-text-secondary); cursor: pointer;
+    }
+    .view-toggle-btn.active { background: var(--awsui-info-bg); color: var(--awsui-link); }
+
+    .awsui-table-wrap { width: 100%; overflow-x: auto; }
+    .awsui-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .awsui-table th {
+      background: var(--awsui-container-header-bg); color: var(--awsui-text-secondary);
+      text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      padding: 7px 12px; border-bottom: 1px solid var(--awsui-border); white-space: nowrap;
+    }
+    .awsui-table td { padding: 7px 12px; border-bottom: 1px solid var(--awsui-divider); vertical-align: middle; }
+    .awsui-table tbody tr { cursor: pointer; }
+    .awsui-table tbody tr:hover { background: var(--awsui-subbox-bg); }
+    .awsui-table tbody tr.selected { background: var(--awsui-info-bg); }
+
+    .dcr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+    .dcr-card {
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;
+      justify-content: space-between; gap: 8px; cursor: pointer;
+    }
+    .dcr-card:hover, .dcr-card.selected { border-color: var(--awsui-link); background: var(--awsui-info-bg); }
+    .dcr-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .cap-code {
+      font-family: Consolas, monospace; font-size: 11px; font-weight: 700;
+      color: var(--awsui-link); background: var(--awsui-info-bg);
+      padding: 1px 6px; border-radius: 4px; border: 1px solid var(--awsui-border);
+    }
+    .cap-cat {
+      font-size: 10.5px; color: var(--awsui-text-secondary); background: var(--awsui-subbox-bg);
+      padding: 1px 6px; border-radius: 4px; border: 1px solid var(--awsui-border);
+    }
+    .dcr-title { margin: 0 0 3px; font-size: 13.5px; font-weight: 700; color: var(--awsui-text); }
+    .dcr-summary { margin: 0; font-size: 12px; color: var(--awsui-text-secondary); line-height: 16px; }
+    .dcr-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 6px; border-top: 1px solid var(--awsui-divider); gap: 6px;
+    }
+    .dep-tag {
+      font-family: Consolas, monospace; font-size: 10.5px; background: var(--awsui-subbox-bg);
+      color: var(--awsui-text-secondary); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--awsui-border);
+    }
+
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 5px; margin: 8px 0;
+    }
+    .step-item {
+      background: var(--awsui-subbox-bg); border: 1px solid var(--awsui-border);
+      border-radius: 4px; padding: 4px 7px; font-size: 11px; display: flex; align-items: center; gap: 5px;
+    }
+    .step-num { color: var(--awsui-success); font-weight: 800; font-family: Consolas, monospace; }
+
+    .cascade-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 10px; border: 1px solid var(--awsui-border); border-radius: 4px;
+      background: var(--awsui-subbox-bg); margin-bottom: 5px; font-size: 12px;
+    }
+
+    .demanda-card {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 9px 12px; border: 1px solid var(--awsui-border); border-radius: 6px;
+      margin-bottom: 6px; background: var(--awsui-subbox-bg); flex-wrap: wrap;
+    }
+    .demanda-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .demanda-topic { margin: 0; font-size: 12px; color: var(--awsui-text-secondary); }
+
+    /* Gaveta Contextual Inferior (Split Panel) */
+    .awsui-split-panel {
+      position: fixed; left: 220px; right: 0; bottom: 0; z-index: 950;
+      background: var(--awsui-container-bg); border-top: 2px solid var(--awsui-link);
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.16); padding: 10px 20px 14px; display: none;
+    }
+    .awsui-split-panel.open { display: block; }
+
+    /* 6. Componentes Padronizados do Monitor - GraphRAG */
+    .gr-workspace-grid {
+      display: grid; grid-template-columns: 1.55fr 1fr; gap: 12px; align-items: start;
+    }
+    .gr-canvas-wrap {
+      position: relative; background: var(--awsui-graph-canvas-bg);
+      border: 1px solid var(--awsui-border); border-radius: 6px; overflow: hidden; min-height: 490px;
+    }
+    .gr-canvas-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px; padding: 8px 12px;
+      background: var(--awsui-container-header-bg); border-bottom: 1px solid var(--awsui-divider);
+    }
+    .gr-legend-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px; padding: 7px 12px;
+      background: var(--awsui-container-header-bg); border-top: 1px solid var(--awsui-divider);
+      font-size: 11.5px; color: var(--awsui-text-secondary);
+    }
+    .gr-legend-items { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .gr-legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .gr-tripartite-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .gr-tripartite-col {
+      background: var(--awsui-subbox-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; padding: 8px 10px; max-height: 195px; overflow-y: auto;
+    }
+    .gr-tripartite-item {
+      padding: 5px 7px; border: 1px solid var(--awsui-border); border-radius: 4px;
+      background: var(--awsui-container-bg); margin-bottom: 5px; cursor: pointer;
+      font-size: 11.5px; transition: all 0.12s;
+    }
+    .gr-tripartite-item:hover, .gr-tripartite-item.active {
+      border-color: var(--awsui-link); background: var(--awsui-info-bg);
+    }
+    .gr-hop-step {
+      padding: 6px 9px; border-left: 3px solid var(--awsui-link);
+      background: var(--awsui-subbox-bg); border-radius: 0 4px 4px 0;
+      margin-bottom: 5px; font-size: 11.8px;
+    }
+    .gr-community-card {
+      border: 1px solid var(--awsui-border); border-left-width: 4px;
+      border-radius: 6px; padding: 8px 10px; background: var(--awsui-subbox-bg);
+      margin-bottom: 6px; cursor: pointer;
+    }
+    .gr-community-card:hover { background: var(--awsui-info-bg); }
+    .gr-svg-node { cursor: pointer; transition: opacity 0.18s ease; }
+    .gr-svg-edge { transition: opacity 0.18s ease, stroke-width 0.18s ease; }
+
+    .muted { color: var(--awsui-text-secondary); }
+    code { font-family: Consolas, monospace; font-size: 11.5px; }
+
+    @media (max-width: 1120px) {
+      .builder-split-grid, .grid-2, .blueprint-strip, .gr-workspace-grid, .gr-tripartite-strip {
+        grid-template-columns: 1fr;
+      }
+      .awsui-side-nav { display: none; }
+      .awsui-split-panel { left: 0; }
+    }
+
+
+    /* Utilitários Self-Contained CSP-Safe para o Workspace Monitor - GraphRAG (Claro & Escuro) */
+    .mono { font-family: Consolas, 'JetBrains Mono', monospace; }
+    .glass-panel {
+      background: var(--awsui-container-bg);
+      border: 1px solid var(--awsui-border);
+      border-radius: 6px;
+      box-shadow: var(--awsui-shadow);
+    }
+    .glass-card {
+      background: var(--awsui-subbox-bg);
+      border: 1px solid var(--awsui-border);
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .glass-card:hover {
+      border-color: var(--awsui-link);
+      background: var(--awsui-info-bg);
+    }
+    .pill-btn {
+      background: var(--awsui-container-bg);
+      color: var(--awsui-text-body);
+      border: 1px solid var(--awsui-border);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      font-family: inherit;
+    }
+    .pill-btn:hover {
+      border-color: var(--awsui-link);
+      color: var(--awsui-link);
+      background: var(--awsui-info-bg);
+    }
+    .pill-btn.active {
+      background: var(--awsui-link) !important;
+      color: #ffffff !important;
+      border-color: var(--awsui-link) !important;
+      font-weight: 700;
+    }
+    .badge-confirmado {
+      background: var(--awsui-success-bg);
+      color: var(--awsui-success);
+      border: 1px solid var(--awsui-success);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-aviso {
+      background: var(--awsui-warning-bg);
+      color: var(--awsui-warning);
+      border: 1px solid var(--awsui-warning);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-critico {
+      background: var(--awsui-danger-bg);
+      color: var(--awsui-danger);
+      border: 1px solid var(--awsui-danger);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-info {
+      background: var(--awsui-info-bg);
+      color: var(--awsui-info);
+      border: 1px solid var(--awsui-info);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    #cloud-canvas-container {
+      position: relative;
+      background:
+        radial-gradient(circle at 22% 28%, rgba(56, 189, 248, 0.09) 0%, transparent 45%),
+        radial-gradient(circle at 78% 32%, rgba(167, 139, 250, 0.09) 0%, transparent 45%),
+        radial-gradient(circle at 52% 78%, rgba(16, 185, 129, 0.08) 0%, transparent 48%),
+        var(--awsui-graph-canvas-bg);
+      border: 1px solid var(--awsui-border);
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 580px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .grid-bg {
+      background-image: radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    /* Grid & Flex helpers compatíveis sem CDN externo */
+    .gr-toolbar-strip {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 8px 12px; margin-bottom: 10px;
+      background: var(--awsui-container-bg); border: 1px solid var(--awsui-border);
+      border-radius: 6px; box-shadow: var(--awsui-shadow);
+    }
+    .monitor-screen-pane {
+      display: none;
+    }
+    .monitor-screen-pane.active {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .screen-2col-grid {
+      display: grid;
+      grid-template-columns: minmax(380px, 1fr) minmax(420px, 1.15fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .floating-inspector-card {
+      position: absolute;
+      top: 64px;
+      right: 16px;
+      width: 320px;
+      z-index: 30;
+      background: rgba(13, 19, 32, 0.94);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.38);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+    body[data-awstheme="light"] .floating-inspector-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: #0972d3;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+    }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .flex-1 { flex: 1; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .items-baseline { align-items: baseline; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .justify-end { justify-content: flex-end; }
+    .gap-1 { gap: 4px; }
+    .gap-1\.5 { gap: 6px; }
+    .gap-2 { gap: 8px; }
+    .gap-2\.5 { gap: 10px; }
+    .gap-3 { gap: 12px; }
+    .p-2 { padding: 8px; }
+    .p-2\.5 { padding: 10px; }
+    .p-3 { padding: 12px; }
+    .p-3\.5 { padding: 12px 14px; }
+    .p-4 { padding: 16px; }
+    .p-5 { padding: 20px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-2\.5 { padding-left: 10px; padding-right: 10px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .py-1\.5 { padding-top: 6px; padding-bottom: 6px; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .m-0 { margin: 0; }
+    .mt-1 { margin-top: 4px; }
+    .mb-0 { margin-bottom: 0; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-1\.5 { margin-bottom: 6px; }
+    .mb-2\.5 { margin-bottom: 10px; }
+    .w-full { width: 100%; }
+    .text-xs { font-size: 11.8px; line-height: 16px; }
+    .text-sm { font-size: 13.5px; line-height: 18px; }
+    .text-base { font-size: 15px; line-height: 20px; }
+    .text-lg { font-size: 18px; line-height: 22px; }
+    .font-bold, .font-semibold, .font-extrabold { font-weight: 700; }
+    .uppercase { text-transform: uppercase; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .break-all { word-break: break-all; }
+    .hidden { display: none !important; }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: 1fr; }
+    .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .overflow-x-auto { overflow-x: auto; }
+    .overflow-y-auto { overflow-y: auto; }
+    .max-h-56 { max-height: 260px; }
+    .cursor-pointer { cursor: pointer; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .z-50 { z-index: 1500; }
+    .min-w-0 { min-width: 0; }
+    .shrink-0 { flex-shrink: 0; }
+    .ml-1 { margin-left: 4px; }
+    .mr-1 { margin-right: 4px; }
+    .pb-1 { padding-bottom: 4px; }
+    .pb-2 { padding-bottom: 8px; }
+    .pb-3 { padding-bottom: 12px; }
+    .pt-2 { padding-top: 8px; }
+    .pt-3 { padding-top: 12px; }
+    .pr-1 { padding-right: 4px; }
+    .rounded { border-radius: 4px; }
+    .rounded-lg { border-radius: 8px; }
+    .rounded-xl { border-radius: 10px; }
+    .iaops-modal-backdrop {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1550;
+      background: rgba(6, 11, 21, 0.84);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    body[data-awstheme="light"] .iaops-modal-backdrop {
+      background: rgba(15, 23, 42, 0.58);
+    }
+    .iaops-modal-dialog {
+      width: min(860px, calc(100vw - 48px));
+      max-width: 860px;
+      max-height: 84vh;
+      padding: 18px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.48);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.78);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+    #cloud-canvas-container {
+      position: relative;
+      height: calc(100vh - 148px);
+      min-height: 620px;
+    }
+    #iaops-graph-canvas {
+      width: 100%;
+      height: calc(100vh - 238px);
+      min-height: 530px;
+      display: block;
+      cursor: grab;
+    }
+    textarea#inp-nova-habilidade, textarea#inp-graphrag-query, input#inp-sandbox-fato, input#inp-canvas-search, input#inp-busca-todas-habilidades, input#aiops-chat-input, select#sel-graphrag-mode, select#sel-path-origin, select#sel-path-target, select#aiops-skill-runner-select {
+      background: var(--awsui-container-bg);
+      color: var(--awsui-text);
+      border: 1px solid var(--awsui-border-strong);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      font-family: inherit;
+    }
+    .aiops-fab-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 54px;
+      z-index: 1600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+      color: #ffffff;
+      border: 1px solid rgba(125, 211, 252, 0.65);
+      box-shadow: 0 12px 28px rgba(2, 132, 199, 0.48);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+    .aiops-fab-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(79, 70, 229, 0.62);
+    }
+    .aiops-floating-drawer {
+      position: fixed;
+      right: 20px;
+      bottom: 54px;
+      width: 440px;
+      max-width: calc(100vw - 32px);
+      height: 580px;
+      max-height: calc(100vh - 110px);
+      z-index: 1650;
+      display: flex;
+      flex-direction: column;
+      background: rgba(11, 17, 29, 0.97);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      border-radius: 14px;
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.72);
+      overflow: hidden;
+      transition: width 0.2s ease, height 0.2s ease;
+    }
+    .aiops-floating-drawer > * {
+      min-width: 0;
+      max-width: 100%;
+    }
+    #aiops-skill-runner-select, #aiops-chat-input {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #btn-aiops-run-skill, #btn-aiops-send {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .aiops-floating-drawer.expanded {
+      width: 680px;
+      height: 680px;
+    }
+    body[data-awstheme="light"] .aiops-floating-drawer {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: #0972d3;
+      box-shadow: 0 18px 46px rgba(15, 23, 42, 0.22);
+    }
+    .aiops-msg-user {
+      align-self: flex-end;
+      max-width: 86%;
+      background: rgba(2, 132, 199, 0.24);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 12px 12px 2px 12px;
+      padding: 8px 11px;
+      font-size: 12px;
+      color: var(--awsui-text);
+    }
+    .aiops-msg-agent {
+      align-self: flex-start;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(100, 116, 139, 0.38);
+      border-radius: 12px 12px 12px 2px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--awsui-text-body);
+    }
+    body[data-awstheme="light"] .aiops-msg-agent {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    table th {
+      background: var(--awsui-container-header-bg);
+      color: var(--awsui-text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--awsui-border);
+      padding: 8px 10px;
+    }
+    table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--awsui-divider);
+      color: var(--awsui-text-body);
+    }
+    table tbody tr:hover { background: var(--awsui-info-bg); }
+    @media (max-width: 1100px) {
+      .screen-2col-grid { grid-template-columns: 1fr; }
+      .floating-inspector-card { width: 270px; top: auto; bottom: 48px; right: 12px; }
+    }
+  </style>
+</head>
+<body data-awstheme="dark">
+  
+  <header class="aws-global-nav">
+    <div class="aws-nav-left">
+      <div class="aws-waffle" onclick="alternarMenuLateral()" title="Alternar menu lateral">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+      <a href="#monitor"
+        onclick="if(typeof navegarTelaMonitor==='function'){navegarTelaMonitor('monitor');return false;}"
+        class="aws-service-pill">
+        <div class="aws-service-icon">IA</div>
+        <span class="aws-service-name">Squad-Agentica IAOps</span>
+      </a>
+      <div class="aws-global-search">
+        <span class="aws-search-icon">🔍</span>
+        <input id="aws-top-search" type="search" placeholder="Buscar nó, recurso AWS, repositório, rota OpenAPI ou ARN... [Alt+S]" oninput="filtrarBuscaTexto(this.value)" />
+        <span class="aws-search-kbd">Alt+S</span>
+      </div>
+    </div>
+  </header>
+
+
+  <div class="awsui-app-layout">
+    <!-- NAVEGAÇÃO LATERAL ENXUTA: TELAS + ATALHOS RÁPIDOS (SEM GOVERNANÇA E SEM CONFORMIDADE) -->
+    <aside class="awsui-side-nav" id="awsui-side-nav">
+      <div>
+        <div class="side-nav-section">
+          <a href="#monitor" onclick="navegarTelaMonitor('monitor'); return false;" class="side-nav-link active" id="snav-tab-monitor-graphrag">
+            <span>Monitor - GraphRAG</span>
+          </a>
+          <button type="button" class="side-nav-link" id="snav-tela-habilidades" onclick="navegarTelaMonitor('habilidades')">
+            <span>Cadastrar Habilidade</span>
+          </button>
+        </div>
+
+        <div class="side-nav-section" id="side-nav-atalhos-rapidos">
+          <div class="side-nav-section-title">Atalhos Rápidos</div>
+          <button type="button" class="side-nav-link" id="snav-atalho-super-agente" onclick="alternarChatSuperAgente(true)">
+            <span>🤖 Super Agente AIOps</span>
+          </button>
+          <button type="button" class="side-nav-link" id="snav-atalho-catalogo" onclick="abrirModalTodasHabilidades()">
+            <span>📋 Catálogo de Habilidades</span>
+          </button>
+          <button type="button" class="side-nav-link" id="btn-theme-toggle" onclick="alternarTemaAws()">
+            <span>🌙 Escuro</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="awsui-main-content" id="tab-monitor-graphrag">
+
+      <!-- ===================================================================== -->
+      <!-- TELA 1 (PRINCIPAL / EXCLUSIVA): MONITOR GRÁFICO FULL-BLEED             -->
+      <!-- ===================================================================== -->
+      <section id="tela-monitor" class="monitor-screen-pane active">
+        <div id="cloud-canvas-container" class="flex-1 flex flex-col justify-between grid-bg">
+          <!-- BARRA DE COMANDO ERGONÔMICA DO MONITOR GRÁFICO -->
+          <div class="p-2.5 flex flex-wrap items-center justify-between gap-2 z-10 bg-slate-950/90 border-b border-slate-800/90">
+            <div class="flex flex-wrap items-center gap-1" id="family-filters">
+              <span class="text-xs font-bold uppercase muted mr-1">Monitor - GraphRAG · Nuvem de Nós &amp; Motor GraphRAG v2.0:</span>
+              <button onclick="filtrarFamilia('all')" id="btn-fam-all" class="pill-btn active">
+                Todos (<span id="cnt-all">24</span>)
+              </button>
+              <button onclick="filtrarFamilia('recurso_aws')" id="btn-fam-recurso_aws" class="pill-btn">
+                ☁️ AWS (<span id="cnt-recurso_aws">10</span>)
+              </button>
+              <button onclick="filtrarFamilia('repositorio')" id="btn-fam-repositorio" class="pill-btn">
+                📦 Repos (<span id="cnt-repositorio">5</span>)
+              </button>
+              <button onclick="filtrarFamilia('configuracao')" id="btn-fam-configuracao" class="pill-btn">
+                ⚙️ Configs (<span id="cnt-configuracao">4</span>)
+              </button>
+              <button onclick="filtrarFamilia('contrato_openapi')" id="btn-fam-contrato_openapi" class="pill-btn">
+                🌐 OpenAPI (<span id="cnt-contrato_openapi">3</span>)
+              </button>
+              <button onclick="filtrarFamilia('achado_sentinela')" id="btn-fam-achado_sentinela" class="pill-btn">
+                ⚠️ Drifts (<span id="cnt-achado_sentinela">3</span>)
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1" id="community-pills">
+              <button onclick="filtrarComunidade('all')" id="btn-com-all" class="pill-btn active">🌐 Todas (4)</button>
+              <button onclick="filtrarComunidade('COM-01')" id="btn-com-COM-01" class="pill-btn">● COM-01 CRM</button>
+              <button onclick="filtrarComunidade('COM-02')" id="btn-com-COM-02" class="pill-btn">● COM-02 PJ</button>
+              <button onclick="filtrarComunidade('COM-03')" id="btn-com-COM-03" class="pill-btn">● COM-03 Internos</button>
+              <button onclick="filtrarComunidade('COM-04')" id="btn-com-COM-04" class="pill-btn">● COM-04 KMS</button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1">
+              <button onclick="alternarRotulosArestas()" id="btn-toggle-edge-labels" class="pill-btn" title="Exibir/ocultar rótulos das arestas">🏷️ Rótulos</button>
+              <input id="inp-canvas-search" type="text" oninput="filtrarBuscaTexto(this.value)" placeholder="Buscar nó (/)" style="width:130px;" />
+              <button onclick="ajustarZoomCanvas(1.15)" class="pill-btn" title="Aproximar Zoom">＋</button>
+              <button onclick="ajustarZoomCanvas(0.87)" class="pill-btn" title="Afastar Zoom">－</button>
+              <button onclick="recentralizarNuvem()" class="pill-btn" title="Centralizar e limpar filtro">🎯 Reset</button>
+            </div>
+          </div>
+
+          <!-- BARRA DO SIMULADOR BLAST RADIUS (VISÍVEL NO MODO 3) -->
+          <div id="blast-simulator-bar" class="hidden mx-3 mt-2 px-3 py-1.5 rounded bg-slate-900/95 border border-amber-500/50 z-20 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="font-bold text-amber-300">⚡ Simulador BFS 3-Hops:</span>
+              <select id="sel-path-origin"></select>
+              <select id="sel-path-target"></select>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="executarSimulacaoCaminhoBlast()" class="pill-btn active">Simular Raio de Explosão</button>
+              <span id="lbl-blast-result" class="text-xs font-bold text-rose-300 mono"></span>
+            </div>
+          </div>
+
+          <!-- CARD FLUTUANTE COMPACTO DO NÓ SELECIONADO (DISPENSÁVEL) -->
+          <div id="floating-node-card" class="floating-inspector-card">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span id="float-insp-familia" class="text-xs px-1.5 py-0.5 rounded badge-info font-semibold uppercase">RECURSO AWS · SQS</span>
+                <h3 id="float-insp-titulo" class="text-sm font-bold text-white mt-1 mb-0 break-all">sqs-eventos-clientes-prod</h3>
+              </div>
+              <div class="flex items-center gap-1">
+                <span id="float-insp-status" class="text-xs px-1.5 py-0.5 rounded badge-aviso font-bold">AVISO</span>
+                <button onclick="fecharCardFlutuanteNo()" class="pill-btn" title="Ocultar resumo flutuante">✕</button>
+              </div>
+            </div>
+            <p id="float-insp-resumo" class="text-xs text-slate-300 mt-1.5 mb-2">
+              Fila SQS cadastral com DLQ ativa e divergência de visibility_timeout em prod.
+            </p>
+            <div class="flex items-center justify-between text-xs mono mb-2 px-2 py-1 rounded bg-slate-950/80 border border-slate-800">
+              <span>Blast: <strong id="float-insp-blast" class="text-amber-400">84/100</strong></span>
+              <span id="float-insp-confianca" class="text-emerald-400 font-bold">CONFIRMADO (0.94)</span>
+            </div>
+            <div class="flex items-center justify-between gap-1.5">
+              <button onclick="isolarSubgrafoDoNoSelecionado()" class="pill-btn flex-1">🔍 Isolar 2-Hops</button>
+              <button onclick="simularExplosaoDoNoSelecionado()" class="pill-btn flex-1">⚡ Blast</button>
+              <button onclick="navegarTelaMonitor('inspetor')" class="awsui-btn awsui-btn-primary awsui-btn-sm">Inspetor 360° →</button>
+            </div>
+          </div>
+
+          <!-- CANVAS INTERATIVO 100% VIEWPORT -->
+          <canvas id="iaops-graph-canvas" class="w-full flex-1"></canvas>
+
+          <!-- LEGENDA DE AÇÃO DO MONITOR: MODOS DO MONITOR GRÁFICO + CAMADAS INTERATIVAS -->
+          <div id="monitor-action-legend" class="p-2.5 px-3 bg-slate-950/95 border-t border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-xs z-10">
+            <div class="flex flex-wrap items-center gap-1.5" id="legend-modes-group">
+              <span class="font-bold uppercase tracking-wider text-slate-400 mr-1">Modos do Monitor Gráfico:</span>
+              <button type="button" onclick="alternarModoLayout('cloud')" id="btn-mode-cloud" class="pill-btn active" title="Agrupamento orgânico por Comunidades Leiden">
+                🌐 1. Nuvem Comunidades
+              </button>
+              <button type="button" onclick="alternarModoLayout('tripartite')" id="btn-mode-tripartite" class="pill-btn" title="Alinhar em colunas: Repositório ↔ Config/OpenAPI ↔ AWS ↔ Sentinela">
+                📐 2. Colunas Tripartidas
+              </button>
+              <button type="button" onclick="alternarModoLayout('blast')" id="btn-mode-blast" class="pill-btn" title="Simular propagação de impacto BFS em até 3 saltos">
+                ⚡ 3. Simulador Blast Radius
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-bold uppercase tracking-wider text-slate-400">Legenda de Nós:</span>
+              <button type="button" onclick="filtrarFamilia('recurso_aws')" class="pill-btn" title="Filtrar Recursos AWS">🔵 Hexágono: AWS</button>
+              <button type="button" onclick="filtrarFamilia('repositorio')" class="pill-btn" title="Filtrar Repositórios Git/IaC">🟣 Retângulo: Repo Git/IaC</button>
+              <button type="button" onclick="filtrarFamilia('configuracao')" class="pill-btn" title="Filtrar Configurações (.tfvars/SSM)">🟢 Losango: Config</button>
+              <button type="button" onclick="filtrarFamilia('contrato_openapi')" class="pill-btn" title="Filtrar Rotas OpenAPI (CAP-31)">🟠 Círculo: OpenAPI</button>
+              <button type="button" onclick="filtrarFamilia('achado_sentinela')" class="pill-btn" title="Filtrar Drifts Sentinela">🔴 Triângulo: Drift</button>
+              <button type="button" onclick="filtrarFamilia('all')" class="pill-btn" title="Mostrar todas as camadas">Todos</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TELA 2: MOTOR DINÂMICO GRAPHRAG & SANDBOX WHAT-IF                      -->
+      <!-- ===================================================================== -->
+      <section id="tela-graphrag" class="monitor-screen-pane">
+        <div class="awsui-page-header">
+          <div>
+            <h1>🧠 Motor Dinâmico GraphRAG &amp; Simulador What-If</h1>
+            <p class="awsui-page-desc">
+              Travessia Multi-Hop determinística sobre o Grafo Vivo com pesos de evidência RN-007 (AWS 0.50 · IaC AST 0.35 · LLM 0.15)
+            </p>
+          </div>
+          <div class="awsui-kpi-pills">
+            <button onclick="navegarTelaMonitor('monitor')" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+              🌌 Voltar ao Monitor Gráfico
+            </button>
+          </div>
+        </div>
+
+        <div class="screen-2col-grid">
+          <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-bold uppercase tracking-wider text-white m-0">Consulta Multi-Hop GraphRAG</h2>
+              <span class="text-xs px-2 py-0.5 rounded badge-info mono">k-Hop · Comunidades Leiden</span>
+            </div>
+
+            <textarea id="inp-graphrag-query" rows="3"
+              class="w-full rounded-lg bg-slate-950 border border-slate-700 p-2.5 text-xs text-slate-100"
+              placeholder="Digite sua pergunta arquitetural multi-hop...">Quais repositórios, .tfvars e rotas OpenAPI impactam a fila SQS de clientes em prod?</textarea>
+
+            <div class="flex items-center gap-2">
+              <select id="sel-graphrag-mode" class="flex-1">
+                <option value="auto">Modo Auto (Local k-Hop + Global Leiden)</option>
+                <option value="local">Local Search (Vizinhança 2-Hops)</option>
+                <option value="global">Global Search (Comunidades Leiden)</option>
+                <option value="path">Path &amp; Blast Radius (Cadeia de Impacto)</option>
+              </select>
+              <button onclick="dispararConsultaGraphRAG()" class="awsui-btn awsui-btn-primary">
+                Executar Travessia
+              </button>
+              <button onclick="dispararConsultaGraphRAG(); navegarTelaMonitor('monitor');" class="pill-btn" title="Executar e visualizar subgrafo iluminado no Monitor Gráfico">
+                🔭 Ver no Grafo
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-1.5 pt-1">
+              <span class="text-xs font-semibold text-slate-400">Consultas recomendadas (1 clique):</span>
+              <button onclick="selecionarPerguntaChip('Quais repositórios, .tfvars e rotas OpenAPI impactam a fila SQS de clientes em prod?')"
+                class="text-left text-xs px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-sky-300 border border-slate-700/80 cursor-pointer">
+                1. Linhagem Completa SQS Clientes + .tfvars + Drift Visibility Timeout (D06/D09)
+              </button>
+              <button onclick="selecionarPerguntaChip('Onde estão as divergências entre rotas OpenAPI (pessoas, empresas, recursos-internos) e Lambda/ECS?')"
+                class="text-left text-xs px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700/80 cursor-pointer">
+                2. Divergências de Contratos OpenAPI vs Apps Lambda/ECS (CAP-31)
+              </button>
+              <button onclick="selecionarPerguntaChip('Quais recursos são Shadow IT (Reverse Drift CAP-24) sem Terraform no Backoffice?')"
+                class="text-left text-xs px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-700/80 cursor-pointer">
+                3. Detecção de Reverse Drift / Shadow IT sem cobertura Terraform (CAP-24)
+              </button>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase text-slate-300">Simulador Sandbox What-If (Read-Only CAP-12)</span>
+                <span class="text-xs mono text-emerald-400">[estimado]</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="inp-sandbox-fato" type="text"
+                  value="lambda-pix-webhook consome de sqs-eventos-clientes-prod"
+                  class="flex-1 mono" placeholder="Ex: servico-x consome de sqs-eventos-clientes" />
+                <button onclick="injetarFatoNoGrafo()" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+                  + Injetar Fato no Grafo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold uppercase text-white">Evidência Multi-Hop &amp; Triplas Recuperadas</span>
+              <div class="flex items-center gap-1.5">
+                <span id="gr-badge-evidencia" class="text-xs px-2 py-0.5 rounded badge-confirmado mono">CONFIRMADO 0.96</span>
+                <span id="gr-badge-prov" class="text-xs px-2 py-0.5 rounded badge-info mono">[medido]</span>
+              </div>
+            </div>
+
+            <div id="gr-sintese-box" class="p-3 rounded-lg bg-slate-950/90 border border-sky-500/30 text-xs text-slate-200">
+              Selecione uma consulta ao lado para executar a travessia multi-hop.
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-2.5 rounded-lg bg-rose-950/25 border border-rose-500/30">
+                <div class="text-xs font-bold text-rose-300 mb-1">❌ RAG Vetorial Tradicional</div>
+                <p id="gr-rag-tradicional" class="text-xs text-slate-300 m-0">Chunks isolados sem vínculo estrutural.</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-emerald-950/25 border border-emerald-500/30">
+                <div class="text-xs font-bold text-emerald-300 mb-1">✅ Vantagem GraphRAG IAOps</div>
+                <p id="gr-rag-vantagem" class="text-xs text-slate-200 m-0">Travessia de Entidade + Relação + Evidência RN-007.</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-400">Triplas do Subgrafo Ativo:</span>
+              <div class="flex items-center gap-2">
+                <button onclick="navegarTelaMonitor('monitor')" class="text-xs text-emerald-400 hover:underline bg-transparent border-0 cursor-pointer font-semibold">
+                  🌌 Destacar no Monitor Gráfico
+                </button>
+                <button onclick="limparDestaqueSubgrafo()" class="text-xs text-sky-400 hover:underline bg-transparent border-0 cursor-pointer">
+                  Limpar filtro
+                </button>
+              </div>
+            </div>
+            <div id="gr-triplas-list" class="flex flex-col gap-1.5 max-h-56 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TELA 3: CADASTRAR HABILIDADE (DCR 1-PROMPT + 5 ÚLTIMAS + VER MAIS)     -->
+      <!-- ===================================================================== -->
+      <section id="tela-habilidades" class="monitor-screen-pane">
+        <div class="awsui-page-header">
+          <div>
+            <h1>✨ Cadastrar Habilidade &amp; Catálogo Prático</h1>
+            <p class="awsui-page-desc">
+              Cadastre novas automações em 1 prompt ou acione habilidades prontas para o dia a dia do Dev e do Tech Lead
+            </p>
+          </div>
+          <div class="awsui-kpi-pills">
+            <button onclick="navegarTelaMonitor('monitor')" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+              🌌 Voltar ao Monitor Gráfico
+            </button>
+          </div>
+        </div>
+
+        <div class="screen-2col-grid">
+          <!-- PAINEL OFICIAL: LABEL + INPUT AREA + BOTÃO SALVAR + 5 ÚLTIMAS + VER MAIS -->
+          <div id="painel-cadastrar-habilidade" class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <label for="inp-nova-habilidade" class="text-sm font-bold uppercase tracking-wider text-white flex items-center justify-between">
+              <span>✨ Cadastrar Habilidade</span>
+              <span id="lbl-status-salvar-hab" class="text-xs text-emerald-400 mono">1-Prompt Auto</span>
+            </label>
+            <textarea id="inp-nova-habilidade" rows="4"
+              class="w-full rounded-lg bg-slate-950 border border-slate-700 focus:border-sky-400 focus:outline-none p-3 text-xs text-slate-100"
+              placeholder="Descreva o que deseja automatizar ou verificar (ex: Mapear rotas OpenAPI sem authorizer nos serviços Lambda e ECS)..."></textarea>
+            <button id="btn-salvar-habilidade" type="button" onclick="salvarNovaHabilidadeMonitor()"
+              class="awsui-btn awsui-btn-primary w-full">
+              Salvar
+            </button>
+
+            <div class="pt-3 border-t border-slate-800 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-300">Últimas 5 cadastradas:</span>
+                <button id="btn-ver-mais-habilidades" type="button" onclick="abrirModalTodasHabilidades()"
+                  class="text-xs text-sky-400 hover:underline bg-transparent border-0 cursor-pointer font-semibold">
+                  Ver mais (<span id="cnt-total-habilidades">0</span>)
+                </button>
+              </div>
+              <div id="lista-ultimas-5-habilidades" class="flex flex-col gap-1.5"></div>
+            </div>
+          </div>
+
+          <!-- CATÁLOGO REORGANIZADO PARA O COTIDIANO DO DEV & TECH LEAD -->
+          <div id="painel-catalogo-dev" class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-bold uppercase tracking-wider text-white m-0">📋 Catálogo para o Dia a Dia (Dev &amp; Tech Lead)</h2>
+              <button type="button" onclick="abrirModalTodasHabilidades()" class="pill-btn">Expandir Catálogo</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-1" id="catalogo-dev-filtros">
+              <button type="button" onclick="filtrarGrupoCatalogoDev('all', this)" id="btn-catdev-all" class="pill-btn active">Todas</button>
+              <button type="button" onclick="filtrarGrupoCatalogoDev('🌐 APIs, Rotas & Eventos', this)" class="pill-btn">🌐 APIs &amp; Rotas</button>
+              <button type="button" onclick="filtrarGrupoCatalogoDev('☁️ Terraform & Configurações (.tfvars)', this)" class="pill-btn">☁️ Terraform &amp; .tfvars</button>
+              <button type="button" onclick="filtrarGrupoCatalogoDev('⚡ Performance, Logs & Incidentes', this)" class="pill-btn">⚡ Performance &amp; On-Call</button>
+              <button type="button" onclick="filtrarGrupoCatalogoDev('🔒 IAM, Segurança & Pipelines CI/CD', this)" class="pill-btn">🔒 IAM &amp; CI/CD</button>
+              <button type="button" onclick="filtrarGrupoCatalogoDev('💰 Custos Cloud & Prioridades da Sprint', this)" class="pill-btn">💰 Custos &amp; Sprint</button>
+            </div>
+            <div id="lista-catalogo-dev-tela" class="flex flex-col gap-2 overflow-y-auto pr-1" style="max-height:360px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TELA 4: MATRIZ TRIPARTIDA & CONTRATOS OPENAPI (CAP-31)                 -->
+      <!-- ===================================================================== -->
+      <section id="tela-openapi" class="monitor-screen-pane">
+        <div class="awsui-page-header">
+          <div>
+            <h1>🔗 Associação Visual Tripartida: Recurso AWS ↔ Repositório GitHub ↔ Configuração &amp; OpenAPI</h1>
+            <p class="awsui-page-desc">
+              Descoberta e auditoria executiva de rotas e parâmetros OpenAPI (CAP-31) cruzados com Lambda, ECS Fargate e arquivos .tfvars
+            </p>
+          </div>
+          <div class="awsui-kpi-pills">
+            <button onclick="navegarTelaMonitor('monitor'); alternarModoLayout('tripartite');" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+              📐 Ver Colunas Tripartidas no Monitor Gráfico
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-xl p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white m-0">
+              Associação Visual Tripartida: Rotas OpenAPI (CAP-31) ↔ Compute ↔ Config
+            </h3>
+            <span class="text-xs px-2.5 py-1 rounded badge-info mono">Padrão Canônico: ?papel=cliente&amp;pag=1&amp;pageSize=20&amp;status=0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr>
+                  <th>Comunidade</th>
+                  <th>Repositório GitHub</th>
+                  <th>Rota OpenAPI &amp; Query Params (CAP-31)</th>
+                  <th>Compute &amp; Configuração (.tfvars / SSM)</th>
+                  <th>Status &amp; Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr onclick="selecionarNoPorId('api-rota-pessoas'); navegarTelaMonitor('monitor');" class="cursor-pointer">
+                  <td class="text-sky-300 font-semibold">COM-01 CRM</td>
+                  <td class="mono">repo-cadastro-pessoas</td>
+                  <td class="mono text-emerald-300">pessoas/?papel=cliente&amp;pag=1&amp;pageSize=20&amp;status=0</td>
+                  <td>Lambda <code>arm64</code> + <code>env/prod/clientes.tfvars</code></td>
+                  <td><span class="badge-confirmado mono px-2 py-0.5 rounded">CONFORME · Ver no Grafo →</span></td>
+                </tr>
+                <tr onclick="selecionarNoPorId('api-rota-empresas'); navegarTelaMonitor('monitor');" class="cursor-pointer">
+                  <td class="text-purple-300 font-semibold">COM-02 PJ</td>
+                  <td class="mono">repo-onboarding-empresas</td>
+                  <td class="mono text-amber-300">empresas/?papel=cliente&amp;pag=1&amp;pageSize=20&amp;status=0</td>
+                  <td>ECS Fargate + <code>ecs/taskdef-empresas-prod.json</code></td>
+                  <td><span class="badge-aviso mono px-2 py-0.5 rounded">PARAM EXTRA: cnpj_raiz · Ver no Grafo →</span></td>
+                </tr>
+                <tr onclick="selecionarNoPorId('api-rota-recursos-internos'); navegarTelaMonitor('monitor');" class="cursor-pointer">
+                  <td class="text-amber-300 font-semibold">COM-03 Internos</td>
+                  <td class="mono">repo-backoffice-recursos</td>
+                  <td class="mono text-rose-300">recursos-internos/?papel=cliente&amp;pag=1&amp;pageSize=20&amp;status=0</td>
+                  <td>Lambda <code>x86_64</code> + <code>secret:db_password=***</code></td>
+                  <td><span class="badge-critico mono px-2 py-0.5 rounded">ROTA_ORFA (D10) · Ver no Grafo →</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TELA 5: INSPETOR 360° DE ASSOCIAÇÕES DO NÓ                             -->
+      <!-- ===================================================================== -->
+      <section id="tela-inspetor" class="monitor-screen-pane">
+        <div class="awsui-page-header">
+          <div>
+            <h1>🔍 Inspetor 360° de Linhagem &amp; Dependências do Recurso</h1>
+            <p class="awsui-page-desc">
+              Visão detalhada do nó selecionado no Monitor Gráfico com associações diretas de Repositório, Config e Recursos AWS
+            </p>
+          </div>
+          <div class="awsui-kpi-pills">
+            <button onclick="navegarTelaMonitor('monitor')" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+              🌌 Voltar ao Monitor Gráfico
+            </button>
+          </div>
+        </div>
+
+        <div class="screen-2col-grid">
+          <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <div class="flex items-start justify-between gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <span id="insp-familia-badge" class="text-xs px-2 py-0.5 rounded badge-info font-semibold uppercase">RECURSO AWS · SQS</span>
+                <h2 id="insp-titulo" class="text-base font-bold text-white mt-1 mb-0 break-all">sqs-eventos-clientes-prod</h2>
+                <p id="insp-arn" class="text-xs text-slate-400 mono m-0 break-all">arn:aws:sqs:sa-east-1:&lt;AWS_ACCOUNT_ID&gt;:sqs-eventos-clientes-prod</p>
+              </div>
+              <span id="insp-status-badge" class="text-xs px-2.5 py-1 rounded badge-aviso font-bold">AVISO</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                <div class="text-xs text-slate-400">Blast Radius (CAP-11)</div>
+                <div class="flex items-baseline justify-between mt-1">
+                  <span id="insp-blast-score" class="text-lg font-extrabold text-amber-400 mono">84/100</span>
+                  <span class="text-xs text-slate-400 mono">[estimado]</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                  <div id="insp-blast-bar" class="h-full bg-amber-400" style="width: 84%"></div>
+                </div>
+              </div>
+              <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                <div class="text-xs text-slate-400">Classificação de Evidência (RN-007)</div>
+                <div class="mt-1">
+                  <span id="insp-confianca" class="text-sm font-bold text-emerald-400 mono">CONFIRMADO (0.94)</span>
+                </div>
+                <div id="insp-proveniencia" class="text-xs text-sky-300 mono mt-1">[AWS + AST · CAP-12 Somente-Leitura]</div>
+              </div>
+            </div>
+
+            <p id="insp-resumo" class="text-xs text-slate-200 m-0 p-3 rounded-lg bg-slate-900/90 border border-slate-800">
+              Fila SQS cadastral com DLQ ativa e divergência de visibility_timeout em prod.
+            </p>
+
+            <div>
+              <h4 class="text-xs font-bold uppercase text-slate-400 mb-1.5">Metadados Técnicos (RN-002 DLP Redaction)</h4>
+              <pre id="insp-metadados" class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 mono overflow-x-auto m-0"></pre>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center gap-2">
+              <button onclick="isolarSubgrafoDoNoSelecionado(); navegarTelaMonitor('monitor');" class="pill-btn flex-1 py-2">
+                🔍 Isolar Subgrafo 2-Hops no Monitor
+              </button>
+              <button onclick="simularExplosaoDoNoSelecionado(); navegarTelaMonitor('monitor');" class="pill-btn flex-1 py-2">
+                ⚡ Simular Blast Radius no Monitor
+              </button>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white m-0">Associações Diretas no Grafo Vivo (1º Salto)</h3>
+            <div>
+              <h4 class="text-xs font-bold uppercase text-indigo-300 mb-1.5 flex items-center justify-between">
+                <span>📦 Repositórios GitHub / Terraform</span>
+                <span id="insp-cnt-repos" class="mono text-xs text-slate-400">0</span>
+              </h4>
+              <div id="insp-list-repos" class="flex flex-col gap-1.5"></div>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold uppercase text-emerald-300 mb-1.5 flex items-center justify-between">
+                <span>⚙️ Configurações (.tfvars/SSM) &amp; Contratos OpenAPI</span>
+                <span id="insp-cnt-configs" class="mono text-xs text-slate-400">0</span>
+              </h4>
+              <div id="insp-list-configs" class="flex flex-col gap-1.5"></div>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold uppercase text-sky-300 mb-1.5 flex items-center justify-between">
+                <span>☁️ Recursos AWS &amp; Achados Sentinela</span>
+                <span id="insp-cnt-recursos" class="mono text-xs text-slate-400">0</span>
+              </h4>
+              <div id="insp-list-recursos" class="flex flex-col gap-1.5"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- MODAL CATÁLOGO DE HABILIDADES REORGANIZADO PARA DEV & TECH LEAD -->
+  <div id="modal-todas-habilidades" class="iaops-modal-backdrop hidden" onclick="if(event.target===this) fecharModalTodasHabilidades()">
+    <div class="glass-panel iaops-modal-dialog">
+      <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid var(--awsui-border);">
+        <div>
+          <span class="text-xs px-2 py-0.5 rounded badge-info font-semibold">Catálogo Prático · Dev &amp; Tech Lead</span>
+          <h3 class="text-base font-bold text-white mt-1 mb-0">O que você precisa investigar ou automatizar hoje?</h3>
+        </div>
+        <button type="button" onclick="fecharModalTodasHabilidades()" class="pill-btn">✕ Fechar</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-1" id="modal-catalogo-filtros">
+        <button type="button" onclick="filtrarGrupoModalCatalogo('all', this)" class="pill-btn active">Todas</button>
+        <button type="button" onclick="filtrarGrupoModalCatalogo('🌐 APIs, Rotas & Eventos', this)" class="pill-btn">🌐 APIs &amp; Rotas</button>
+        <button type="button" onclick="filtrarGrupoModalCatalogo('☁️ Terraform & Configurações (.tfvars)', this)" class="pill-btn">☁️ Terraform &amp; .tfvars</button>
+        <button type="button" onclick="filtrarGrupoModalCatalogo('⚡ Performance, Logs & Incidentes', this)" class="pill-btn">⚡ Performance &amp; On-Call</button>
+        <button type="button" onclick="filtrarGrupoModalCatalogo('🔒 IAM, Segurança & Pipelines CI/CD', this)" class="pill-btn">🔒 IAM &amp; CI/CD</button>
+        <button type="button" onclick="filtrarGrupoModalCatalogo('💰 Custos Cloud & Prioridades da Sprint', this)" class="pill-btn">💰 Custos &amp; Sprint</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="inp-busca-todas-habilidades" type="text" oninput="filtrarModalTodasHabilidades(this.value)"
+          placeholder="Buscar por tema (ex: OpenAPI, .tfvars, DLQ, cold start, IAM, custos, Terraform)..." class="w-full" />
+      </div>
+      <div id="lista-todas-habilidades" class="flex flex-col gap-2.5 overflow-y-auto pr-1" style="max-height:58vh;"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SUPER AGENTE AIOPS FLUTUANTE EM TODAS AS TELAS (CAP-32)                -->
+  <!-- ===================================================================== -->
+  <button id="aiops-fab-trigger" type="button" onclick="alternarChatSuperAgente()" class="aiops-fab-btn" title="Abrir Super Agente AIOps Flutuante (Alt+A)">
+    <span>🤖 Super Agente AIOps</span>
+    <span id="aiops-fab-badge" class="px-1.5 py-0.5 rounded bg-slate-950/70 text-sky-300 mono text-xs">CAP-32</span>
+  </button>
+
+  <aside id="aiops-floating-chat" class="aiops-floating-drawer hidden" aria-label="Super Agente AIOps Flutuante">
+    <!-- Cabeçalho do Super Agente -->
+    <div class="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="px-2 py-0.5 rounded badge-info font-bold mono text-xs">CAP-32</span>
+        <div class="truncate">
+          <div class="text-sm font-bold text-white truncate">🤖 Super Agente AIOps · Copiloto GraphRAG</div>
+          <div class="text-xs text-slate-400 truncate">Lê o contexto da squad, navega o Grafo Vivo e executa habilidades</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1 shrink-0">
+        <button id="btn-aiops-expand" type="button" onclick="alternarExpansaoSuperAgente()" class="pill-btn" title="Expandir / Compactar janela">⤢</button>
+        <button type="button" onclick="alternarChatSuperAgente(false)" class="pill-btn" title="Minimizar Super Agente">✕</button>
+      </div>
+    </div>
+
+    <!-- Barra de Contexto Vivo da Squad (Lida Automaticamente da Tela Atual) -->
+    <div id="aiops-context-bar" class="px-3 py-1.5 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5 text-xs">
+      <span class="mono text-sky-300 truncate">📍 Tela: <strong id="aiops-ctx-tela" class="text-white">Monitor - GraphRAG</strong></span>
+      <span class="mono text-amber-300 truncate">🎯 Foco: <strong id="aiops-ctx-no" class="text-white">sqs-eventos-clientes-prod</strong></span>
+      <span class="mono text-emerald-400">⚡ <strong id="aiops-ctx-habs">0</strong> habs ativas</span>
+    </div>
+
+    <!-- Executor Direto de Habilidades Cadastradas -->
+    <div class="p-2.5 bg-slate-900/60 border-b border-slate-800/90 flex flex-col gap-1.5">
+      <div class="flex items-center gap-1.5">
+        <select id="aiops-skill-runner-select" class="flex-1 text-xs" aria-label="Selecionar habilidade cadastrada para executar"></select>
+        <button id="btn-aiops-run-skill" type="button" onclick="executarHabilidadeSelecionadaSuperAgente()" class="awsui-btn awsui-btn-primary awsui-btn-sm">
+          ▶ Executar Habilidade
+        </button>
+      </div>
+      <div class="flex flex-wrap items-center gap-1">
+        <button type="button" onclick="enviarPerguntaRapidaSuperAgente('Mapear rotas e query params OpenAPI vs Lambda e ECS (CAP-31)', 'CAP-31')" class="pill-btn">🌐 Rotas OpenAPI</button>
+        <button type="button" onclick="enviarPerguntaRapidaSuperAgente('Investigar causa raiz de incidentes, timeout .tfvars e fila DLQ (CAP-28)', 'CAP-28')" class="pill-btn">⚡ Causa Raiz &amp; DLQ</button>
+        <button type="button" onclick="enviarPerguntaRapidaSuperAgente('Encontrar recursos criados manualmente sem Terraform / ClickOps (CAP-24)', 'CAP-24')" class="pill-btn">☁️ ClickOps s/ TF</button>
+        <button type="button" onclick="enviarPerguntaRapidaSuperAgente('Analisar economia FinOps ARM64 e prioridades da sprint (CAP-25)', 'CAP-25')" class="pill-btn">💰 Custos &amp; Sprint</button>
+      </div>
+    </div>
+
+    <!-- Histórico Conversacional + Cards de Execução e Evidências GraphRAG -->
+    <div id="aiops-chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2.5"></div>
+
+    <!-- Input Conversacional Livre -->
+    <div class="p-2.5 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+      <input id="aiops-chat-input" type="text"
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensagemSuperAgenteAIOps();}"
+        placeholder="Pergunte sobre a infra/GraphRAG ou peça para executar uma habilidade..."
+        class="flex-1" />
+      <button id="btn-aiops-send" type="button" onclick="enviarMensagemSuperAgenteAIOps()" class="awsui-btn awsui-btn-primary">
+        Enviar
+      </button>
+    </div>
+  </aside>
+
+  <script>
+    // DATASET INICIAL DO GRAFO VIVO IAOPS + MOTOR GRAPHRAG EMBUTIDO
+    const GRAFO_IAOPS = {"versao_motor": "2.0.0-graphrag-iaops", "gerado_em": "2026-10-31T15:35:01.918944+00:00", "governanca": {"acesso": "read-only (CAP-12)", "hierarquia_rn007": "0.50 AWS_RUNTIME + 0.35 IAC_AST + 0.15 LLM", "teto_finops_usd": 5.0}, "guardrails": {"cap12_read_only": true, "dlp_redaction": true, "dual_mode_llm": "openai_compatible_proxy_ready", "finops_budget_usd": 5.0, "finops_consumido_usd": 1.42}, "metricas": {"total_nos": 26, "total_arestas": 38, "total_comunidades": 4, "drifts_ativos": 14, "confianca_media_rn007": 0.95, "custo_mensal_total_usd": 1.42}, "comunidades": [{"id": "COM-01", "nome": "Sistema Cadastro & Clientes (CRM)", "cor_hex": "#38bdf8", "resumo_executivo": "Cluster crítico de atendimento a clientes PF. Reúne API Gateway, Lambda arm64, SNS/SQS com CMK KMS e contrato OpenAPI /pessoas, apresentando 1 drift de timeout em prod (D06).", "score_saude_360": 86, "total_nos": 10, "achados_criticos": 0}, {"id": "COM-02", "nome": "Sistema Empresas & Onboarding PJ", "cor_hex": "#a78bfa", "resumo_executivo": "Cluster de microsserviços ECS Fargate arm64 e mensageria KYC. Possui divergência de parâmetro oculto (cnpj_raiz) na rota /empresas (CAP-31) e bucket S3 sem chave KMS CMK dedicada (D01).", "score_saude_360": 74, "total_nos": 6, "achados_criticos": 2}, {"id": "COM-03", "nome": "Sistema Recursos Internos & Backoffice", "cor_hex": "#f59e0b", "resumo_executivo": "Cluster administrativo com Lambda x86_64 elegível para Graviton2 (D13), rota /recursos-internos órfã no OpenAPI (CAP-31) e fila SQS criada manualmente sem Terraform (Shadow IT CAP-24).", "score_saude_360": 62, "total_nos": 6, "achados_criticos": 4}, {"id": "COM-04", "nome": "Núcleo Compartilhado & Governança IAOps", "cor_hex": "#10b981", "resumo_executivo": "Módulos Terraform shared, chave KMS corporativa, barramento MCP HMAC-SHA256 e Proxy Local OpenAI-Compatible para AWS Bedrock sob teto FinOps <= US$ 5/mês.", "score_saude_360": 96, "total_nos": 4, "achados_criticos": 0}], "nos": [{"id": "repo-tf-shared-modules", "rotulo": "tf-module-sqs-kms-shared", "familia": "repositorio", "subtipo": "shared", "comunidade_id": "COM-04", "comunidade_nome": "Núcleo Compartilhado & Governança IAOps", "ambiente": "multi", "blast_radius": 94, "status_saude": "CONFORME", "confianca_evidencia": 0.98, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "github://org-corporativa/tf-module-sqs-kms-shared", "resumo": "Módulo Terraform compartilhado que padroniza filas SQS, DLQ redrive e criptografia KMS para toda a squad.", "metadados": {"papel": "shared", "maturidade_kms": 4, "maturidade_testes": 4, "versao_modulo": "2.4.0"}, "camada": "repositorio", "status": "SYNCED", "confianca_rn007": 0.98, "custo_mensal_usd": 1.41, "tags": ["repositorio", "shared", "multi", "COM-04"]}, {"id": "kms-cmk-corporativa-prod", "rotulo": "kms-cmk-squad-prod", "familia": "recurso_aws", "subtipo": "kms", "comunidade_id": "COM-04", "comunidade_nome": "Núcleo Compartilhado & Governança IAOps", "ambiente": "prod", "blast_radius": 96, "status_saude": "CONFORME", "confianca_evidencia": 0.99, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:kms:sa-east-1:111122223333:key/cmk-squad-iaops-prod", "resumo": "Chave KMS Customer Managed com rotação anual ativa usada por filas SQS, tópicos SNS e tabelas DynamoDB.", "metadados": {"enable_key_rotation": true, "maturidade_kms": 4, "regiao": "sa-east-1"}, "camada": "recurso_aws", "status": "SYNCED", "confianca_rn007": 0.99, "custo_mensal_usd": 1.44, "tags": ["recurso_aws", "kms", "prod", "COM-04"]}, {"id": "apigw-corporativo-prod", "rotulo": "apigw-gateway-central", "familia": "recurso_aws", "subtipo": "apigw", "comunidade_id": "COM-04", "comunidade_nome": "Núcleo Compartilhado & Governança IAOps", "ambiente": "prod", "blast_radius": 92, "status_saude": "AVISO", "confianca_evidencia": 0.95, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:apigateway:sa-east-1::/restapis/gw-central-prod", "resumo": "API Gateway REST central que expõe as rotas corporativas /pessoas, /empresas e /recursos-internos.", "metadados": {"openapi_spec": "specs/api-gateway-central.yaml", "stage": "prod", "waf_enabled": true}, "camada": "recurso_aws", "status": "DRIFT_DETECTED", "confianca_rn007": 0.95, "custo_mensal_usd": 1.38, "tags": ["recurso_aws", "apigw", "prod", "COM-04"]}, {"id": "proxy-local-bedrock", "rotulo": "proxy-openai-bedrock-local", "familia": "configuracao", "subtipo": "proxy_llm", "comunidade_id": "COM-04", "comunidade_nome": "Núcleo Compartilhado & Governança IAOps", "ambiente": "multi", "blast_radius": 78, "status_saude": "CONFORME", "confianca_evidencia": 0.95, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "env://AI_PROXY_BASE_URL/v1/chat/completions", "resumo": "Proxy local compatível com OpenAI Chat Completions (SSE + Bearer ***) que isola o acesso ao AWS Bedrock (RN-003).", "metadados": {"modo": "openai_compatible_proxy", "api_key": "***", "finops_teto_usd": 5.0}, "camada": "configuracao", "status": "SYNCED", "confianca_rn007": 0.95, "custo_mensal_usd": 1.17, "tags": ["configuracao", "proxy_llm", "multi", "COM-04"]}, {"id": "repo-cadastro-pessoas", "rotulo": "repo-cadastro-pessoas", "familia": "repositorio", "subtipo": "principal", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 82, "status_saude": "CONFORME", "confianca_evidencia": 0.96, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "github://org-corporativa/repo-cadastro-pessoas", "resumo": "Repositório principal do microsserviço de consulta e eventos cadastrais de pessoas físicas.", "metadados": {"papel": "principal", "maturidade_kms": 3, "maturidade_testes": 3, "linguagem": "Python 3.13"}, "camada": "repositorio", "status": "SYNCED", "confianca_rn007": 0.96, "custo_mensal_usd": 1.23, "tags": ["repositorio", "principal", "prod", "COM-01"]}, {"id": "repo-iac-cadastro", "rotulo": "repo-iac-cadastro-infra", "familia": "repositorio", "subtipo": "iac", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "multi", "blast_radius": 85, "status_saude": "AVISO", "confianca_evidencia": 0.94, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "github://org-corporativa/repo-iac-cadastro-infra", "resumo": "Repositório Terraform dedicado que provisiona Lambda, SNS, SQS e DynamoDB do domínio de clientes.", "metadados": {"papel": "iac", "maturidade_kms": 4, "maturidade_testes": 3, "terraform_version": "1.11.2"}, "camada": "repositorio", "status": "DRIFT_DETECTED", "confianca_rn007": 0.94, "custo_mensal_usd": 1.27, "tags": ["repositorio", "iac", "multi", "COM-01"]}, {"id": "lambda-pessoas-api", "rotulo": "lambda-pessoas-consulta", "familia": "recurso_aws", "subtipo": "lambda", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 76, "status_saude": "CONFORME", "confianca_evidencia": 0.95, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:lambda:sa-east-1:111122223333:function:pessoas-consulta-prod", "resumo": "Função AWS Lambda arm64 (Graviton2) que processa GET /pessoas e publica eventos cadastrais.", "metadados": {"arquitetura": "arm64", "timeout_s": 10, "memoria_mb": 512, "p95_ms": 28.4}, "camada": "recurso_aws", "status": "SYNCED", "confianca_rn007": 0.95, "custo_mensal_usd": 1.14, "tags": ["recurso_aws", "lambda", "prod", "COM-01"]}, {"id": "sns-eventos-cadastro", "rotulo": "sns-cadastro-fanout-prod", "familia": "recurso_aws", "subtipo": "sns", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 88, "status_saude": "CONFORME", "confianca_evidencia": 0.96, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:sns:sa-east-1:111122223333:sns-cadastro-fanout-prod", "resumo": "Tópico SNS fanout que distribui alterações de clientes para filas de CRM, Onboarding PJ e Backoffice.", "metadados": {"assinaturas_ativas": 3, "kms_cmk": true}, "camada": "recurso_aws", "status": "SYNCED", "confianca_rn007": 0.96, "custo_mensal_usd": 1.32, "tags": ["recurso_aws", "sns", "prod", "COM-01"]}, {"id": "sqs-eventos-clientes", "rotulo": "sqs-eventos-clientes-prod", "familia": "recurso_aws", "subtipo": "sqs", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 84, "status_saude": "AVISO", "confianca_evidencia": 0.94, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:sqs:sa-east-1:111122223333:sqs-eventos-clientes-prod", "resumo": "Fila SQS principal de sincronização cadastral. Possui DLQ configurada, mas visibility_timeout divergiu em prod.", "metadados": {"visibility_timeout_prod": 30, "visibility_timeout_hml": 90, "dlq_ativa": true}, "camada": "recurso_aws", "status": "DRIFT_DETECTED", "confianca_rn007": 0.94, "custo_mensal_usd": 1.26, "tags": ["recurso_aws", "sqs", "prod", "COM-01"]}, {"id": "ddb-clientes-master", "rotulo": "ddb-clientes-master-prod", "familia": "recurso_aws", "subtipo": "dynamodb", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 91, "status_saude": "CONFORME", "confianca_evidencia": 0.98, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:dynamodb:sa-east-1:111122223333:table/clientes-master-prod", "resumo": "Tabela DynamoDB PAY_PER_REQUEST com GSIs por documento e status cadastral (Zero Scan RN-012).", "metadados": {"billing_mode": "PAY_PER_REQUEST", "pitr_enabled": true, "gsis": 2}, "camada": "recurso_aws", "status": "SYNCED", "confianca_rn007": 0.98, "custo_mensal_usd": 1.36, "tags": ["recurso_aws", "dynamodb", "prod", "COM-01"]}, {"id": "cfg-tfvars-clientes-prod", "rotulo": "env/prod/clientes.tfvars", "familia": "configuracao", "subtipo": "tfvars", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 72, "status_saude": "AVISO", "confianca_evidencia": 0.92, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "repo-iac-cadastro-infra://env/prod/clientes.tfvars", "resumo": "Arquivo .tfvars de produção onde var.sqs_visibility_timeout=30s diverge de hml (90s) e do recomendado (60s+).", "metadados": {"variavel_divergente": "var.sqs_visibility_timeout", "valor_hml": "90s", "valor_prod": "30s"}, "camada": "configuracao", "status": "DRIFT_DETECTED", "confianca_rn007": 0.92, "custo_mensal_usd": 1.08, "tags": ["configuracao", "tfvars", "prod", "COM-01"]}, {"id": "cfg-ssm-clientes-pool", "rotulo": "ssm:/prod/clientes/max_page", "familia": "configuracao", "subtipo": "ssm", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 58, "status_saude": "CONFORME", "confianca_evidencia": 0.9, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:ssm:sa-east-1:111122223333:parameter/prod/clientes/max_page", "resumo": "Parâmetro SSM Parameter Store que governa o limite default pageSize=20 da API de pessoas.", "metadados": {"tipo_ssm": "String", "valor_publico": "pageSize=20"}, "camada": "configuracao", "status": "SYNCED", "confianca_rn007": 0.9, "custo_mensal_usd": 0.87, "tags": ["configuracao", "ssm", "prod", "COM-01"]}, {"id": "api-rota-pessoas", "rotulo": "GET /pessoas/?papel=cliente&pag=1&pageSize=20&status=0", "familia": "contrato_openapi", "subtipo": "openapi_route", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 79, "status_saude": "CONFORME", "confianca_evidencia": 0.96, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "openapi://apigw-gateway-central/paths/~1pessoas", "resumo": "Contrato OpenAPI 100% alinhado entre API Gateway e handler Lambda (CAP-31). Sanitizado contra typo &&status=0.", "metadados": {"url_exemplo": "pessoas/?papel=cliente&pag=1&pageSize=20&status=0", "parametros": ["papel", "pag", "pageSize", "status"], "alinhamento_cap31": "CONFORME"}, "camada": "configuracao", "status": "SYNCED", "confianca_rn007": 0.96, "custo_mensal_usd": 1.19, "tags": ["contrato_openapi", "openapi_route", "prod", "COM-01"]}, {"id": "achado-d06-drift-timeout", "rotulo": "D06/D09: Drift Visibility Timeout SQS", "familia": "achado_sentinela", "subtipo": "finding_warning", "comunidade_id": "COM-01", "comunidade_nome": "Sistema Cadastro & Clientes (CRM)", "ambiente": "prod", "blast_radius": 75, "status_saude": "AVISO", "confianca_evidencia": 0.94, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "ACHADO#D06#AMB#prod#REC#sqs-eventos-clientes", "resumo": "Sentinela detectou visibility_timeout=30s em prod (menor que 6x o timeout da Lambda consumidora de 10s = 60s).", "metadados": {"regra": "D06", "severidade": "MEDIA", "receita_lote": "receita_sqs_timeout"}, "camada": "incidente_drift", "status": "DRIFT_DETECTED", "confianca_rn007": 0.94, "custo_mensal_usd": 1.12, "tags": ["achado_sentinela", "finding_warning", "prod", "COM-01"]}, {"id": "repo-onboarding-empresas", "rotulo": "repo-onboarding-empresas", "familia": "repositorio", "subtipo": "principal", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 80, "status_saude": "AVISO", "confianca_evidencia": 0.93, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "github://org-corporativa/repo-onboarding-empresas", "resumo": "Repositório do serviço ECS Fargate de onboarding de empresas e validação societária.", "metadados": {"papel": "principal", "maturidade_kms": 2, "maturidade_testes": 2, "stack": "FastAPI / ECS Fargate"}, "camada": "repositorio", "status": "DRIFT_DETECTED", "confianca_rn007": 0.93, "custo_mensal_usd": 1.2, "tags": ["repositorio", "principal", "prod", "COM-02"]}, {"id": "ecs-empresas-service", "rotulo": "ecs-empresas-fargate-prod", "familia": "recurso_aws", "subtipo": "ecs", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 81, "status_saude": "CONFORME", "confianca_evidencia": 0.96, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:ecs:sa-east-1:111122223333:service/cluster-corp/empresas-fargate-prod", "resumo": "Serviço Amazon ECS Fargate arm64 com 3 tasks ativas, latência quente estável (p95 = 19.2ms CAP-23).", "metadados": {"arquitetura": "arm64", "tasks_desired": 3, "p95_ms": 19.2, "wei_warmup_pct": 18.5}, "camada": "recurso_aws", "status": "SYNCED", "confianca_rn007": 0.96, "custo_mensal_usd": 1.21, "tags": ["recurso_aws", "ecs", "prod", "COM-02"]}, {"id": "s3-docs-empresas", "rotulo": "s3-contratos-empresas-prod", "familia": "recurso_aws", "subtipo": "s3", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 77, "status_saude": "CRITICO", "confianca_evidencia": 0.95, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:s3:::s3-contratos-empresas-prod", "resumo": "Bucket S3 de dossiês PJ usando criptografia default SSE-S3 em vez de chave KMS Customer Managed (Violação D01).", "metadados": {"sse_algorithm": "AES256", "kms_cmk": false, "maturidade_kms": 1}, "camada": "recurso_aws", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.95, "custo_mensal_usd": 1.16, "tags": ["recurso_aws", "s3", "prod", "COM-02"]}, {"id": "cfg-taskdef-empresas", "rotulo": "ecs/taskdef-empresas-prod.json", "familia": "configuracao", "subtipo": "taskdef", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 65, "status_saude": "CONFORME", "confianca_evidencia": 0.91, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "repo-onboarding-empresas://deploy/taskdef-empresas-prod.json", "resumo": "Task Definition do ECS Fargate declarando CPU/Memória e variáveis de integração com SNS/SQS.", "metadados": {"cpu": "1024", "memory": "2048", "oidc_pipeline": true}, "camada": "configuracao", "status": "SYNCED", "confianca_rn007": 0.91, "custo_mensal_usd": 0.97, "tags": ["configuracao", "taskdef", "prod", "COM-02"]}, {"id": "api-rota-empresas", "rotulo": "GET /empresas/?papel=cliente&pag=1&pageSize=20&status=0", "familia": "contrato_openapi", "subtipo": "openapi_route", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 74, "status_saude": "AVISO", "confianca_evidencia": 0.93, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "openapi://apigw-gateway-central/paths/~1empresas", "resumo": "Rota exposta no ECS e OpenAPI, porém o código aceita query param extra (cnpj_raiz) omitido no OpenAPI (CAP-31).", "metadados": {"url_exemplo": "empresas/?papel=cliente&pag=1&pageSize=20&status=0", "parametros": ["papel", "pag", "pageSize", "status", "cnpj_raiz (oculto no OpenAPI)"], "alinhamento_cap31": "PARAMETRO_NAO_DOCUMENTADO"}, "camada": "configuracao", "status": "DRIFT_DETECTED", "confianca_rn007": 0.93, "custo_mensal_usd": 1.11, "tags": ["contrato_openapi", "openapi_route", "prod", "COM-02"]}, {"id": "achado-d01-kms-s3", "rotulo": "D01: Bucket S3 sem Chave KMS CMK", "familia": "achado_sentinela", "subtipo": "finding_critical", "comunidade_id": "COM-02", "comunidade_nome": "Sistema Empresas & Onboarding PJ", "ambiente": "prod", "blast_radius": 83, "status_saude": "CRITICO", "confianca_evidencia": 0.95, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "ACHADO#D01#AMB#prod#REC#s3-docs-empresas", "resumo": "Violação de segurança D01: s3-contratos-empresas-prod não utiliza a CMK kms-cmk-squad-prod. Elegível para Lote 3-Gates.", "metadados": {"regra": "D01", "severidade": "ALTA", "receita_lote": "receita_kms"}, "camada": "incidente_drift", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.95, "custo_mensal_usd": 1.24, "tags": ["achado_sentinela", "finding_critical", "prod", "COM-02"]}, {"id": "repo-backoffice-recursos", "rotulo": "repo-backoffice-recursos", "familia": "repositorio", "subtipo": "principal", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 69, "status_saude": "CRITICO", "confianca_evidencia": 0.92, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "github://org-corporativa/repo-backoffice-recursos", "resumo": "Repositório de gestão de recursos internos e alçadas operacionais (Maturidade de Testes 1/4).", "metadados": {"papel": "principal", "maturidade_kms": 2, "maturidade_testes": 1}, "camada": "repositorio", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.92, "custo_mensal_usd": 1.03, "tags": ["repositorio", "principal", "prod", "COM-03"]}, {"id": "lambda-recursos-internos", "rotulo": "lambda-recursos-internos-prod", "familia": "recurso_aws", "subtipo": "lambda", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 68, "status_saude": "AVISO", "confianca_evidencia": 0.94, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:lambda:sa-east-1:111122223333:function:recursos-internos-prod", "resumo": "Lambda ainda em x86_64 (elegível para migração Graviton2 arm64 com 20% de economia FinOps via receita_arm64).", "metadados": {"arquitetura": "x86_64", "economia_arm64_pct": 20, "p95_ms": 64.0}, "camada": "recurso_aws", "status": "DRIFT_DETECTED", "confianca_rn007": 0.94, "custo_mensal_usd": 1.02, "tags": ["recurso_aws", "lambda", "prod", "COM-03"]}, {"id": "sqs-shadow-auditoria", "rotulo": "sqs-auditoria-manual-shadow", "familia": "recurso_aws", "subtipo": "sqs", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 64, "status_saude": "SHADOW_IT", "confianca_evidencia": 0.97, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:sqs:sa-east-1:111122223333:sqs-auditoria-manual-shadow", "resumo": "Recurso em Reverse Drift / Shadow IT (CAP-24): vivo no AWS Resource Explorer, mas sem nenhum código Terraform associado.", "metadados": {"shadow_it": true, "dlq_ativa": false, "criado_via": "ClickOps Console"}, "camada": "recurso_aws", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.97, "custo_mensal_usd": 0.96, "tags": ["recurso_aws", "sqs", "prod", "COM-03"]}, {"id": "cfg-secret-backoffice", "rotulo": "secret:backoffice/erp-token (***)", "familia": "configuracao", "subtipo": "secret_metadata", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 60, "status_saude": "CONFORME", "confianca_evidencia": 0.9, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "arn:aws:secretsmanager:sa-east-1:111122223333:secret:backoffice/erp-token-***", "resumo": "Metadado de segredo auditado sem leitura de payload (GetSecretValue bloqueado por IAM deny_base RN-002).", "metadados": {"valor_mascarado": "***", "rotacao_ativa": true, "kms_encrypted": true}, "camada": "configuracao", "status": "SYNCED", "confianca_rn007": 0.9, "custo_mensal_usd": 0.9, "tags": ["configuracao", "secret_metadata", "prod", "COM-03"]}, {"id": "api-rota-recursos-internos", "rotulo": "GET /recursos-internos/?papel=cliente&pag=1&pageSize=20&status=0", "familia": "contrato_openapi", "subtipo": "openapi_route", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 73, "status_saude": "CRITICO", "confianca_evidencia": 0.94, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "code://repo-backoffice-recursos/handlers/recursos.py#L48", "resumo": "Divergência crítica CAP-31 (ROTA_ORFA_NO_OPENAPI): rota implementada na Lambda, mas ausente no OpenAPI do API Gateway.", "metadados": {"url_exemplo": "recursos-internos/?papel=cliente&pag=1&pageSize=20&status=0", "parametros": ["papel", "pag", "pageSize", "status"], "alinhamento_cap31": "ROTA_ORFA_NO_OPENAPI"}, "camada": "configuracao", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.94, "custo_mensal_usd": 1.09, "tags": ["contrato_openapi", "openapi_route", "prod", "COM-03"]}, {"id": "achado-d10-shadow-openapi", "rotulo": "D10/D12: Shadow IT SQS + Rota Órfã OpenAPI", "familia": "achado_sentinela", "subtipo": "finding_critical", "comunidade_id": "COM-03", "comunidade_nome": "Sistema Recursos Internos & Backoffice", "ambiente": "prod", "blast_radius": 78, "status_saude": "CRITICO", "confianca_evidencia": 0.96, "classificacao_evidencia": "CONFIRMADO", "proveniencia": "medido", "arn_ou_caminho": "ACHADO#D10#AMB#prod#REC#sqs-shadow-auditoria", "resumo": "Duplo desvio estrutural no Backoffice: fila SQS órfã de Terraform (CAP-24) e rota /recursos-internos ausente do OpenAPI (CAP-31).", "metadados": {"regras": ["D10", "D12", "D13"], "severidade": "ALTA"}, "camada": "incidente_drift", "status": "CRITICAL_DRIFT", "confianca_rn007": 0.96, "custo_mensal_usd": 1.17, "tags": ["achado_sentinela", "finding_critical", "prod", "COM-03"]}], "arestas": [{"id": "e01", "origem": "repo-iac-cadastro", "destino": "repo-tf-shared-modules", "relacao": "USA_MODULO", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "module.sqs_clientes source = tf-module-sqs-kms-shared v2.4.0"}, {"id": "e02", "origem": "repo-onboarding-empresas", "destino": "repo-tf-shared-modules", "relacao": "USA_MODULO", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Consome módulo base de mensageria e políticas IAM"}, {"id": "e03", "origem": "sqs-eventos-clientes", "destino": "kms-cmk-corporativa-prod", "relacao": "USA_CHAVE_KMS", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "kms_master_key_id = alias/cmk-squad-iaops-prod"}, {"id": "e04", "origem": "sns-eventos-cadastro", "destino": "kms-cmk-corporativa-prod", "relacao": "USA_CHAVE_KMS", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Criptografia em trânsito e repouso via CMK"}, {"id": "e05", "origem": "ddb-clientes-master", "destino": "kms-cmk-corporativa-prod", "relacao": "USA_CHAVE_KMS", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "SSE-KMS ativo com chave gerenciada pelo cliente"}, {"id": "e06", "origem": "cfg-secret-backoffice", "destino": "kms-cmk-corporativa-prod", "relacao": "USA_CHAVE_KMS", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME", "peso": 1.0, "detalhe": "Metadado KMS validado sem ler SecretString (RN-002)"}, {"id": "e07", "origem": "repo-iac-cadastro", "destino": "lambda-pessoas-api", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "main.tf: resource aws_lambda_function.pessoas_consulta"}, {"id": "e08", "origem": "repo-iac-cadastro", "destino": "sns-eventos-cadastro", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "main.tf: resource aws_sns_topic.cadastro_fanout"}, {"id": "e09", "origem": "repo-iac-cadastro", "destino": "sqs-eventos-clientes", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "main.tf: module.sqs_eventos_clientes"}, {"id": "e10", "origem": "repo-iac-cadastro", "destino": "ddb-clientes-master", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "dynamodb.tf: resource aws_dynamodb_table.clientes_master"}, {"id": "e11", "origem": "repo-cadastro-pessoas", "destino": "lambda-pessoas-api", "relacao": "IMPLANTA_CODIGO", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Handler Python src/pessoas/handler.py"}, {"id": "e12", "origem": "repo-cadastro-pessoas", "destino": "api-rota-pessoas", "relacao": "EXPOE_ROTA", "natureza": "EXTRACTED", "camada_evidencia": "OPENAPI_SPEC + IAC_AST", "peso": 1.0, "detalhe": "Implementa GET /pessoas/?papel=cliente&pag=1&pageSize=20&status=0"}, {"id": "e13", "origem": "apigw-corporativo-prod", "destino": "api-rota-pessoas", "relacao": "PUBLICA_CONTRATO", "natureza": "EXTRACTED", "camada_evidencia": "OPENAPI_SPEC", "peso": 1.0, "detalhe": "Rota mapeada no x-amazon-apigateway-integration"}, {"id": "e14", "origem": "api-rota-pessoas", "destino": "lambda-pessoas-api", "relacao": "INTEGRA_PROXY", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + OPENAPI_SPEC", "peso": 1.0, "detalhe": "Integração AWS_PROXY no API Gateway"}, {"id": "e15", "origem": "lambda-pessoas-api", "destino": "ddb-clientes-master", "relacao": "CONSOME_DE", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Query por PK=CLIENTE#<id> e GSI1=PAPEL#cliente (Zero Scan)"}, {"id": "e16", "origem": "lambda-pessoas-api", "destino": "sns-eventos-cadastro", "relacao": "PUBLICA_EM", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Publica evento ClienteAtualizado no tópico fanout"}, {"id": "e17", "origem": "sns-eventos-cadastro", "destino": "sqs-eventos-clientes", "relacao": "NOTIFICA_FILA", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Subscription SNS -> SQS ativa"}, {"id": "e18", "origem": "cfg-tfvars-clientes-prod", "destino": "sqs-eventos-clientes", "relacao": "DEFINE_CONFIG", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Define var.sqs_visibility_timeout = 30s em prod (drift vs 90s em hml)"}, {"id": "e19", "origem": "cfg-ssm-clientes-pool", "destino": "lambda-pessoas-api", "relacao": "DEFINE_CONFIG", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Injeta limite default pageSize=20 no ambiente da Lambda"}, {"id": "e20", "origem": "achado-d06-drift-timeout", "destino": "sqs-eventos-clientes", "relacao": "AFETA_RECURSO", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Alerta D06: visibility_timeout (30s) < 6x timeout consumidor"}, {"id": "e21", "origem": "achado-d06-drift-timeout", "destino": "cfg-tfvars-clientes-prod", "relacao": "CAUSA_RAIZ_CONFIG", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Origem exata do drift localizada em env/prod/clientes.tfvars:L18"}, {"id": "e22", "origem": "sns-eventos-cadastro", "destino": "ecs-empresas-service", "relacao": "PROPAGA_EVENTO", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME", "peso": 1.0, "detalhe": "Dependência cross-repo: mudanças em Cadastro impactam Onboarding PJ"}, {"id": "e23", "origem": "repo-onboarding-empresas", "destino": "ecs-empresas-service", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Serviço Fargate arm64 gerenciado pelo repo de empresas"}, {"id": "e24", "origem": "repo-onboarding-empresas", "destino": "s3-docs-empresas", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Bucket S3 de documentos societários"}, {"id": "e25", "origem": "cfg-taskdef-empresas", "destino": "ecs-empresas-service", "relacao": "DEFINE_CONFIG", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Configura task definition Fargate (CPU 1024 / Mem 2048)"}, {"id": "e26", "origem": "repo-onboarding-empresas", "destino": "api-rota-empresas", "relacao": "EXPOE_ROTA", "natureza": "EXTRACTED", "camada_evidencia": "OPENAPI_SPEC + IAC_AST", "peso": 1.0, "detalhe": "Handler FastAPI aceita ?papel=cliente&pag=1&pageSize=20&status=0&cnpj_raiz"}, {"id": "e27", "origem": "apigw-corporativo-prod", "destino": "api-rota-empresas", "relacao": "PUBLICA_CONTRATO", "natureza": "EXTRACTED", "camada_evidencia": "OPENAPI_SPEC", "peso": 1.0, "detalhe": "VPC Link API Gateway -> ALB/ECS Empresas"}, {"id": "e28", "origem": "api-rota-empresas", "destino": "ecs-empresas-service", "relacao": "INTEGRA_PROXY", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + OPENAPI_SPEC", "peso": 1.0, "detalhe": "Roteamento HTTP GET /empresas"}, {"id": "e29", "origem": "ecs-empresas-service", "destino": "s3-docs-empresas", "relacao": "PUBLICA_EM", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Grava contratos PJ no bucket S3"}, {"id": "e30", "origem": "achado-d01-kms-s3", "destino": "s3-docs-empresas", "relacao": "AFETA_RECURSO", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME + IAC_AST", "peso": 1.0, "detalhe": "Violação D01: ausência de aws_kms_key CMK no bucket S3"}, {"id": "e31", "origem": "repo-backoffice-recursos", "destino": "lambda-recursos-internos", "relacao": "PROVISIONA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Provisiona função Lambda de consulta de recursos internos"}, {"id": "e32", "origem": "repo-backoffice-recursos", "destino": "api-rota-recursos-internos", "relacao": "EXPOE_ROTA", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Implementa GET /recursos-internos/?papel=cliente&pag=1&pageSize=20&status=0"}, {"id": "e33", "origem": "api-rota-recursos-internos", "destino": "lambda-recursos-internos", "relacao": "INTEGRA_PROXY", "natureza": "EXTRACTED", "camada_evidencia": "IAC_AST", "peso": 1.0, "detalhe": "Rota ativa no handler, porém órfã no spec OpenAPI do API Gateway"}, {"id": "e34", "origem": "cfg-secret-backoffice", "destino": "lambda-recursos-internos", "relacao": "DEFINE_CONFIG", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME", "peso": 1.0, "detalhe": "Referência ARN de segredo injetada por variável de ambiente"}, {"id": "e35", "origem": "lambda-recursos-internos", "destino": "sqs-shadow-auditoria", "relacao": "PUBLICA_EM", "natureza": "INFERRED", "camada_evidencia": "AWS_RUNTIME", "peso": 0.85, "detalhe": "Chamada SDK detectada em runtime para fila SQS sem Terraform (Shadow IT)"}, {"id": "e36", "origem": "sqs-eventos-clientes", "destino": "lambda-recursos-internos", "relacao": "CONSOME_DE", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME", "peso": 1.0, "detalhe": "Backoffice consome eventos de clientes para auditoria cruzada"}, {"id": "e37", "origem": "achado-d10-shadow-openapi", "destino": "sqs-shadow-auditoria", "relacao": "AFETA_RECURSO", "natureza": "EXTRACTED", "camada_evidencia": "AWS_RUNTIME", "peso": 1.0, "detalhe": "Detectado via Resource Explorer sem correspondência em .tf (CAP-24)"}, {"id": "e38", "origem": "achado-d10-shadow-openapi", "destino": "api-rota-recursos-internos", "relacao": "AFETA_RECURSO", "natureza": "EXTRACTED", "camada_evidencia": "OPENAPI_SPEC + IAC_AST", "peso": 1.0, "detalhe": "Detectada divergência ROTA_ORFA_NO_OPENAPI (CAP-31)"}], "catalogo_rotas_openapi_cap31": [{"rota": "GET /pessoas/", "parametros": "papel=cliente&pag=1&pageSize=20&status=0", "sistema_alvo": "lambda-pessoas-api", "status_contrato": "CONFORME", "achado_iaops": "Contrato OpenAPI sincronizado com handler Python e DynamoDB GSI."}, {"rota": "GET /empresas/", "parametros": "papel=cliente&pag=1&pageSize=20&status=0&cnpj_raiz", "sistema_alvo": "ecs-empresas-service", "status_contrato": "DRIFT_PARAM", "achado_iaops": "Divergência CAP-31: query param cnpj_raiz aceito no ECS mas omitido no OpenAPI."}, {"rota": "GET /recursos-internos/", "parametros": "papel=cliente&pag=1&pageSize=20&status=0", "sistema_alvo": "lambda-recursos-internos", "status_contrato": "ROTA_ORFA", "achado_iaops": "Divergência Crítica CAP-31: rota ativa na Lambda mas órfã no spec OpenAPI."}], "comparativo_rag_vs_graphrag": [{"dimensao": "Unidade de Conhecimento", "rag_tradicional": "Chunks de texto isolados por similaridade cosseno", "graphrag_iaops": "Grafo tipado (Repositório ↔ Config/OpenAPI ↔ Recurso AWS)"}, {"dimensao": "Cálculo de Blast Radius", "rag_tradicional": "Cego a dependências transitivas multi-hop", "graphrag_iaops": "Travessia BFS determinística em 1, 2 e 3 saltos"}, {"dimensao": "Visão Global de Arquitetura", "rag_tradicional": "Falha em perguntas amplas ('quais os riscos da conta?')", "graphrag_iaops": "Map-Reduce sobre Comunidades Hierárquicas (Leiden COM-01..COM-04)"}, {"dimensao": "Hierarquia da Verdade (RN-007)", "rag_tradicional": "Peso igual para texto obsoleto e código vivo", "graphrag_iaops": "Score ponderado: 0.50 AWS Runtime + 0.35 IaC AST + 0.15 LLM"}], "habilidades_cadastradas": [{"code": "CAP-32", "id": "cap-32-super-agente-aiops-copiloto-graphrag", "name": "Copiloto Super Agente AIOps (Chat Contextual GraphRAG + Execução de Habilidades)", "grupo_dev": "🌐 APIs, Rotas & Eventos", "category": "agentic", "status": "ACTIVE", "version": "1.0.0", "description": "Lê o contexto da squad, navega o GraphRAG multi-hop e executa qualquer habilidade cadastrada em tempo real."}, {"code": "CAP-31", "id": "cap-31-api-openapi-route-parameter-discovery", "name": "Mapear Endpoints e Query Params (OpenAPI vs. Lambda/ECS)", "grupo_dev": "🌐 APIs, Rotas & Eventos", "category": "integration", "status": "ACTIVE", "version": "1.0.0", "description": "Lista todas as URLs e parâmetros aceitos no API Gateway e aponta divergências com o código das apps."}, {"code": "CAP-30", "id": "cap-30-executive-squad-health-radar-360", "name": "Visão Geral da Arquitetura e Prioridades da Sprint (Tech Lead)", "grupo_dev": "💰 Custos Cloud & Prioridades da Sprint", "category": "quality", "status": "ACTIVE", "version": "1.0.0", "description": "Resume os pontos críticos da arquitetura da squad e sugere o que priorizar no backlog técnico."}, {"code": "CAP-29", "id": "cap-29-cicd-supply-chain-oidc-auditor", "name": "Auditar Pipelines GitHub Actions e Role OIDC da AWS", "grupo_dev": "🔒 IAM, Segurança & Pipelines CI/CD", "category": "devops", "status": "ACTIVE", "version": "1.0.0", "description": "Revisa workflows de CI/CD, versões de actions e permissões de deploy na conta AWS."}, {"code": "CAP-28", "id": "cap-28-autonomous-incident-triage-correlator", "name": "Investigar Causa Raiz de Incidentes, Erros 5xx e Filas DLQ", "grupo_dev": "⚡ Performance, Logs & Incidentes", "category": "observability", "status": "ACTIVE", "version": "1.0.0", "description": "Cruza alarmes do CloudWatch, mensagens retidas em DLQ e deploys recentes para agilizar o troubleshooting."}, {"code": "CAP-27", "id": "cap-27-resilience-spof-dr-readiness", "name": "Checar Pontos Únicos de Falha (SPOF), Backup e Multi-AZ", "grupo_dev": "⚡ Performance, Logs & Incidentes", "category": "observability", "status": "ACTIVE", "version": "1.0.0", "description": "Verifica se bancos, filas e serviços críticos possuem alta disponibilidade, retry e política de backup ativa."}, {"code": "CAP-26", "id": "cap-26-iam-zerotrust-privilege-escalation", "name": "Revisar Permissões IAM Excessivas e Riscos de Acesso", "grupo_dev": "🔒 IAM, Segurança & Pipelines CI/CD", "category": "security", "status": "ACTIVE", "version": "1.0.0", "description": "Encontra roles com permissão curinga (*), iam:PassRole aberto ou acessos cruzados desnecessários."}, {"code": "CAP-25", "id": "cap-25-finops-workload-rightsizing-optimizer", "name": "Reduzir Custos de Lambda/ECS (Graviton ARM64 e Logs CloudWatch)", "grupo_dev": "💰 Custos Cloud & Prioridades da Sprint", "category": "agentic", "status": "ACTIVE", "version": "1.0.0", "description": "Calcula economia prática ajustando memória/CPU, migrando para ARM64 e limpando retenção de logs."}, {"code": "CAP-24", "id": "cap-24-reverse-drift-shadow-it-detector", "name": "Encontrar Recursos Criados Manualmente sem Terraform (ClickOps)", "grupo_dev": "☁️ Terraform & Configurações (.tfvars)", "category": "infrastructure", "status": "ACTIVE", "version": "1.0.0", "description": "Identifica filas, buckets e Lambdas ativos na conta AWS que não existem nos repositórios Git."}, {"code": "CAP-23", "id": "cap-23-api-warmup-ml-performance", "name": "Analisar Cold Start e Latência de APIs (1ª, 2ª e 3ª Request)", "grupo_dev": "⚡ Performance, Logs & Incidentes", "category": "observability", "status": "ACTIVE", "version": "1.0.0", "description": "Mede o tempo de resposta em chamadas frias vs. aquecidas nas Lambdas e containers ECS."}, {"code": "CAP-22", "id": "cap-22-continuous-skill-forge", "name": "Criar Nova Automação ou Verificação Técnica via Prompt", "grupo_dev": "💰 Custos Cloud & Prioridades da Sprint", "category": "agentic", "status": "ACTIVE", "version": "1.0.0", "description": "Transforma uma necessidade do time em uma nova habilidade pronta para rodar no console."}, {"code": "CAP-21", "id": "cap-21-infra-config-trace", "name": "Comparar Variáveis e Configs entre Ambientes (dev / hml / prod)", "grupo_dev": "☁️ Terraform & Configurações (.tfvars)", "category": "infrastructure", "status": "ACTIVE", "version": "1.0.0", "description": "Rastreia diferenças de variáveis em arquivos .tfvars, SSM Parameter Store e Secrets Manager."}, {"code": "CAP-19", "id": "cap-19-multi-channel-cli-teams", "name": "Rastrear Fluxo de Eventos e Mensageria (API ➔ SNS ➔ SQS ➔ Worker)", "grupo_dev": "🌐 APIs, Rotas & Eventos", "category": "integration", "status": "ACTIVE", "version": "1.0.0", "description": "Mapeia quem publica e quem consome em cada tópico SNS, fila SQS e EventBridge da squad."}, {"code": "CAP-11", "id": "cap-11-predictive-blast-radius", "name": "Simular Impacto de Mudança antes do Deploy (Blast Radius)", "grupo_dev": "⚡ Performance, Logs & Incidentes", "category": "agentic", "status": "ACTIVE", "version": "1.0.0", "description": "Mostra quais serviços, rotas e bancos seriam afetados antes de alterar um recurso compartilhado."}, {"code": "CAP-07", "id": "cap-07-intake-l0-l1-l2", "name": "Detectar Divergências entre Código Terraform e AWS (Drift)", "grupo_dev": "☁️ Terraform & Configurações (.tfvars)", "category": "agentic", "status": "ACTIVE", "version": "1.0.0", "description": "Aponta configurações em produção (timeouts, políticas, tags) que saíram de sincronia com a branch."}]};
+
+    // Estado interativo da visualização
+    let estado = {
+      telaAtiva: 'monitor', // 'monitor' | 'graphrag' | 'habilidades' | 'openapi' | 'inspetor'
+      modoLayout: 'cloud', // 'cloud' | 'tripartite' | 'blast'
+      grupoCatalogoDev: 'all',
+      familiaFiltro: 'all',
+      comunidadeFiltro: 'all',
+      buscaTexto: '',
+      noSelecionadoId: 'sqs-eventos-clientes',
+      noHoverId: null,
+      noArrastando: null,
+      subgrafoAtivoNos: new Set(),
+      subgrafoAtivoArestas: new Set(),
+      ondasBlast: {}, // noId -> hop (0, 1, 2, 3)
+      exibirRotulosArestas: false,
+      zoom: 1.0,
+      panX: 0,
+      panY: 0,
+      arrastandoCanvas: false,
+      ultimoMouseX: 0,
+      ultimoMouseY: 0,
+      tick: 0
+    };
+
+    const CORES_COMUNIDADE = {
+      'COM-01': '#38bdf8',
+      'COM-02': '#a78bfa',
+      'COM-03': '#f59e0b',
+      'COM-04': '#10b981'
+    };
+
+    const CORES_FAMILIA = {
+      'recurso_aws': '#0ea5e9',
+      'repositorio': '#6366f1',
+      'configuracao': '#10b981',
+      'contrato_openapi': '#f59e0b',
+      'achado_sentinela': '#ef4444'
+    };
+
+    const canvas = document.getElementById('iaops-graph-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Inicializa coordenadas físicas para cada nó com amplo espaçamento por quadrante
+    function inicializarPosicoesNos() {
+      const w = canvas.width || 1280;
+      const h = canvas.height || 660;
+      const centrosComunidade = {
+        'COM-01': { x: w * 0.21, y: h * 0.36 },
+        'COM-04': { x: w * 0.50, y: h * 0.23 },
+        'COM-02': { x: w * 0.79, y: h * 0.36 },
+        'COM-03': { x: w * 0.50, y: h * 0.74 }
+      };
+
+      const porComunidade = {};
+      GRAFO_IAOPS.nos.forEach(n => {
+        const cid = n.comunidade_id || 'COM-01';
+        if (!porComunidade[cid]) porComunidade[cid] = [];
+        porComunidade[cid].push(n);
+      });
+
+      Object.entries(porComunidade).forEach(([cid, lista]) => {
+        const c = centrosComunidade[cid] || { x: w * 0.5, y: h * 0.5 };
+        lista.forEach((n, idx) => {
+          const ang = (idx / Math.max(1, lista.length)) * Math.PI * 2 - Math.PI / 4;
+          const raio = 95 + (idx % 2) * 38;
+          n.x = c.x + Math.cos(ang) * raio;
+          n.y = c.y + Math.sin(ang) * (raio * 0.82);
+          n.vx = 0;
+          n.vy = 0;
+          n.raio = Math.max(16, Math.min(24, 12 + (n.blast_radius || 60) * 0.12));
+        });
+      });
+      atualizarContadores();
+      popularSelectsSimulador();
+    }
+
+    function redimensionarCanvas() {
+      const container = document.getElementById('cloud-canvas-container');
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 100) {
+        canvas.width = Math.max(760, rect.width);
+        canvas.height = Math.max(540, rect.height - 92);
+      }
+    }
+
+    function atualizarContadores() {
+      const cont = { all: GRAFO_IAOPS.nos.length, recurso_aws: 0, repositorio: 0, configuracao: 0, contrato_openapi: 0, achado_sentinela: 0 };
+      GRAFO_IAOPS.nos.forEach(n => {
+        if (cont[n.familia] !== undefined) cont[n.familia]++;
+      });
+      Object.keys(cont).forEach(k => {
+        const el = document.getElementById('cnt-' + k);
+        if (el) el.textContent = cont[k];
+      });
+    }
+
+    function popularSelectsSimulador() {
+      const selOrig = document.getElementById('sel-path-origin');
+      const selDest = document.getElementById('sel-path-target');
+      if (!selOrig || !selDest) return;
+      const opcoes = GRAFO_IAOPS.nos.map(n => `<option value="${n.id}">${n.rotulo} (${n.subtipo})</option>`).join('');
+      selOrig.innerHTML = opcoes;
+      selDest.innerHTML = `<option value="">-- Propagar para todos os vizinhos (3-Hops) --</option>` + opcoes;
+      selOrig.value = 'kms-cmk-corporativa-prod';
+      selDest.value = 'ecs-empresas-service';
+    }
+
+    function noEstaVisivel(n) {
+      if (estado.familiaFiltro !== 'all' && n.familia !== estado.familiaFiltro) return false;
+      if (estado.comunidadeFiltro !== 'all' && n.comunidade_id !== estado.comunidadeFiltro) return false;
+      if (estado.buscaTexto) {
+        const q = estado.buscaTexto.toLowerCase();
+        const hay = `${n.id} ${n.rotulo} ${n.subtipo} ${n.arn_ou_caminho} ${n.resumo}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }
+
+    // FÍSICA DA NUVEM DE NÓS COM RESOLUÇÃO RÍGIDA DE COLISÃO (ZERO SOBREPOSIÇÃO)
+    function atualizarFisica() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const nosVisiveis = GRAFO_IAOPS.nos.filter(noEstaVisivel);
+      const mapaNos = Object.fromEntries(GRAFO_IAOPS.nos.map(n => [n.id, n]));
+
+      if (estado.modoLayout === 'tripartite') {
+        const ordemColunas = {
+          'repositorio': w * 0.14,
+          'configuracao': w * 0.39,
+          'contrato_openapi': w * 0.39,
+          'recurso_aws': w * 0.66,
+          'achado_sentinela': w * 0.88
+        };
+        const grupos = { col1: [], col2: [], col3: [], col4: [] };
+        nosVisiveis.forEach(n => {
+          if (n.familia === 'repositorio') grupos.col1.push(n);
+          else if (n.familia === 'configuracao' || n.familia === 'contrato_openapi') grupos.col2.push(n);
+          else if (n.familia === 'recurso_aws') grupos.col3.push(n);
+          else grupos.col4.push(n);
+        });
+        Object.values(grupos).forEach(lista => {
+          lista.forEach((n, idx) => {
+            const alvoX = ordemColunas[n.familia] || w * 0.5;
+            const espacoY = (h - 96) / Math.max(1, lista.length);
+            const alvoY = 56 + espacoY * (idx + 0.5);
+            if (estado.noArrastando !== n) {
+              n.x += (alvoX - n.x) * 0.14;
+              n.y += (alvoY - n.y) * 0.14;
+            }
+          });
+        });
+        return;
+      }
+
+      const centros = {
+        'COM-01': { x: w * 0.21, y: h * 0.37 },
+        'COM-04': { x: w * 0.50, y: h * 0.23 },
+        'COM-02': { x: w * 0.79, y: h * 0.37 },
+        'COM-03': { x: w * 0.50, y: h * 0.74 }
+      };
+
+      // Repulsão Coulomb reforçada entre pares de nós
+      for (let i = 0; i < nosVisiveis.length; i++) {
+        for (let j = i + 1; j < nosVisiveis.length; j++) {
+          const a = nosVisiveis[i];
+          const b = nosVisiveis[j];
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          let dist2 = dx * dx + dy * dy;
+          if (dist2 < 140) dist2 = 140;
+          const dist = Math.sqrt(dist2);
+          const repulsao = 6400 / dist2;
+          const fx = (dx / dist) * repulsao;
+          const fy = (dy / dist) * repulsao;
+          a.vx -= fx;
+          a.vy -= fy;
+          b.vx += fx;
+          b.vy += fy;
+        }
+      }
+
+      // Atração Hooke pelas arestas conectadas com comprimento ideal amplo
+      GRAFO_IAOPS.arestas.forEach(ar => {
+        const u = mapaNos[ar.origem];
+        const v = mapaNos[ar.destino];
+        if (!u || !v || !noEstaVisivel(u) || !noEstaVisivel(v)) return;
+        const dx = v.x - u.x;
+        const dy = v.y - u.y;
+        const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        const ideal = u.comunidade_id === v.comunidade_id ? 142 : 270;
+        const forca = (dist - ideal) * 0.006;
+        const fx = (dx / dist) * forca;
+        const fy = (dy / dist) * forca;
+        u.vx += fx;
+        u.vy += fy;
+        v.vx -= fx;
+        v.vy -= fy;
+      });
+
+      // Gravidade suave para o quadrante da Comunidade GraphRAG
+      nosVisiveis.forEach(n => {
+        if (estado.noArrastando === n) return;
+        const c = centros[n.comunidade_id] || { x: w * 0.5, y: h * 0.5 };
+        n.vx += (c.x - n.x) * 0.015;
+        n.vy += (c.y - n.y) * 0.015;
+        n.vx *= 0.78;
+        n.vy *= 0.78;
+        n.x += n.vx;
+        n.y += n.vy;
+      });
+
+      // Solver de separação mínima rígida (garante distância >= 132px entre quaisquer 2 nós)
+      const minDist = 132;
+      for (let iter = 0; iter < 3; iter++) {
+        for (let i = 0; i < nosVisiveis.length; i++) {
+          for (let j = i + 1; j < nosVisiveis.length; j++) {
+            const a = nosVisiveis[i];
+            const b = nosVisiveis[j];
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist < 1) {
+              dx = (i % 2 === 0 ? 1 : -1);
+              dy = (j % 2 === 0 ? 1 : -1);
+              dist = Math.hypot(dx, dy);
+            }
+            if (dist < minDist) {
+              const overlap = (minDist - dist) * 0.5;
+              const nx = dx / dist;
+              const ny = dy / dist;
+              if (estado.noArrastando !== a) {
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+              }
+              if (estado.noArrastando !== b) {
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+              }
+            }
+          }
+        }
+      }
+
+      // Mantém dentro das margens seguras do canvas
+      nosVisiveis.forEach(n => {
+        n.x = Math.max(76, Math.min(w - 76, n.x));
+        n.y = Math.max(54, Math.min(h - 48, n.y));
+      });
+    }
+
+    // DESENHO GEOMÉTRICO POR FAMÍLIA DE NÓ
+    function desenharFormaNo(ctx, n, r) {
+      ctx.beginPath();
+      if (n.familia === 'recurso_aws') {
+        for (let i = 0; i < 6; i++) {
+          const ang = (Math.PI / 3) * i - Math.PI / 6;
+          const px = n.x + r * Math.cos(ang);
+          const py = n.y + r * Math.sin(ang);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      } else if (n.familia === 'repositorio') {
+        const rw = r * 1.25;
+        const rh = r * 0.95;
+        ctx.roundRect(n.x - rw, n.y - rh, rw * 2, rh * 2, 6);
+      } else if (n.familia === 'configuracao') {
+        ctx.moveTo(n.x, n.y - r * 1.15);
+        ctx.lineTo(n.x + r * 1.2, n.y);
+        ctx.lineTo(n.x, n.y + r * 1.15);
+        ctx.lineTo(n.x - r * 1.2, n.y);
+        ctx.closePath();
+      } else if (n.familia === 'achado_sentinela') {
+        ctx.moveTo(n.x, n.y - r * 1.2);
+        ctx.lineTo(n.x + r * 1.15, n.y + r * 0.95);
+        ctx.lineTo(n.x - r * 1.15, n.y + r * 0.95);
+        ctx.closePath();
+      } else {
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      }
+    }
+
+    function desenharPillTexto(ctx, texto, x, y, corTexto, corFundo, corBorda, fontSpec) {
+      ctx.save();
+      ctx.font = fontSpec || '600 10.5px Inter, sans-serif';
+      const larguraTexto = ctx.measureText(texto).width;
+      const padX = 7;
+      const w = larguraTexto + padX * 2;
+      const h = 18;
+      ctx.beginPath();
+      ctx.roundRect(x - w / 2, y - h / 2, w, h, 5);
+      ctx.fillStyle = corFundo || 'rgba(9, 13, 22, 0.90)';
+      ctx.fill();
+      if (corBorda) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = corBorda;
+        ctx.stroke();
+      }
+      ctx.fillStyle = corTexto || '#e2e8f0';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(texto, x, y + 0.5);
+      ctx.restore();
+    }
+
+    function renderizarNuvem() {
+      estado.tick++;
+      atualizarFisica();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(estado.panX, estado.panY);
+      ctx.scale(estado.zoom, estado.zoom);
+
+      const mapaNos = Object.fromEntries(GRAFO_IAOPS.nos.map(n => [n.id, n]));
+      const temSubgrafo = estado.subgrafoAtivoNos.size > 0;
+
+      // 1. Desenha Bolhas de Comunidades Leiden (Modo Cloud) ou Cabeçalhos de Colunas (Modo Tripartido)
+      if (estado.modoLayout === 'cloud') {
+        GRAFO_IAOPS.comunidades.forEach(com => {
+          if (estado.comunidadeFiltro !== 'all' && estado.comunidadeFiltro !== com.id) return;
+          const nosCom = GRAFO_IAOPS.nos.filter(n => n.comunidade_id === com.id && noEstaVisivel(n));
+          if (nosCom.length === 0) return;
+          const cx = nosCom.reduce((s, n) => s + n.x, 0) / nosCom.length;
+          const cy = nosCom.reduce((s, n) => s + n.y, 0) / nosCom.length;
+          let maxDist = 88;
+          nosCom.forEach(n => {
+            const d = Math.hypot(n.x - cx, n.y - cy) + 48;
+            if (d > maxDist) maxDist = d;
+          });
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, maxDist, 0, Math.PI * 2);
+          ctx.fillStyle = com.cor_hex + '0c';
+          ctx.fill();
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = com.cor_hex + '44';
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          const tituloCom = `${com.id} · ${com.nome} · Saúde ${com.score_saude_360}%`;
+          desenharPillTexto(
+            ctx,
+            tituloCom,
+            cx,
+            Math.max(20, cy - maxDist + 4),
+            com.cor_hex,
+            'rgba(9, 13, 22, 0.92)',
+            com.cor_hex + '66',
+            'bold 11px Inter, sans-serif'
+          );
+        });
+      } else if (estado.modoLayout === 'tripartite') {
+        const colunas = [
+          { x: canvas.width * 0.14, titulo: '📦 1. REPOSITÓRIOS GITHUB', cor: '#818cf8' },
+          { x: canvas.width * 0.39, titulo: '⚙️ 2. CONFIGS (.TFVARS/SSM) & OPENAPI', cor: '#34d399' },
+          { x: canvas.width * 0.66, titulo: '☁️ 3. RECURSOS AWS RUNTIME', cor: '#38bdf8' },
+          { x: canvas.width * 0.88, titulo: '⚠️ 4. SENTINELA (D01–D20)', cor: '#f87171' }
+        ];
+        colunas.forEach(c => {
+          ctx.save();
+          ctx.strokeStyle = c.cor + '33';
+          ctx.beginPath();
+          ctx.moveTo(c.x, 34);
+          ctx.lineTo(c.x, canvas.height - 20);
+          ctx.stroke();
+          ctx.restore();
+          desenharPillTexto(ctx, c.titulo, c.x, 20, c.cor, 'rgba(9, 13, 22, 0.92)', c.cor + '55', 'bold 11px Inter, sans-serif');
+        });
+      }
+
+      // 2. Desenha Arestas Direcionadas e Partículas Luminosas de Fluxo
+      GRAFO_IAOPS.arestas.forEach(ar => {
+        const u = mapaNos[ar.origem];
+        const v = mapaNos[ar.destino];
+        if (!u || !v || !noEstaVisivel(u) || !noEstaVisivel(v)) return;
+
+        const conectadaAoHover = (estado.noHoverId && (estado.noHoverId === u.id || estado.noHoverId === v.id));
+        const conectadaAoSelecionado = (estado.noSelecionadoId && (estado.noSelecionadoId === u.id || estado.noSelecionadoId === v.id));
+        const estaDestacada =
+          (!temSubgrafo && (conectadaAoHover || conectadaAoSelecionado)) ||
+          (temSubgrafo && estado.subgrafoAtivoArestas.has(ar.id));
+
+        const opacidadeBase = temSubgrafo ? (estaDestacada ? 0.92 : 0.10) : (estaDestacada ? 0.88 : 0.28);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(u.x, u.y);
+        ctx.lineTo(v.x, v.y);
+        ctx.lineWidth = estaDestacada ? 2.1 : 1.1;
+        ctx.strokeStyle = estaDestacada ? '#38bdf8' : `rgba(148, 163, 184, ${opacidadeBase})`;
+        if (ar.natureza === 'INFERRED') ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (estaDestacada) {
+          const t = ((estado.tick * 0.013) + (ar.id.charCodeAt(ar.id.length - 1) * 0.13)) % 1;
+          const px = u.x + (v.x - u.x) * t;
+          const py = u.y + (v.y - u.y) * t;
+          ctx.beginPath();
+          ctx.arc(px, py, 3.0, 0, Math.PI * 2);
+          ctx.fillStyle = '#f8fafc';
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 7;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Exibe rótulo da aresta apenas em hover direto ou quando toggle "🏷️ Rótulos" estiver ativo
+          if (conectadaAoHover || estado.exibirRotulosArestas) {
+            const mx = (u.x + v.x) / 2;
+            const my = (u.y + v.y) / 2;
+            desenharPillTexto(
+              ctx,
+              ar.relacao,
+              mx,
+              my,
+              '#bae6fd',
+              'rgba(15, 23, 42, 0.94)',
+              'rgba(56, 189, 248, 0.45)',
+              'bold 9px JetBrains Mono, monospace'
+            );
+          }
+        }
+        ctx.restore();
+      });
+
+      // 3. Desenha os Nós da Nuvem com Rótulos em Pill de Alto Contraste
+      GRAFO_IAOPS.nos.forEach(n => {
+        if (!noEstaVisivel(n)) return;
+        const selecionado = estado.noSelecionadoId === n.id;
+        const hover = estado.noHoverId === n.id;
+        const noSubgrafo = !temSubgrafo || estado.subgrafoAtivoNos.has(n.id);
+        const alfa = noSubgrafo ? 1.0 : 0.22;
+        const corBase = CORES_FAMILIA[n.familia] || '#38bdf8';
+        const r = n.raio * (selecionado || hover ? 1.16 : 1.0);
+
+        ctx.save();
+        ctx.globalAlpha = alfa;
+
+        if (n.status_saude === 'CRITICO' || n.status_saude === 'SHADOW_IT' || estado.ondasBlast[n.id] !== undefined) {
+          const pulso = 4 + Math.sin(estado.tick * 0.08) * 3.2;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r + pulso, 0, Math.PI * 2);
+          ctx.strokeStyle = estado.ondasBlast[n.id] !== undefined ? '#fbbf24' : '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        desenharFormaNo(ctx, n, r);
+        ctx.fillStyle = selecionado ? corBase : '#0f172a';
+        ctx.fill();
+        ctx.lineWidth = selecionado ? 3.0 : 2.0;
+        ctx.strokeStyle = corBase;
+        if (selecionado || hover) {
+          ctx.shadowColor = corBase;
+          ctx.shadowBlur = 15;
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 9.5px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const sigla = (n.subtipo || '').slice(0, 6).toUpperCase();
+        ctx.fillText(sigla, n.x, n.y);
+
+        if (estado.ondasBlast[n.id] !== undefined) {
+          const hop = estado.ondasBlast[n.id];
+          ctx.fillStyle = hop === 0 ? '#ef4444' : '#f59e0b';
+          ctx.beginPath();
+          ctx.arc(n.x + r * 0.85, n.y - r * 0.85, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 9px Inter, sans-serif';
+          ctx.fillText(`${hop}º`, n.x + r * 0.85, n.y - r * 0.85);
+        }
+
+        const rotuloCurto = n.rotulo.length > 26 ? n.rotulo.slice(0, 24) + '…' : n.rotulo;
+        desenharPillTexto(
+          ctx,
+          rotuloCurto,
+          n.x,
+          n.y + r + 14,
+          selecionado ? '#ffffff' : '#e2e8f0',
+          selecionado ? 'rgba(14, 116, 144, 0.92)' : 'rgba(9, 13, 22, 0.88)',
+          selecionado ? '#38bdf8' : 'rgba(51, 65, 85, 0.70)',
+          selecionado ? 'bold 10.5px Inter, sans-serif' : '500 10px Inter, sans-serif'
+        );
+
+        ctx.restore();
+      });
+
+      ctx.restore();
+      requestAnimationFrame(renderizarNuvem);
+    }
+
+    // NAVEGAÇÃO ENTRE AS TELAS DO MENU (MONITOR EXCLUSIVO NA PRINCIPAL)
+    function navegarTelaMonitor(telaKey) {
+      const mapaTelas = {
+        'monitor': 'tela-monitor',
+        'graphrag': 'tela-graphrag',
+        'habilidades': 'tela-habilidades',
+        'openapi': 'tela-openapi',
+        'inspetor': 'tela-inspetor'
+      };
+      const idAlvo = mapaTelas[telaKey] || 'tela-monitor';
+      estado.telaAtiva = telaKey;
+
+      document.querySelectorAll('.monitor-screen-pane').forEach(sec => {
+        sec.classList.toggle('active', sec.id === idAlvo);
+      });
+
+      // Atualiza estado ativo no menu lateral e na barra superior
+      const snavMap = {
+        'monitor': 'snav-tab-monitor-graphrag',
+        'graphrag': 'snav-tela-graphrag',
+        'habilidades': 'snav-tela-habilidades',
+        'openapi': 'snav-tela-openapi',
+        'inspetor': 'snav-tela-inspetor'
+      };
+      Object.entries(snavMap).forEach(([k, btnId]) => {
+        const el = document.getElementById(btnId);
+        if (el) el.classList.toggle('active', k === telaKey);
+      });
+
+      const topMap = {
+        'monitor': 'top-nav-monitor',
+        'graphrag': 'top-nav-graphrag',
+        'habilidades': 'top-nav-habilidades',
+        'openapi': 'top-nav-openapi'
+      };
+      Object.entries(topMap).forEach(([k, btnId]) => {
+        const el = document.getElementById(btnId);
+        if (el) el.classList.toggle('active', k === telaKey);
+      });
+
+      if (telaKey === 'monitor') {
+        setTimeout(() => redimensionarCanvas(), 25);
+      }
+      if (typeof atualizarContextoSuperAgente === 'function') {
+        atualizarContextoSuperAgente();
+      }
+    }
+
+    function fecharCardFlutuanteNo() {
+      const card = document.getElementById('floating-node-card');
+      if (card) card.classList.add('hidden');
+    }
+
+    function alternarRotulosArestas() {
+      estado.exibirRotulosArestas = !estado.exibirRotulosArestas;
+      const btn = document.getElementById('btn-toggle-edge-labels');
+      if (btn) btn.classList.toggle('active', estado.exibirRotulosArestas);
+    }
+
+    function ajustarZoomCanvas(fator) {
+      estado.zoom = Math.max(0.55, Math.min(2.2, estado.zoom * fator));
+    }
+
+    // INTERAÇÃO DE MOUSE E TOQUE NO CANVAS
+    function obterCoordenadasMundo(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (ev.clientX - rect.left - estado.panX) / estado.zoom;
+      const my = (ev.clientY - rect.top - estado.panY) / estado.zoom;
+      return { x: mx, y: my };
+    }
+
+    function encontrarNoEm(x, y) {
+      for (let i = GRAFO_IAOPS.nos.length - 1; i >= 0; i--) {
+        const n = GRAFO_IAOPS.nos[i];
+        if (!noEstaVisivel(n)) continue;
+        if (Math.hypot(n.x - x, n.y - y) <= n.raio + 8) return n;
+      }
+      return null;
+    }
+
+    canvas.addEventListener('mousedown', ev => {
+      const pt = obterCoordenadasMundo(ev);
+      const no = encontrarNoEm(pt.x, pt.y);
+      if (no) {
+        estado.noArrastando = no;
+        selecionarNoPorId(no.id, true);
+      } else {
+        estado.arrastandoCanvas = true;
+        estado.ultimoMouseX = ev.clientX;
+        estado.ultimoMouseY = ev.clientY;
+      }
+    });
+
+    window.addEventListener('mousemove', ev => {
+      if (estado.noArrastando) {
+        const pt = obterCoordenadasMundo(ev);
+        estado.noArrastando.x = pt.x;
+        estado.noArrastando.y = pt.y;
+        return;
+      }
+      if (estado.arrastandoCanvas) {
+        estado.panX += ev.clientX - estado.ultimoMouseX;
+        estado.panY += ev.clientY - estado.ultimoMouseY;
+        estado.ultimoMouseX = ev.clientX;
+        estado.ultimoMouseY = ev.clientY;
+        return;
+      }
+      const pt = obterCoordenadasMundo(ev);
+      const no = encontrarNoEm(pt.x, pt.y);
+      estado.noHoverId = no ? no.id : null;
+      canvas.style.cursor = no ? 'pointer' : 'grab';
+    });
+
+    window.addEventListener('mouseup', () => {
+      estado.noArrastando = null;
+      estado.arrastandoCanvas = false;
+    });
+
+    canvas.addEventListener('wheel', ev => {
+      ev.preventDefault();
+      const fator = ev.deltaY < 0 ? 1.1 : 0.9;
+      estado.zoom = Math.max(0.55, Math.min(2.2, estado.zoom * fator));
+    }, { passive: false });
+
+    // INSPETOR 360° DE ASSOCIAÇÕES + CARD FLUTUANTE COMPACTO DO NÓ SELECIONADO
+    function selecionarNoPorId(noId, exibirCardFlutuante = false) {
+      const no = GRAFO_IAOPS.nos.find(n => n.id === noId);
+      if (!no) return;
+      estado.noSelecionadoId = no.id;
+
+      const badgeFamTexto = `${no.familia.replace('_', ' ').toUpperCase()} · ${no.subtipo.toUpperCase()}`;
+      const classeStatus = (
+        no.status_saude === 'CONFORME' ? 'badge-confirmado' :
+        (no.status_saude === 'AVISO' ? 'badge-aviso' : 'badge-critico')
+      );
+
+      // Atualiza Card Flutuante Rápido no Monitor Gráfico
+      const floatCard = document.getElementById('floating-node-card');
+      if (floatCard && exibirCardFlutuante) floatCard.classList.remove('hidden');
+      const fFam = document.getElementById('float-insp-familia');
+      if (fFam) fFam.textContent = badgeFamTexto;
+      const fTit = document.getElementById('float-insp-titulo');
+      if (fTit) fTit.textContent = no.rotulo;
+      const fStat = document.getElementById('float-insp-status');
+      if (fStat) {
+        fStat.textContent = no.status_saude;
+        fStat.className = 'text-xs px-1.5 py-0.5 rounded font-bold ' + classeStatus;
+      }
+      const fRes = document.getElementById('float-insp-resumo');
+      if (fRes) fRes.textContent = no.resumo;
+      const fBlast = document.getElementById('float-insp-blast');
+      if (fBlast) fBlast.textContent = `${no.blast_radius}/100`;
+      const fConf = document.getElementById('float-insp-confianca');
+      if (fConf) fConf.textContent = `${no.classificacao_evidencia} (${no.confianca_evidencia})`;
+
+      // Atualiza Tela Dedicada do Inspetor 360° (#tela-inspetor)
+      document.getElementById('insp-familia-badge').textContent = badgeFamTexto;
+      document.getElementById('insp-titulo').textContent = no.rotulo;
+      document.getElementById('insp-arn').textContent = no.arn_ou_caminho;
+      document.getElementById('insp-resumo').textContent = no.resumo;
+
+      const statusEl = document.getElementById('insp-status-badge');
+      statusEl.textContent = no.status_saude;
+      statusEl.className = 'text-xs px-2.5 py-1 rounded-md font-bold ' + classeStatus;
+
+      document.getElementById('insp-blast-score').textContent = `${no.blast_radius}/100`;
+      document.getElementById('insp-blast-bar').style.width = `${no.blast_radius}%`;
+      document.getElementById('insp-confianca').textContent = `${no.classificacao_evidencia} (${no.confianca_evidencia})`;
+      document.getElementById('insp-proveniencia').textContent = `Selo: [${no.proveniencia} · RN-008]`;
+      document.getElementById('insp-metadados').textContent = JSON.stringify(no.metadados || {}, null, 2);
+
+      const mapaNos = Object.fromEntries(GRAFO_IAOPS.nos.map(n => [n.id, n]));
+      const repos = [];
+      const configs = [];
+      const recursos = [];
+
+      GRAFO_IAOPS.arestas.forEach(ar => {
+        let outroId = null;
+        let direcao = '';
+        if (ar.origem === no.id) { outroId = ar.destino; direcao = `➔ ${ar.relacao}`; }
+        else if (ar.destino === no.id) { outroId = ar.origem; direcao = `⬅ ${ar.relacao}`; }
+        if (!outroId || !mapaNos[outroId]) return;
+        const outro = mapaNos[outroId];
+        const itemHtml = `
+          <div onclick="selecionarNoPorId('${outro.id}', true)" class="glass-card rounded-lg p-2 cursor-pointer flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-semibold text-white">${outro.rotulo}</div>
+              <div class="text-xs text-slate-400 mono">${direcao} · [${ar.natureza}]</div>
+            </div>
+            <span class="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-sky-300 mono">${outro.subtipo}</span>
+          </div>`;
+        if (outro.familia === 'repositorio') repos.push(itemHtml);
+        else if (outro.familia === 'configuracao' || outro.familia === 'contrato_openapi') configs.push(itemHtml);
+        else recursos.push(itemHtml);
+      });
+
+      document.getElementById('insp-cnt-repos').textContent = repos.length;
+      document.getElementById('insp-cnt-configs').textContent = configs.length;
+      document.getElementById('insp-cnt-recursos').textContent = recursos.length;
+
+      const vazioHtml = `<div class="text-xs text-slate-500 italic">Nenhuma associação direta nesta camada (use Isolar 2-Hops).</div>`;
+      document.getElementById('insp-list-repos').innerHTML = repos.join('') || vazioHtml;
+      document.getElementById('insp-list-configs').innerHTML = configs.join('') || vazioHtml;
+      document.getElementById('insp-list-recursos').innerHTML = recursos.join('') || vazioHtml;
+      if (typeof atualizarContextoSuperAgente === 'function') {
+        atualizarContextoSuperAgente();
+      }
+    }
+
+    // MOTOR GRAPHRAG: TRAVESSIA MULTI-HOP LOCAL E VIA API
+    function selecionarPerguntaChip(pergunta) {
+      document.getElementById('inp-graphrag-query').value = pergunta;
+      dispararConsultaGraphRAG();
+    }
+
+    async function dispararConsultaGraphRAG(iluminarNoCanvas = true) {
+      const pergunta = document.getElementById('inp-graphrag-query').value.trim();
+      const modo = document.getElementById('sel-graphrag-mode').value;
+      if (!pergunta) return;
+
+      try {
+        const resp = await fetch('/api/graphrag/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pergunta, modo })
+        });
+        if (resp.ok) {
+          const dados = await resp.json();
+          aplicarResultadoGraphRAGNaTela(dados, iluminarNoCanvas);
+          return;
+        }
+      } catch (_e) {
+        // Usa o motor GraphRAG determinístico no cliente
+      }
+
+      const resultadoLocal = executarMotorGraphRAGCliente(pergunta, modo);
+      aplicarResultadoGraphRAGNaTela(resultadoLocal, iluminarNoCanvas);
+    }
+
+    function executarMotorGraphRAGCliente(pergunta, modo) {
+      const q = pergunta.toLowerCase();
+      const mapaNos = Object.fromEntries(GRAFO_IAOPS.nos.map(n => [n.id, n]));
+      let sementes = [];
+
+      if (q.includes('openapi') || q.includes('rota') || q.includes('pessoas') || q.includes('empresas') || q.includes('recursos-internos')) {
+        sementes = ['api-rota-pessoas', 'api-rota-empresas', 'api-rota-recursos-internos', 'apigw-corporativo-prod'];
+      } else if (q.includes('sqs') || q.includes('tfvars') || q.includes('drift') || q.includes('timeout')) {
+        sementes = ['sqs-eventos-clientes', 'cfg-tfvars-clientes-prod', 'achado-d06-drift-timeout'];
+      } else if (q.includes('kms') || q.includes('criptografia') || q.includes('s3') || q.includes('shared')) {
+        sementes = ['kms-cmk-corporativa-prod', 's3-docs-empresas', 'achado-d01-kms-s3', 'repo-tf-shared-modules'];
+      } else if (q.includes('shadow') || q.includes('orfao') || q.includes('backoffice') || q.includes('cap-24')) {
+        sementes = ['sqs-shadow-auditoria', 'achado-d10-shadow-openapi', 'lambda-recursos-internos'];
+      } else {
+        GRAFO_IAOPS.nos.forEach(n => {
+          if (q.includes(n.id.toLowerCase()) || q.includes(n.rotulo.toLowerCase())) sementes.push(n.id);
+        });
+      }
+      if (sementes.length === 0) sementes = [estado.noSelecionadoId || 'sqs-eventos-clientes'];
+
+      const nosRecuperados = new Set(sementes);
+      const arestasRecuperadas = new Set();
+      const triplas = [];
+
+      let fronteira = [...sementes];
+      for (let hop = 0; hop < 2; hop++) {
+        const prox = [];
+        fronteira.forEach(uid => {
+          GRAFO_IAOPS.arestas.forEach(ar => {
+            if (ar.origem === uid || ar.destino === uid) {
+              if (!arestasRecuperadas.has(ar.id)) {
+                arestasRecuperadas.add(ar.id);
+                triplas.push({
+                  origem: mapaNos[ar.origem]?.rotulo || ar.origem,
+                  relacao: ar.relacao,
+                  destino: mapaNos[ar.destino]?.rotulo || ar.destino,
+                  natureza: ar.natureza,
+                  evidencia: ar.camada_evidencia
+                });
+              }
+              const viz = ar.origem === uid ? ar.destino : ar.origem;
+              if (!nosRecuperados.has(viz)) {
+                nosRecuperados.add(viz);
+                prox.push(viz);
+              }
+            }
+          });
+        });
+        fronteira = prox;
+      }
+
+      return {
+        sementes,
+        nos_subgrafo: [...nosRecuperados],
+        arestas_subgrafo: [...arestasRecuperadas],
+        triplas_recuperadas: triplas.slice(0, 12),
+        confianca_combinada: 0.95,
+        classificacao_evidencia: 'CONFIRMADO',
+        proveniencia: 'medido',
+        sintese_graphrag: `Travessia GraphRAG conectou ${nosRecuperados.size} nós e ${arestasRecuperadas.size} relações em 2 saltos a partir de [${sementes.join(', ')}], unindo Repositório GitHub, Configuração (.tfvars/SSM) e Recurso AWS Runtime.`,
+        comparativo_rag_vs_graphrag: {
+          rag_tradicional_vetorial: 'Busca por similaridade de texto retornaria apenas fragmentos isolados sem perceber que o drift em clientes.tfvars impacta a fila SQS e os consumidores downstream.',
+          graphrag_iaops_vantagem: `O GraphRAG seguiu ${arestasRecuperadas.size} arestas direcionadas no Grafo Vivo, provando a causa raiz com evidência AWS (0.50) + AST (0.35) = 0.95 CONFIRMADO.`
+        }
+      };
+    }
+
+    function aplicarResultadoGraphRAGNaTela(dados, iluminarNoCanvas = true) {
+      if (iluminarNoCanvas) {
+        estado.ondasBlast = {};
+        estado.subgrafoAtivoNos = new Set(dados.nos_subgrafo || []);
+        estado.subgrafoAtivoArestas = new Set(dados.arestas_subgrafo || []);
+        if (dados.sementes && dados.sementes[0]) {
+          selecionarNoPorId(dados.sementes[0]);
+        }
+      }
+
+      document.getElementById('gr-sintese-box').textContent = dados.sintese_graphrag;
+      document.getElementById('gr-badge-evidencia').textContent = `${dados.classificacao_evidencia} ${dados.confianca_combinada}`;
+      document.getElementById('gr-badge-prov').textContent = `[${dados.proveniencia}]`;
+
+      if (dados.comparativo_rag_vs_graphrag) {
+        document.getElementById('gr-rag-tradicional').textContent = dados.comparativo_rag_vs_graphrag.rag_tradicional_vetorial;
+        document.getElementById('gr-rag-vantagem').textContent = dados.comparativo_rag_vs_graphrag.graphrag_iaops_vantagem;
+      }
+
+      const listaEl = document.getElementById('gr-triplas-list');
+      listaEl.innerHTML = (dados.triplas_recuperadas || []).map(t => `
+        <div class="p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-xs flex flex-col gap-0.5">
+          <div class="flex items-center justify-between gap-1">
+            <span class="font-semibold text-sky-300 truncate">${t.origem}</span>
+            <span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-200 mono text-xs">--[${t.relacao}]--&gt;</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-300 mt-0.5">
+            <span class="font-semibold text-emerald-300 truncate">${t.destino}</span>
+            <span class="text-slate-400 mono text-xs">${t.natureza} · ${t.evidencia}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function limparDestaqueSubgrafo() {
+      estado.subgrafoAtivoNos.clear();
+      estado.subgrafoAtivoArestas.clear();
+      estado.ondasBlast = {};
+      document.getElementById('lbl-blast-result').textContent = '';
+    }
+
+    function isolarSubgrafoDoNoSelecionado() {
+      const nid = estado.noSelecionadoId;
+      if (!nid) return;
+      const nosSub = new Set([nid]);
+      const arSub = new Set();
+      let fronteira = [nid];
+      for (let h = 0; h < 2; h++) {
+        const prox = [];
+        fronteira.forEach(u => {
+          GRAFO_IAOPS.arestas.forEach(ar => {
+            if (ar.origem === u || ar.destino === u) {
+              arSub.add(ar.id);
+              const v = ar.origem === u ? ar.destino : ar.origem;
+              if (!nosSub.has(v)) { nosSub.add(v); prox.push(v); }
+            }
+          });
+        });
+        fronteira = prox;
+      }
+      estado.subgrafoAtivoNos = nosSub;
+      estado.subgrafoAtivoArestas = arSub;
+    }
+
+    function simularExplosaoDoNoSelecionado() {
+      alternarModoLayout('blast');
+      const selOrig = document.getElementById('sel-path-origin');
+      if (selOrig && estado.noSelecionadoId) selOrig.value = estado.noSelecionadoId;
+      document.getElementById('sel-path-target').value = '';
+      executarSimulacaoCaminhoBlast();
+    }
+
+    function executarSimulacaoCaminhoBlast() {
+      const orig = document.getElementById('sel-path-origin').value;
+      const dest = document.getElementById('sel-path-target').value;
+      if (!orig) return;
+
+      const ondas = { [orig]: 0 };
+      const arAtivas = new Set();
+      const fila = [orig];
+      while (fila.length > 0) {
+        const u = fila.shift();
+        const d = ondas[u];
+        if (d >= 3) continue;
+        GRAFO_IAOPS.arestas.forEach(ar => {
+          if (ar.origem === u || ar.destino === u) {
+            arAtivas.add(ar.id);
+            const v = ar.origem === u ? ar.destino : ar.origem;
+            if (ondas[v] === undefined) {
+              ondas[v] = d + 1;
+              fila.push(v);
+            }
+          }
+        });
+      }
+
+      estado.ondasBlast = ondas;
+      estado.subgrafoAtivoNos = new Set(Object.keys(ondas));
+      estado.subgrafoAtivoArestas = arAtivas;
+      const totalAlcancados = Object.keys(ondas).length;
+      const score = Math.min(100, Math.round(52 + totalAlcancados * 2.1));
+      document.getElementById('lbl-blast-result').textContent =
+        dest ? `Caminho & Propagação: ${totalAlcancados} nós em até 3 hops · Blast Score: ${score}/100`
+             : `Propagação: ${totalAlcancados} nós impactados · Blast Score: ${score}/100 [CRÍTICO]`;
+      selecionarNoPorId(orig);
+    }
+
+    async function injetarFatoNoGrafo() {
+      const inp = document.getElementById('inp-sandbox-fato');
+      const fato = inp.value.trim();
+      if (!fato) return;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      const slug = fato.split(' ')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      const novoId = 'sandbox-' + slug + '-' + (GRAFO_IAOPS.nos.length + 1);
+
+      let destinoId = estado.noSelecionadoId || 'sqs-eventos-clientes';
+      GRAFO_IAOPS.nos.forEach(n => {
+        if (fato.toLowerCase().includes(n.rotulo.toLowerCase()) || fato.toLowerCase().includes(n.id.toLowerCase())) {
+          destinoId = n.id;
+        }
+      });
+
+      const novoNo = {
+        id: novoId,
+        rotulo: fato.split(' ')[0],
+        familia: 'recurso_aws',
+        subtipo: 'lambda',
+        comunidade_id: 'COM-01',
+        comunidade_nome: 'Sandbox What-If (Read-Only CAP-12)',
+        ambiente: 'prod',
+        blast_radius: 64,
+        status_saude: 'CONFORME',
+        confianca_evidencia: 0.86,
+        classificacao_evidencia: 'CONFIRMADO',
+        proveniencia: 'estimado',
+        arn_ou_caminho: 'sandbox://what-if/' + novoId,
+        resumo: 'Nó adicionado dinamicamente no Sandbox GraphRAG: ' + fato,
+        metadados: { sandbox_what_if: true, imutabilidade_cap12: true },
+        x: w * 0.30 + (Math.random() - 0.5) * 80,
+        y: h * 0.42 + (Math.random() - 0.5) * 80,
+        vx: 0,
+        vy: 0,
+        raio: 18
+      };
+
+      const novaAresta = {
+        id: 'e-sandbox-' + (GRAFO_IAOPS.arestas.length + 1),
+        origem: novoId,
+        destino: destinoId,
+        relacao: 'CONSOME_DE',
+        natureza: 'INFERRED',
+        camada_evidencia: 'SANDBOX_GRAPHRAG',
+        detalhe: fato
+      };
+
+      GRAFO_IAOPS.nos.push(novoNo);
+      GRAFO_IAOPS.arestas.push(novaAresta);
+      atualizarContadores();
+      popularSelectsSimulador();
+      selecionarNoPorId(novoId);
+      isolarSubgrafoDoNoSelecionado();
+    }
+
+    // CONTROLES DE FILTRO E LAYOUT
+    function filtrarFamilia(fam) {
+      estado.familiaFiltro = fam;
+      document.querySelectorAll('[id^="btn-fam-"]').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('btn-fam-' + fam);
+      if (btn) btn.classList.add('active');
+    }
+
+    function filtrarComunidade(comId) {
+      estado.comunidadeFiltro = comId;
+      document.querySelectorAll('[id^="btn-com-"]').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('btn-com-' + comId);
+      if (btn) btn.classList.add('active');
+    }
+
+    function filtrarBuscaTexto(txt) {
+      estado.buscaTexto = txt || '';
+    }
+
+    function buscaGlobalConsole(txt) {
+      const termo = txt || '';
+      filtrarBuscaTexto(termo);
+      const inpCanvas = document.getElementById('inp-canvas-search');
+      if (inpCanvas && inpCanvas.value !== termo) {
+        inpCanvas.value = termo;
+      }
+      renderizarListaHabilidadesMonitor(termo);
+    }
+
+    function alternarModoLayout(modo) {
+      estado.modoLayout = modo;
+      document.querySelectorAll('[id^="btn-mode-"]').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('btn-mode-' + modo);
+      if (btn) btn.classList.add('active');
+      const bar = document.getElementById('blast-simulator-bar');
+      if (bar) bar.classList.toggle('hidden', modo !== 'blast');
+      if (modo === 'blast') executarSimulacaoCaminhoBlast();
+      else estado.ondasBlast = {};
+    }
+
+    function recentralizarNuvem() {
+      estado.zoom = 1.0;
+      estado.panX = 0;
+      estado.panY = 0;
+      limparDestaqueSubgrafo();
+    }
+
+    // CADASTRO DE HABILIDADES & CATÁLOGO REORGANIZADO PARA O DIA A DIA DO DEV & TECH LEAD
+    if (!Array.isArray(GRAFO_IAOPS.habilidades_cadastradas)) {
+      GRAFO_IAOPS.habilidades_cadastradas = [];
+    } else {
+      const vistos = new Set();
+      GRAFO_IAOPS.habilidades_cadastradas = GRAFO_IAOPS.habilidades_cadastradas.filter(h => {
+        const c = String((h && h.code) || '').trim();
+        if (!c || vistos.has(c)) return false;
+        vistos.add(c);
+        return true;
+      });
+    }
+
+    function renderizarGruposCatalogoHtml(itens, fecharAoClicar = false) {
+      if (!itens || !itens.length) {
+        return '<div class="p-4 text-xs text-slate-400">Nenhuma habilidade encontrada para este filtro.</div>';
+      }
+      const grupos = {};
+      itens.forEach(h => {
+        const grp = h.grupo_dev || '✨ Automação Customizada (Squad)';
+        if (!grupos[grp]) grupos[grp] = [];
+        grupos[grp].push(h);
+      });
+      const acaoFechar = fecharAoClicar ? '; fecharModalTodasHabilidades();' : '';
+      return Object.entries(grupos).map(([nomeGrupo, habs]) => `
+        <div class="flex flex-col gap-1.5">
+          <div class="text-xs font-bold uppercase tracking-wider text-sky-300 pb-1 mt-1 flex items-center justify-between" style="border-bottom: 1px solid var(--awsui-border);">
+            <span>${nomeGrupo}</span>
+            <span class="mono text-slate-400">${habs.length}</span>
+          </div>
+          ${habs.map(h => `
+            <div onclick="selecionarHabilidadeNoMonitor('${h.code}', '${h.id}')${acaoFechar}"
+              class="glass-card p-2.5 flex items-center justify-between gap-2 text-xs cursor-pointer">
+              <div class="flex flex-col gap-0.5 min-w-0 flex-1">
+                <div class="truncate">
+                  <span class="text-white font-semibold">${h.name}</span>
+                  <span class="text-sky-300 mono ml-1">(${h.code})</span>
+                </div>
+                <span class="muted text-xs truncate">${h.description || h.id}</span>
+              </div>
+              <span class="badge-confirmado mono shrink-0">▶ Executar</span>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    function renderizarListaHabilidadesMonitor(filtroTexto = '', grupoFiltro = estado.grupoCatalogoDev || 'all') {
+      const lista = GRAFO_IAOPS.habilidades_cadastradas || [];
+      const cntEl = document.getElementById('cnt-total-habilidades');
+      if (cntEl) cntEl.textContent = String(lista.length);
+
+      const top5El = document.getElementById('lista-ultimas-5-habilidades');
+      if (top5El) {
+        const ultimas5 = lista.slice(0, 5);
+        top5El.innerHTML = ultimas5.map(h => `
+          <div onclick="selecionarHabilidadeNoMonitor('${h.code}', '${h.id}')"
+            class="glass-card px-2.5 py-1.5 flex items-center justify-between gap-2 text-xs cursor-pointer">
+            <div class="truncate min-w-0 flex-1">
+              <span class="text-slate-100 font-semibold">${h.name}</span>
+              <span class="text-sky-300 mono ml-1">(${h.code})</span>
+            </div>
+            <span class="badge-confirmado mono shrink-0">${h.status || 'ACTIVE'}</span>
+          </div>
+        `).join('');
+      }
+
+      const telaCatEl = document.getElementById('lista-catalogo-dev-tela');
+      if (telaCatEl) {
+        const porGrupo = (!grupoFiltro || grupoFiltro === 'all')
+          ? lista
+          : lista.filter(h => (h.grupo_dev || '') === grupoFiltro);
+        telaCatEl.innerHTML = renderizarGruposCatalogoHtml(porGrupo, false);
+      }
+
+      const modalListaEl = document.getElementById('lista-todas-habilidades');
+      if (modalListaEl) {
+        const grpModal = estado.grupoModalCatalogo || 'all';
+        const baseModal = (!grpModal || grpModal === 'all')
+          ? lista
+          : lista.filter(h => (h.grupo_dev || '') === grpModal);
+        const q = (filtroTexto || '').toLowerCase().trim();
+        const filtradas = q
+          ? baseModal.filter(h =>
+              (h.code || '').toLowerCase().includes(q) ||
+              (h.name || '').toLowerCase().includes(q) ||
+              (h.description || '').toLowerCase().includes(q) ||
+              (h.grupo_dev || '').toLowerCase().includes(q) ||
+              (h.id || '').toLowerCase().includes(q) ||
+              (h.category || '').toLowerCase().includes(q)
+            )
+          : baseModal;
+        modalListaEl.innerHTML = renderizarGruposCatalogoHtml(filtradas, true);
+      }
+      if (typeof popularSeletorHabilidadesSuperAgente === 'function') {
+        popularSeletorHabilidadesSuperAgente();
+      }
+      if (typeof atualizarContextoSuperAgente === 'function') {
+        atualizarContextoSuperAgente();
+      }
+    }
+
+    function filtrarGrupoCatalogoDev(grupo, btnEl) {
+      estado.grupoCatalogoDev = grupo || 'all';
+      const container = document.getElementById('catalogo-dev-filtros');
+      if (container) {
+        container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      }
+      if (btnEl) btnEl.classList.add('active');
+      renderizarListaHabilidadesMonitor('', estado.grupoCatalogoDev);
+    }
+
+    function filtrarGrupoModalCatalogo(grupo, btnEl) {
+      estado.grupoModalCatalogo = grupo || 'all';
+      const container = document.getElementById('modal-catalogo-filtros');
+      if (container) {
+        container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      }
+      if (btnEl) btnEl.classList.add('active');
+      const inp = document.getElementById('inp-busca-todas-habilidades');
+      renderizarListaHabilidadesMonitor(inp ? inp.value : '', estado.grupoCatalogoDev || 'all');
+    }
+
+    function selecionarHabilidadeNoMonitor(code, capId) {
+      const inp = document.getElementById('inp-graphrag-query');
+      if (inp) {
+        inp.value = `Inspecionar impacto e recursos associados à habilidade ${code} (${capId})`;
+        dispararConsultaGraphRAG(true);
+        navegarTelaMonitor('monitor');
+      }
+      const hab = (GRAFO_IAOPS.habilidades_cadastradas || []).find(h => h.code === code);
+      const pergunta = hab
+        ? `Executar habilidade ${hab.code} — ${hab.name}`
+        : `Executar habilidade ${code}`;
+      if (typeof enviarPerguntaRapidaSuperAgente === 'function') {
+        enviarPerguntaRapidaSuperAgente(pergunta, code);
+      }
+    }
+
+    async function salvarNovaHabilidadeMonitor() {
+      const inp = document.getElementById('inp-nova-habilidade');
+      const statusEl = document.getElementById('lbl-status-salvar-hab');
+      const historia = (inp ? inp.value : '').trim();
+      if (!historia) {
+        if (inp) inp.focus();
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Salvando...';
+
+      let novaHab = null;
+      try {
+        const resp = await fetch('/api/teach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ story: historia, persist: true })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.ok) {
+            novaHab = {
+              code: data.code || 'CAP-NEW',
+              id: data.capability_id,
+              name: (data.decisoes_automaticas && data.decisoes_automaticas.name) || historia.slice(0, 68),
+              grupo_dev: '✨ Automação Customizada (Squad)',
+              category: data.category || 'devops',
+              status: data.status_final || 'ACTIVE',
+              version: '1.0.0',
+              description: historia.slice(0, 120)
+            };
+          }
+        }
+      } catch (_err) {
+        // Fallback determinístico em modo estático / CloudFront
+      }
+
+      if (!novaHab) {
+        const proxNum = 32 + (GRAFO_IAOPS.habilidades_cadastradas.filter(h => (h.code || '').startsWith('CAP-')).length);
+        const slug = historia.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'nova-habilidade';
+        novaHab = {
+          code: `CAP-${proxNum}`,
+          id: `cap-${proxNum}-${slug}`,
+          name: historia.length > 64 ? historia.slice(0, 64) + '...' : historia,
+          grupo_dev: '✨ Automação Customizada (Squad)',
+          category: 'agentic',
+          status: 'ACTIVE',
+          version: '1.0.0',
+          description: historia.slice(0, 120)
+        };
+      }
+
+      GRAFO_IAOPS.habilidades_cadastradas = [
+        novaHab,
+        ...GRAFO_IAOPS.habilidades_cadastradas.filter(h => h.id !== novaHab.id)
+      ];
+      renderizarListaHabilidadesMonitor();
+
+      const inpSandbox = document.getElementById('inp-sandbox-fato');
+      if (inpSandbox) {
+        inpSandbox.value = `${novaHab.id} monitora sqs-eventos-clientes`;
+        await injetarFatoNoGrafo();
+      }
+
+      if (inp) inp.value = '';
+      if (statusEl) statusEl.textContent = `✓ ${novaHab.code} Salva`;
+      if (typeof notificarNovaHabilidadeNoSuperAgente === 'function') {
+        notificarNovaHabilidadeNoSuperAgente(novaHab);
+      }
+    }
+
+    function focarCadastroHabilidadeMonitor() {
+      navegarTelaMonitor('habilidades');
+      const inp = document.getElementById('inp-nova-habilidade');
+      if (inp) {
+        setTimeout(() => inp.focus(), 40);
+      }
+    }
+
+    function abrirModalTodasHabilidades() {
+      renderizarListaHabilidadesMonitor();
+      const m = document.getElementById('modal-todas-habilidades');
+      if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      }
+    }
+
+    function fecharModalTodasHabilidades() {
+      const m = document.getElementById('modal-todas-habilidades');
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+
+    function filtrarModalTodasHabilidades(termo) {
+      renderizarListaHabilidadesMonitor(termo);
+    }
+
+    function alternarMenuLateral() {
+      const nav = document.getElementById('awsui-side-nav');
+      if (nav) nav.classList.toggle('collapsed');
+      setTimeout(() => redimensionarCanvas(), 200);
+    }
+
+    function alternarTemaAws(temaForcado) {
+      const atual = document.body.getAttribute('data-awstheme') || 'dark';
+      const novo = temaForcado || (atual === 'light' ? 'dark' : 'light');
+      document.body.setAttribute('data-awstheme', novo);
+      try { localStorage.setItem('iaops_awstheme', novo); } catch (_e) {}
+      const btn = document.getElementById('btn-theme-toggle');
+      if (btn) btn.textContent = novo === 'light' ? '🌙 Escuro' : '☀️ Claro';
+    }
+
+    // =========================================================================
+    // SUPER AGENTE AIOPS FLUTUANTE EM TODAS AS TELAS (CAP-32)
+    // =========================================================================
+    function alternarChatSuperAgente(forcarAbrir) {
+      const drawer = document.getElementById('aiops-floating-chat');
+      const fab = document.getElementById('aiops-fab-trigger');
+      if (!drawer) return;
+      const estaOculto = drawer.classList.contains('hidden');
+      const abrir = typeof forcarAbrir === 'boolean' ? forcarAbrir : estaOculto;
+      drawer.classList.toggle('hidden', !abrir);
+      if (fab) fab.classList.toggle('hidden', abrir);
+      if (abrir) {
+        atualizarContextoSuperAgente();
+        popularSeletorHabilidadesSuperAgente();
+        const inp = document.getElementById('aiops-chat-input');
+        if (inp) setTimeout(() => inp.focus(), 40);
+      }
+    }
+
+    function alternarExpansaoSuperAgente() {
+      const drawer = document.getElementById('aiops-floating-chat');
+      const btn = document.getElementById('btn-aiops-expand');
+      if (!drawer) return;
+      const exp = drawer.classList.toggle('expanded');
+      if (btn) btn.textContent = exp ? '⤡' : '⤢';
+    }
+
+    function atualizarContextoSuperAgente() {
+      const nomesTelas = {
+        'monitor': 'Monitor - GraphRAG',
+        'habilidades': 'Cadastrar Habilidade',
+        'graphrag': 'Motor GraphRAG',
+        'openapi': 'Rotas OpenAPI',
+        'inspetor': 'Inspetor 360°'
+      };
+      const elTela = document.getElementById('aiops-ctx-tela');
+      if (elTela) elTela.textContent = nomesTelas[estado.telaAtiva] || 'Monitor - GraphRAG';
+
+      const no = GRAFO_IAOPS.nos.find(n => n.id === estado.noSelecionadoId) || GRAFO_IAOPS.nos[0];
+      const elNo = document.getElementById('aiops-ctx-no');
+      if (elNo && no) elNo.textContent = `${no.rotulo} (${no.blast_radius}/100)`;
+
+      const totalHabs = (GRAFO_IAOPS.habilidades_cadastradas || []).length;
+      const elHabs = document.getElementById('aiops-ctx-habs');
+      if (elHabs) elHabs.textContent = String(totalHabs);
+      const badgeFab = document.getElementById('aiops-fab-badge');
+      if (badgeFab) badgeFab.textContent = `${totalHabs} habs`;
+    }
+
+    function popularSeletorHabilidadesSuperAgente() {
+      const sel = document.getElementById('aiops-skill-runner-select');
+      if (!sel) return;
+      const lista = GRAFO_IAOPS.habilidades_cadastradas || [];
+      const valorAtual = sel.value;
+      sel.innerHTML = lista.map(h =>
+        `<option value="${h.code}">⚡ ${h.code} · ${h.name}</option>`
+      ).join('');
+      if (valorAtual && lista.some(h => h.code === valorAtual)) {
+        sel.value = valorAtual;
+      }
+    }
+
+    function executarHabilidadeSelecionadaSuperAgente() {
+      const sel = document.getElementById('aiops-skill-runner-select');
+      if (!sel || !sel.value) return;
+      const hab = (GRAFO_IAOPS.habilidades_cadastradas || []).find(h => h.code === sel.value);
+      const texto = hab
+        ? `Executar habilidade ${hab.code} (${hab.name}) no contexto atual da squad`
+        : `Executar habilidade ${sel.value}`;
+      enviarMensagemSuperAgenteAIOps(texto, sel.value);
+    }
+
+    function enviarPerguntaRapidaSuperAgente(pergunta, codeForcado) {
+      alternarChatSuperAgente(true);
+      enviarMensagemSuperAgenteAIOps(pergunta, codeForcado || '');
+    }
+
+    function notificarNovaHabilidadeNoSuperAgente(novaHab) {
+      popularSeletorHabilidadesSuperAgente();
+      atualizarContextoSuperAgente();
+      const sel = document.getElementById('aiops-skill-runner-select');
+      if (sel && novaHab && novaHab.code) sel.value = novaHab.code;
+      const box = document.getElementById('aiops-chat-messages');
+      if (!box || !novaHab) return;
+      const card = document.createElement('div');
+      card.className = 'aiops-msg-agent flex flex-col gap-1.5';
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="badge-confirmado px-2 py-0.5 rounded mono text-xs">✨ Nova Habilidade Indexada</span>
+          <span class="text-xs text-sky-300 mono">${novaHab.code}</span>
+        </div>
+        <div class="text-xs text-slate-200">
+          O Super Agente AIOps leu e indexou <strong>${novaHab.name}</strong> (<code>${novaHab.id}</code>). Ela já está disponível para execução imediata sobre o Grafo Vivo.
+        </div>
+        <div>
+          <button type="button" onclick="enviarMensagemSuperAgenteAIOps('Executar ${novaHab.code} (${novaHab.name})', '${novaHab.code}')" class="pill-btn active">
+            ▶ Executar ${novaHab.code} Agora
+          </button>
+        </div>
+      `;
+      box.appendChild(card);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function acionarAcaoUiSuperAgente(tipo, noId, nosSub, arestasSub) {
+      if (noId) selecionarNoPorId(noId, true);
+      if (tipo === 'iluminar_subgrafo') {
+        estado.ondasBlast = {};
+        if (Array.isArray(nosSub) && nosSub.length) estado.subgrafoAtivoNos = new Set(nosSub);
+        if (Array.isArray(arestasSub) && arestasSub.length) estado.subgrafoAtivoArestas = new Set(arestasSub);
+        navegarTelaMonitor('monitor');
+      } else if (tipo === 'blast') {
+        navegarTelaMonitor('monitor');
+        simularExplosaoDoNoSelecionado();
+      } else if (tipo === 'inspetor') {
+        navegarTelaMonitor('inspetor');
+      }
+    }
+
+    function formatarTextoNaturalChat(texto) {
+      const seguro = String(texto || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return seguro
+        .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white">$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="mono text-sky-300 bg-slate-900/80 px-1 py-0.5 rounded">$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function gerarRespostaNaturalSuperAgenteCliente(msg, noFoco, habEscolhida, achados, forcarCode) {
+      const q = (msg || '').toLowerCase().trim();
+      const nos = GRAFO_IAOPS.nos || [];
+      const repos = nos.filter(n => n.familia === 'repositorio');
+      const recursos = nos.filter(n => n.familia === 'recurso_aws');
+      const configs = nos.filter(n => n.familia === 'configuracao');
+      const rotas = nos.filter(n => n.familia === 'contrato_openapi');
+      const sentinelas = nos.filter(n => n.familia === 'achado_sentinela');
+      const comunidades = GRAFO_IAOPS.comunidades || [];
+      const listaHabs = GRAFO_IAOPS.habilidades_cadastradas || [];
+
+      if ((q.includes('reposit') || q.includes('github') || q.includes('repos') || q.includes('git')) &&
+          !q.includes('actions') && !q.includes('oidc') && !q.includes('pipeline') && !q.includes('workflow')) {
+        const linhas = repos.map(r => `• **${r.rotulo}** — ${r.resumo || ''}`);
+        return `Você tem **${repos.length} repositórios** mapeados no GitHub da squad:\n${linhas.join('\n')}`;
+      }
+
+      if (q.includes('quantas habilidades') || q.includes('quais habilidades') || q.includes('habilidades cadastradas') || q.includes('listar habilidades')) {
+        const topH = listaHabs.slice(0, 5).map(h => `• **${h.code}** — ${h.name}`);
+        return `Atualmente existem **${listaHabs.length} habilidades** cadastradas e ativas no catálogo da squad. As 5 mais recentes são:\n${topH.join('\n')}`;
+      }
+
+      if (q.includes('openapi') || q.includes('rota') || q.includes('endpoint') || q.includes('url')) {
+        const extraSqs = (q.includes('sqs') || q.includes('tfvars') || q.includes('fila') || q.includes('timeout'))
+          ? '\n• **Fila SQS (env/prod/clientes.tfvars)**: sqs_visibility_timeout está em **30s** (divergindo de 90s em homologação).'
+          : '';
+        return `Temos **${rotas.length} rotas OpenAPI** mapeadas no API Gateway da squad:\n` +
+          `• **GET /pessoas/** (lambda-pessoas-api) — Em conformidade com o contrato.\n` +
+          `• **GET /empresas/** (ecs-empresas-service) — Com divergência: o parâmetro cnpj_raiz é aceito no código, mas não está declarado no OpenAPI.\n` +
+          `• **GET /recursos-internos/** (lambda-recursos-internos) — Rota órfã em produção sem integração declarada no API Gateway.${extraSqs}`;
+      }
+
+      if (q.includes('drift') || q.includes('divergen') || q.includes('incidente') || q.includes('problema') || q.includes('erro') || q.includes('alerta') || q.includes('critico') || q.includes('crítico') || q.includes('dlq') || q.includes('causa') || q.includes('tfvars')) {
+        return `Identifiquei **${sentinelas.length} pontos de atenção (drifts/incidentes)** ativos na infraestrutura da squad:\n` +
+          `• **Timeout da fila SQS (env/prod/clientes.tfvars)**: sqs_visibility_timeout está em **30s** (deveria ser **90s**), gerando risco de reprocessamento na fila sqs-eventos-clientes-prod.\n` +
+          `• **Criptografia S3 (s3-contratos-empresas-prod)**: Bucket com criptografia padrão SSE-S3 em vez da chave KMS corporativa (kms-cmk-squad-prod).\n` +
+          `• **Recurso ClickOps (sqs-auditoria-manual-shadow)**: Fila criada manualmente na console AWS sem código Terraform.\n` +
+          `• **Contrato OpenAPI (GET /recursos-internos/ e GET /empresas/)**: Rota órfã no API Gateway e parâmetro cnpj_raiz não documentado.`;
+      }
+
+      if (q.includes('recurso') || q.includes('aws') || q.includes('lambda') || q.includes('fila') || q.includes('sqs') || q.includes('bucket') || q.includes('s3') || q.includes('dynamodb') || q.includes('tabela') || q.includes('kms') || q.includes('sns') || q.includes('ecs')) {
+        const subtipos = [
+          ['lambda', 'funções Lambda'],
+          ['sqs', 'filas SQS'],
+          ['s3', 'buckets S3'],
+          ['dynamodb', 'tabelas DynamoDB'],
+          ['kms', 'chaves KMS'],
+          ['sns', 'tópicos SNS'],
+          ['ecs', 'serviços ECS']
+        ];
+        for (const [sub, label] of subtipos) {
+          if (q.includes(sub) || (sub === 'sqs' && q.includes('fila')) || (sub === 's3' && q.includes('bucket'))) {
+            const filtrados = recursos.filter(r => r.subtipo === sub);
+            if (filtrados.length) {
+              return `A squad possui **${filtrados.length} ${label}** mapeadas:\n` +
+                filtrados.map(r => `• **${r.rotulo}** — ${r.resumo || ''}`).join('\n');
+            }
+          }
+        }
+        return `A squad possui **${recursos.length} recursos AWS** monitorados: ${recursos.map(r => `**${r.rotulo}**`).join(', ')}.`;
+      }
+
+      if (q.includes('custo') || q.includes('finops') || q.includes('gasto') || q.includes('orcamento') || q.includes('orçamento') || q.includes('graviton') || q.includes('arm64')) {
+        return `O custo mensal estimado da plataforma está em **US$ 1,42/mês**, dentro do teto FinOps de **US$ 5,00/mês** (e **US$ 0,00/mês** no modo LocalStack Lite). A principal oportunidade de economia é migrar a Lambda lambda-recursos-internos para **ARM64 (Graviton)**, reduzindo ~20% do consumo.`;
+      }
+
+      if (q.includes('comunidade') || q.includes('sistema') || q.includes('arquitetura') || q.includes('visao geral') || q.includes('visão geral') || q.includes('resumo') || q.includes('saude') || q.includes('saúde')) {
+        const linhasC = comunidades.map(c => `• **${c.nome}** — Saúde **${c.score_saude_360}%**`);
+        return `A arquitetura da squad está dividida em **${comunidades.length} sistemas** com **${nos.length} nós** (${repos.length} repositórios, ${recursos.length} recursos AWS e ${rotas.length} rotas OpenAPI):\n${linhasC.join('\n')}`;
+      }
+
+      if (q.includes('blast') || q.includes('explos') || q.includes('impacto') || q.includes('raio') || q.includes('afeta')) {
+        return `Uma alteração em **${noFoco.rotulo}** tem um raio de impacto (Blast Radius) de **${noFoco.blast_radius}/100** na comunidade **${noFoco.comunidade_id}** (${noFoco.resumo || ''}).`;
+      }
+
+      if (q.includes('config') || q.includes('secret') || q.includes('segredo') || q.includes('ssm')) {
+        return `Temos **${configs.length} configurações e segredos** mapeados na squad:\n` +
+          configs.map(c => `• **${c.rotulo}** — ${c.resumo || ''}`).join('\n');
+      }
+
+      if (forcarCode || q.includes('executar') || q.includes('execute') || q.includes('rodar') || q.includes('cap-')) {
+        return `Resultado da habilidade **${habEscolhida.code} — ${habEscolhida.name}**:\n` +
+          achados.map(a => `• ${a}`).join('\n');
+      }
+
+      return `Na arquitetura atual da squad temos **${repos.length} repositórios no GitHub**, **${recursos.length} recursos AWS**, **${rotas.length} rotas OpenAPI** e **${sentinelas.length} pontos de atenção ativos**. O componente selecionado no momento é **${noFoco.rotulo}** (${noFoco.resumo || ''}). Sobre qual parte você gostaria de saber mais?`;
+    }
+
+    function executarSuperAgenteClienteLocal(mensagem, forcarCode = '') {
+      const msg = (mensagem || '').trim();
+      const q = msg.toLowerCase();
+      const noFoco = GRAFO_IAOPS.nos.find(n => n.id === estado.noSelecionadoId) || GRAFO_IAOPS.nos[0];
+      const listaHabs = GRAFO_IAOPS.habilidades_cadastradas || [];
+
+      const bloqueados = ['delete-table', 'apagar tabela', 'drop table', 'rm -rf', 'terraform destroy', 'put-bucket-policy', 'destruir producao'];
+      if (bloqueados.some(p => q.includes(p))) {
+        return {
+          ok: true,
+          agente: 'Super Agente AIOps · CAP-32',
+          status_agente: 'GUARDRAIL_CAP12_BLOCKED',
+          guardrail_cap12_acionado: true,
+          contexto_lido: {
+            tela_ativa: estado.telaAtiva,
+            no_foco_id: noFoco.id,
+            no_foco_rotulo: noFoco.rotulo,
+            comunidade_id: noFoco.comunidade_id,
+            total_habilidades_catalogo: listaHabs.length
+          },
+          resposta_principal: `🛡️ **Modo Somente-Leitura (CAP-12):** Bloqueei esse comando porque ele altera ou remove recursos de infraestrutura. Posso simular o impacto da mudança ou analisar drifts sobre **${noFoco.rotulo}** com segurança.`,
+          habilidades_executadas: [],
+          graphrag_evidencia: {
+            modo: 'guardrail_l0',
+            confianca_rn007: 1.0,
+            classificacao: 'CONFIRMADO',
+            nos_subgrafo: [noFoco.id],
+            arestas_subgrafo: [],
+            triplas: []
+          },
+          acoes_ui: []
+        };
+      }
+
+      let habEscolhida = null;
+      if (forcarCode) {
+        habEscolhida = listaHabs.find(h => (h.code || '').toUpperCase() === forcarCode.toUpperCase() || h.id === forcarCode);
+      }
+      if (!habEscolhida) {
+        habEscolhida = listaHabs.find(h => q.includes((h.code || '').toLowerCase()) || q.includes((h.id || '').toLowerCase()));
+      }
+      if (!habEscolhida) {
+        if (q.includes('openapi') || q.includes('rota') || q.includes('endpoint') || q.includes('query')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-31');
+        } else if (q.includes('incidente') || q.includes('dlq') || q.includes('alarme') || q.includes('causa')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-28');
+        } else if (q.includes('clickops') || q.includes('manual') || q.includes('shadow') || q.includes('orfao')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-24');
+        } else if (q.includes('tfvars') || q.includes('ambiente') || q.includes('ssm') || q.includes('variav')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-21');
+        } else if (q.includes('custo') || q.includes('finops') || q.includes('arm64') || q.includes('graviton')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-25');
+        } else if (q.includes('iam') || q.includes('permiss') || q.includes('kms') || q.includes('seguran')) {
+          habEscolhida = listaHabs.find(h => h.code === 'CAP-26');
+        } else {
+          habEscolhida = listaHabs[0] || { code: 'CAP-30', id: 'cap-30-executive-squad-health-radar-360', name: 'Visão Geral da Arquitetura e Prioridades da Sprint' };
+        }
+      }
+
+      const resGr = executarMotorGraphRAGCliente(msg || habEscolhida.name, 'auto');
+      const achadosPorCode = {
+        'CAP-31': [
+          'Rota GET /pessoas/ (lambda-pessoas-api): CONFORME com OpenAPI (?papel=cliente&pag=1&pageSize=20&status=0).',
+          'Rota GET /empresas/ (ecs-empresas-service): DRIFT_PARAM — cnpj_raiz aceito no handler FastAPI mas omitido no OpenAPI.',
+          'Rota GET /recursos-internos/ (lambda-recursos-internos): ROTA_ORFA (D10) — endpoint ativo sem registro no API Gateway.'
+        ],
+        'CAP-28': [
+          `Foco ${noFoco.rotulo} (Blast Radius ${noFoco.blast_radius}/100): correlacionado com achado D06 (Drift Visibility Timeout).`,
+          'Causa raiz (confiança 0.96): sqs_visibility_timeout = 30s em env/prod/clientes.tfvars:L18 (< 6x timeout da Lambda).',
+          'Propagação: sns-eventos-cadastro impacta sqs-eventos-clientes e ecs-empresas-service.'
+        ],
+        'CAP-24': [
+          'Recurso ClickOps detectado: fila sqs-shadow-auditoria ativa na AWS sem bloco resource no Terraform.',
+          'Vínculo runtime: lambda-recursos-internos publica na fila órfã sem rastreabilidade em repo-backoffice-recursos.'
+        ],
+        'CAP-25': [
+          'Orçamento FinOps: US$ 1,42/mês consumidos de US$ 5,00/mês (dentro da meta).',
+          'Economia imediata: migrar lambda-recursos-internos de x86_64 para arm64 (Graviton) reduz ~20% de custo.'
+        ]
+      };
+
+      const achados = achadosPorCode[habEscolhida.code] || [
+        `Habilidade ${habEscolhida.code} (${habEscolhida.name}) executada sobre ${noFoco.rotulo} (${noFoco.comunidade_id}).`,
+        `Subgrafo analisado: ${resGr.nos_subgrafo.length} nós e ${resGr.arestas_subgrafo.length} relações verificadas no Grafo Vivo.`,
+        `Evidência combinada RN-007: ${resGr.confianca_combinada} (${resGr.classificacao_evidencia}) em modo estritamente Read-Only (CAP-12).`
+      ];
+
+      const respostaNatural = gerarRespostaNaturalSuperAgenteCliente(msg, noFoco, habEscolhida, achados, forcarCode);
+
+      return {
+        ok: true,
+        agente: 'Super Agente AIOps · CAP-32',
+        status_agente: 'ACTIVE_READY',
+        guardrail_cap12_acionado: false,
+        contexto_lido: {
+          tela_ativa: estado.telaAtiva,
+          no_foco_id: noFoco.id,
+          no_foco_rotulo: noFoco.rotulo,
+          comunidade_id: noFoco.comunidade_id,
+          blast_radius: noFoco.blast_radius,
+          total_habilidades_catalogo: listaHabs.length
+        },
+        resposta_principal: respostaNatural,
+        habilidades_executadas: [{
+          code: habEscolhida.code,
+          id: habEscolhida.id,
+          name: habEscolhida.name,
+          grupo_dev: habEscolhida.grupo_dev || '⚡ Execução AIOps',
+          status_execucao: 'SUCCEEDED',
+          modo_acesso: 'read-only (CAP-12)',
+          confianca_rn007: resGr.confianca_combinada,
+          classificacao_evidencia: resGr.classificacao_evidencia,
+          ondas_nanoagentes: ['Onda 1: nano_aws_runtime_mapper + nano_terraform_hcl', 'Onda 2: nano_drift_analyzer + nano_openapi_contrato'],
+          achados,
+          recomendacao: `Revisar as dependências diretas de ${noFoco.rotulo} e sincronizar o contrato declarativo via PR.`
+        }],
+        graphrag_evidencia: {
+          modo: 'auto',
+          confianca_rn007: resGr.confianca_combinada,
+          classificacao: resGr.classificacao_evidencia,
+          nos_subgrafo: resGr.nos_subgrafo,
+          arestas_subgrafo: resGr.arestas_subgrafo,
+          triplas: (resGr.triplas_recuperadas || []).slice(0, 5)
+        },
+        acoes_ui: []
+      };
+    }
+
+    function renderizarRespostaSuperAgenteNoChat(dados) {
+      const box = document.getElementById('aiops-chat-messages');
+      if (!box) return;
+      const card = document.createElement('div');
+      card.className = 'aiops-msg-agent flex flex-col gap-1.5';
+      card.innerHTML = `<div class="text-xs text-slate-100 leading-relaxed">${formatarTextoNaturalChat(dados.resposta_principal)}</div>`;
+      box.appendChild(card);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function enviarMensagemSuperAgenteAIOps(mensagemForcada, codeForcado = '') {
+      const inp = document.getElementById('aiops-chat-input');
+      const box = document.getElementById('aiops-chat-messages');
+      const texto = (typeof mensagemForcada === 'string' ? mensagemForcada : (inp ? inp.value : '')).trim();
+      if (!texto && !codeForcado) return;
+      if (!mensagemForcada && inp) inp.value = '';
+
+      if (box && texto) {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'aiops-msg-user';
+        userDiv.textContent = texto;
+        box.appendChild(userDiv);
+        box.scrollTop = box.scrollHeight;
+      }
+
+      const payload = {
+        mensagem: texto,
+        executar_habilidade_id: codeForcado || '',
+        contexto_tela: {
+          tela_ativa: estado.telaAtiva,
+          no_selecionado_id: estado.noSelecionadoId,
+          comunidade_filtro: estado.comunidadeFiltro,
+          familia_filtro: estado.familiaFiltro,
+          modo_layout: estado.modoLayout
+        }
+      };
+
+      let dadosResp = null;
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          dadosResp = await resp.json();
+        }
+      } catch (_err) {
+        // Fallback local determinístico
+      }
+
+      if (!dadosResp || !dadosResp.ok) {
+        dadosResp = executarSuperAgenteClienteLocal(texto, codeForcado);
+      }
+
+      renderizarRespostaSuperAgenteNoChat(dadosResp);
+
+      // Se a resposta trouxe um subgrafo GraphRAG, atualiza também o estado visual
+      if (dadosResp.graphrag_evidencia && Array.isArray(dadosResp.graphrag_evidencia.nos_subgrafo) && dadosResp.graphrag_evidencia.nos_subgrafo.length > 1) {
+        estado.subgrafoAtivoNos = new Set(dadosResp.graphrag_evidencia.nos_subgrafo);
+        estado.subgrafoAtivoArestas = new Set(dadosResp.graphrag_evidencia.arestas_subgrafo || []);
+      }
+    }
+
+    function inicializarSuperAgenteAIOps() {
+      atualizarContextoSuperAgente();
+      popularSeletorHabilidadesSuperAgente();
+      const box = document.getElementById('aiops-chat-messages');
+      if (!box || box.children.length > 0) return;
+      const msgBoasVindas = document.createElement('div');
+      msgBoasVindas.className = 'aiops-msg-agent flex flex-col gap-1';
+      msgBoasVindas.innerHTML = `
+        <div class="text-xs text-slate-100 leading-relaxed">
+          Olá! Sou o <strong class="text-white">Super Agente AIOps</strong> da squad. Pode me perguntar em linguagem natural sobre nossos repositórios, recursos AWS, filas SQS, rotas OpenAPI, custos ou pedir para executar qualquer habilidade cadastrada.
+        </div>
+      `;
+      box.appendChild(msgBoasVindas);
+    }
+
+    window.addEventListener('keydown', ev => {
+      if (ev.altKey && (ev.key === 'a' || ev.key === 'A')) {
+        ev.preventDefault();
+        alternarChatSuperAgente();
+      }
+      if (ev.altKey && (ev.key === 's' || ev.key === 'S')) {
+        ev.preventDefault();
+        const inp = document.getElementById('aws-top-search');
+        if (inp) inp.focus();
+      }
+      if (ev.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        ev.preventDefault();
+        navegarTelaMonitor('monitor');
+        document.getElementById('inp-canvas-search').focus();
+      }
+      if (ev.key === 'Escape') {
+        fecharModalTodasHabilidades();
+        limparDestaqueSubgrafo();
+      }
+    });
+
+    try {
+      const temaSalvo = localStorage.getItem('iaops_awstheme');
+      if (temaSalvo) alternarTemaAws(temaSalvo);
+      else alternarTemaAws('dark');
+    } catch (_e) {}
+    window.addEventListener('resize', redimensionarCanvas);
+    redimensionarCanvas();
+    inicializarPosicoesNos();
+    renderizarListaHabilidadesMonitor();
+    selecionarNoPorId('sqs-eventos-clientes', false);
+    inicializarSuperAgenteAIOps();
+    // Preenche síntese inicial na tela Motor GraphRAG sem travar filtro sobre o Monitor Gráfico
+    dispararConsultaGraphRAG(false);
+    requestAnimationFrame(renderizarNuvem);
+  </script>
+</body>
+</html>

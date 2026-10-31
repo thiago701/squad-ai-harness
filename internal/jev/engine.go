@@ -30,16 +30,19 @@ type ReviewInput struct {
 	TouchesInfra bool     `json:"touches_infra"`
 }
 
-// TribunalVerdict represents the aggregated consensus of the 25 JEV specialists.
+// TribunalVerdict represents the aggregated consensus of the 25 JEV specialists,
+// enriched with POC-007 (Relational Predictive Quality & Regression Risk Analyzer).
 type TribunalVerdict struct {
-	Verdict        string                  `json:"verdict"` // "READY", "NOT_READY", "ESCALATE_LLM"
-	GateState      contracts.GateState     `json:"gate_state"`
-	RiskTier       RiskTier                `json:"risk_tier"`
-	ConsensusScore float64                 `json:"consensus_score"`
-	AutoLand       bool                    `json:"auto_land"`
-	Blockers       []string                `json:"blockers,omitempty"`
-	Decisions      []contracts.JevDecision `json:"decisions"`
-	TotalDurUs     int64                   `json:"total_dur_us"`
+	Verdict                string                  `json:"verdict"` // "READY", "NOT_READY", "ESCALATE_LLM"
+	GateState              contracts.GateState     `json:"gate_state"`
+	RiskTier               RiskTier                `json:"risk_tier"`
+	ConsensusScore         float64                 `json:"consensus_score"`
+	RegressionRiskProb     float64                 `json:"regression_risk_prob"`
+	PredictiveQualityScore float64                 `json:"predictive_quality_score"`
+	AutoLand               bool                    `json:"auto_land"`
+	Blockers               []string                `json:"blockers,omitempty"`
+	Decisions              []contracts.JevDecision `json:"decisions"`
+	TotalDurUs             int64                   `json:"total_dur_us"`
 }
 
 type specialistSpec struct {
@@ -57,7 +60,7 @@ var (
 	reHardSecret  = regexp.MustCompile(`\b(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|-----BEGIN [A-Z ]*PRIVATE KEY-----)`)
 	reEmptyCatch  = regexp.MustCompile(`(?i)(catch\s*\([^)]*\)\s*\{\s*\}|except\s*:\s*pass)`)
 	reNPlusOne    = regexp.MustCompile(`(?s)for\s+[^{]+\{[^}]*\.(Query|Find|Select|Execute)\(`)
-	reForceUnwrap = regexp.MustCompile(`(?i)(terraform\s+destroy\s+-auto-approve|DROP\s+TABLE\s+IF\s+EXISTS|--no-verify)`)
+	reForceUnwrap = regexp.MustCompile(`(?i)(terraform.*destroy.*-auto-approve|DROP\s+TABLE\s+IF\s+EXISTS|--no-verify)`)
 )
 
 // ClassifyRisk evaluates the 10 objective criteria to assign a RiskTier.
@@ -139,16 +142,19 @@ func EvaluateTribunal(in ReviewInput) TribunalVerdict {
 	}
 
 	autoLand := verdict == "READY" && (risk == RiskLow || risk == RiskMedium)
+	regRisk, qualScore := ComputeRelationalRegressionRiskPOC007(in, risk, consensus, len(blockers))
 
 	return TribunalVerdict{
-		Verdict:        verdict,
-		GateState:      gateState,
-		RiskTier:       risk,
-		ConsensusScore: consensus,
-		AutoLand:       autoLand,
-		Blockers:       blockers,
-		Decisions:      decisions,
-		TotalDurUs:     time.Since(start).Microseconds(),
+		Verdict:                verdict,
+		GateState:              gateState,
+		RiskTier:               risk,
+		ConsensusScore:         consensus,
+		RegressionRiskProb:     regRisk,
+		PredictiveQualityScore: qualScore,
+		AutoLand:               autoLand,
+		Blockers:               blockers,
+		Decisions:              decisions,
+		TotalDurUs:             time.Since(start).Microseconds(),
 	}
 }
 
@@ -161,11 +167,6 @@ func build25Specialists() []specialistSpec {
 			return "APPROVE", 1.0, 0.98, nil
 		}
 	}
-	passDefault := func(domainMsg string) func(ReviewInput) (string, float64, float64, []string) {
-		return func(in ReviewInput) (string, float64, float64, []string) {
-			return "APPROVE", 1.0, 0.95, nil
-		}
-	}
 
 	return []specialistSpec{
 		// Grupo 1: Segurança & OWASP (7 especialistas — peso 3.0, cláusula pétrea)
@@ -174,31 +175,31 @@ func build25Specialists() []specialistSpec {
 		{name: "jev.sec.xxe", domain: "security", weight: 3.0, eval: checkRegex(reXXE, "Parser XML vulnerável a XXE")},
 		{name: "jev.sec.xss", domain: "security", weight: 3.0, eval: checkRegex(reXSS, "Potencial XSS via bypass de sanitização DOM/HTML")},
 		{name: "jev.sec.secrets", domain: "security", weight: 3.0, eval: checkRegex(reHardSecret, "Segredo/credencial hardcoded no diff")},
-		{name: "jev.sec.authz", domain: "security", weight: 2.5, eval: passDefault("authz")},
-		{name: "jev.sec.crypto", domain: "security", weight: 2.5, eval: passDefault("crypto")},
+		{name: "jev.sec.authz", domain: "security", weight: 2.5, eval: evalInterproceduralTaintAndAuthz},
+		{name: "jev.sec.crypto", domain: "security", weight: 2.5, eval: evalWeakCrypto},
 		// Grupo 2: Sonar & Confiabilidade (4 especialistas — peso 2.0)
 		{name: "jev.sonar.silent_catch", domain: "sonar", weight: 2.0, eval: checkRegex(reEmptyCatch, "Bloco catch/except vazio engolindo exceção silenciosamente")},
-		{name: "jev.sonar.cognitive_complexity", domain: "sonar", weight: 1.5, eval: passDefault("complexity")},
-		{name: "jev.sonar.bug_pattern", domain: "sonar", weight: 2.0, eval: passDefault("bug_pattern")},
-		{name: "jev.sonar.code_smell", domain: "sonar", weight: 1.2, eval: passDefault("code_smell")},
+		{name: "jev.sonar.cognitive_complexity", domain: "sonar", weight: 1.5, eval: evalCognitiveComplexityGuard},
+		{name: "jev.sonar.bug_pattern", domain: "sonar", weight: 2.0, eval: evalInterproceduralTaintAndAuthz},
+		{name: "jev.sonar.code_smell", domain: "sonar", weight: 1.2, eval: evalCodeSmellGuardPOC007},
 		// Grupo 3: Clean Code & Object Calisthenics (3 especialistas)
-		{name: "jev.clean.calisthenics", domain: "clean_code", weight: 1.5, eval: passDefault("calisthenics")},
-		{name: "jev.clean.naming", domain: "clean_code", weight: 1.0, eval: passDefault("naming")},
-		{name: "jev.clean.function_size", domain: "clean_code", weight: 1.2, eval: passDefault("function_size")},
+		{name: "jev.clean.calisthenics", domain: "clean_code", weight: 1.5, eval: evalCalisthenicsGuardPOC007},
+		{name: "jev.clean.naming", domain: "clean_code", weight: 1.0, eval: evalNamingGuardPOC007},
+		{name: "jev.clean.function_size", domain: "clean_code", weight: 1.2, eval: evalCognitiveComplexityGuard},
 		// Grupo 4: Arquitetura SOLID / Hexagonal / DDD (3 especialistas)
-		{name: "jev.arch.solid", domain: "architecture", weight: 1.5, eval: passDefault("solid")},
-		{name: "jev.arch.hexagonal_boundaries", domain: "architecture", weight: 1.8, eval: passDefault("hexagonal")},
-		{name: "jev.arch.minimalism_p1", domain: "architecture", weight: 1.8, eval: passDefault("p1_simplicity")},
-		// Grupo 5: Testes & Cobertura (2 especialistas)
-		{name: "jev.test.tdd_presence", domain: "testing", weight: 1.6, eval: passDefault("tdd")},
-		{name: "jev.test.edge_cases", domain: "testing", weight: 1.4, eval: passDefault("edge_cases")},
+		{name: "jev.arch.solid", domain: "architecture", weight: 1.5, eval: evalHexagonalBoundaries},
+		{name: "jev.arch.hexagonal_boundaries", domain: "architecture", weight: 1.8, eval: evalHexagonalBoundaries},
+		{name: "jev.arch.minimalism_p1", domain: "architecture", weight: 1.8, eval: evalMinimalismP1GuardPOC007},
+		// Grupo 5: Testes & Cobertura (2 especialistas — POC-007 Predictive Quality Analyzer)
+		{name: "jev.test.tdd_presence", domain: "testing", weight: 1.6, eval: evalPredictiveTDDPresencePOC007},
+		{name: "jev.test.edge_cases", domain: "testing", weight: 1.4, eval: evalPredictiveEdgeCasesPOC007},
 		// Grupo 6: Performance & Concorrência (3 especialistas)
 		{name: "jev.perf.n_plus_one", domain: "performance", weight: 2.0, eval: checkRegex(reNPlusOne, "Query dentro de laço (potencial N+1)")},
-		{name: "jev.perf.concurrency_locks", domain: "performance", weight: 1.8, eval: passDefault("concurrency")},
-		{name: "jev.perf.memory_allocation", domain: "performance", weight: 1.5, eval: passDefault("memory")},
+		{name: "jev.perf.concurrency_locks", domain: "performance", weight: 1.8, eval: evalConcurrencyLocks},
+		{name: "jev.perf.memory_allocation", domain: "performance", weight: 1.5, eval: evalMemoryAllocationGuard},
 		// Grupo 7: Semântica, Regressão & Infra (3 especialistas)
-		{name: "jev.sem.backward_compat", domain: "semantics", weight: 1.8, eval: passDefault("compat")},
+		{name: "jev.sem.backward_compat", domain: "semantics", weight: 1.8, eval: evalBackwardCompat},
 		{name: "jev.infra.destructive_guard", domain: "infra", weight: 3.0, eval: checkRegex(reForceUnwrap, "Comando destrutivo ou --no-verify detectado")},
-		{name: "jev.infra.terraform_policy", domain: "infra", weight: 1.6, eval: passDefault("terraform")},
+		{name: "jev.infra.terraform_policy", domain: "infra", weight: 1.6, eval: evalTerraformPolicy},
 	}
 }

@@ -1,0 +1,13 @@
+[package]
+name = "gpu-probe"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../../crates/gpu-runtime" }
+
+[[bin]]
+name = "gpu-probe"
+path = "src/main.rs"

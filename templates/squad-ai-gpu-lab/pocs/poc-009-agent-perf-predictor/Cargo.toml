@@ -1,0 +1,13 @@
+[package]
+name = "poc-009-agent-perf-predictor"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+telemetry = { path = "../../crates/telemetry" }
+
+[lib]
+name = "poc_009_agent_perf_predictor"
+path = "src/lib.rs"

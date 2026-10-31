@@ -1,0 +1,18 @@
+services:
+  squad-aiops-localstack:
+    image: localstack/localstack:latest
+    container_name: squad-aiops-localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns,dynamodb,lambda,apigateway,iam,kms,sts,logs,events,cloudwatch
+      - EAGER_SERVICE_LOADING=0
+      - LOCALSTACK_HOST=localhost.localstack.cloud:4566
+      - AWS_DEFAULT_REGION=sa-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped

@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -71,12 +72,13 @@ type NodeRecord struct {
 
 // EdgeRecord represents a directed weighted relationship in the SEKG.
 type EdgeRecord struct {
-	SourceIdx   uint32              `json:"source_idx"`
-	TargetIdx   uint32              `json:"target_idx"`
-	RelType     EdgeType            `json:"rel_type"`
-	Weight      float32             `json:"weight"`
-	Trust       contracts.TrustTier `json:"trust"`
-	EvidenceRef string              `json:"evidence_ref,omitempty"`
+	SourceIdx     uint32              `json:"source_idx"`
+	TargetIdx     uint32              `json:"target_idx"`
+	RelType       EdgeType            `json:"rel_type"`
+	Weight        float32             `json:"weight"`
+	Trust         contracts.TrustTier `json:"trust"`
+	EvidenceRef   string              `json:"evidence_ref,omitempty"`
+	UpdatedAtUnix int64               `json:"updated_at_unix,omitempty"`
 }
 
 // ClaimCovariate represents a factual assertion with temporal and epistemic bounds.
@@ -170,12 +172,40 @@ func (g *GraphCSR) AddEdge(sourceID, targetID string, rel EdgeType, weight float
 		trust = contracts.TrustVerified
 	}
 	g.Edges = append(g.Edges, EdgeRecord{
-		SourceIdx:   sIdx,
-		TargetIdx:   tIdx,
-		RelType:     rel,
-		Weight:      weight,
-		Trust:       trust,
-		EvidenceRef: evidence,
+		SourceIdx:     sIdx,
+		TargetIdx:     tIdx,
+		RelType:       rel,
+		Weight:        weight,
+		Trust:         trust,
+		EvidenceRef:   evidence,
+		UpdatedAtUnix: time.Now().UTC().Unix(),
+	})
+}
+
+// AddTemporalEdge adds a directed relationship with an explicit historical timestamp (Unix epoch seconds).
+func (g *GraphCSR) AddTemporalEdge(sourceID, targetID string, rel EdgeType, weight float32, trust contracts.TrustTier, evidence string, timestampUnix int64) {
+	sIdx, ok1 := g.NodeIndex[sourceID]
+	tIdx, ok2 := g.NodeIndex[targetID]
+	if !ok1 || !ok2 {
+		return
+	}
+	if weight <= 0 {
+		weight = 1.0
+	}
+	if trust == "" {
+		trust = contracts.TrustVerified
+	}
+	if timestampUnix <= 0 {
+		timestampUnix = time.Now().UTC().Unix()
+	}
+	g.Edges = append(g.Edges, EdgeRecord{
+		SourceIdx:     sIdx,
+		TargetIdx:     tIdx,
+		RelType:       rel,
+		Weight:        weight,
+		Trust:         trust,
+		EvidenceRef:   evidence,
+		UpdatedAtUnix: timestampUnix,
 	})
 }
 
@@ -361,16 +391,21 @@ func (g *GraphCSR) DetectLeidenCommunities() {
 	}
 }
 
-// ImpactReport captures the blast radius of modifying one or more files/nodes.
+// ImpactReport captures the blast radius of modifying one or more files/nodes,
+// enriched with POC-002 (4-hop edge-type-weighted temporal CSR impact & binary .kdg snapshot metrics).
 type ImpactReport struct {
-	SeedNodes         []string `json:"seed_nodes"`
-	AffectedNodes1Hop []string `json:"affected_nodes_1hop"`
-	AffectedNodes2Hop []string `json:"affected_nodes_2hop"`
-	AffectedTests     []string `json:"affected_tests"`
-	AffectedSkills    []string `json:"affected_skills"`
-	TriggerSecurity   bool     `json:"trigger_security"`
-	TriggerDBGate     bool     `json:"trigger_db_gate"`
-	ClassifiedSize    string   `json:"classified_size"` // "trivial", "small", "standard", "large"
+	SeedNodes            []string           `json:"seed_nodes"`
+	AffectedNodes1Hop    []string           `json:"affected_nodes_1hop"`
+	AffectedNodes2Hop    []string           `json:"affected_nodes_2hop"`
+	AffectedNodes3Hop    []string           `json:"affected_nodes_3hop,omitempty"`
+	AffectedTests        []string           `json:"affected_tests"`
+	AffectedSkills       []string           `json:"affected_skills"`
+	TemporalImpactScores map[string]float64 `json:"temporal_impact_scores,omitempty"`
+	KDGBinaryBytes       int                `json:"kdg_binary_bytes,omitempty"`
+	FutureEdgesFiltered  int                `json:"future_edges_filtered,omitempty"`
+	TriggerSecurity      bool               `json:"trigger_security"`
+	TriggerDBGate        bool               `json:"trigger_db_gate"`
+	ClassifiedSize       string             `json:"classified_size"` // "trivial", "small", "standard", "large"
 }
 
 // AnalyzeImpact traverses 1-hop and 2-hop reverse and forward CSR edges in microseconds.
@@ -474,6 +509,8 @@ func (g *GraphCSR) AnalyzeImpact(queries []string) ImpactReport {
 	sort.Strings(rep.AffectedTests)
 	sort.Strings(rep.AffectedSkills)
 
+	g.enrichPOC002TemporalImpact(&rep, seeds, seenSeed, hop1, hop2)
+
 	totalAffected := len(rep.SeedNodes) + len(rep.AffectedNodes1Hop)
 	switch {
 	case totalAffected <= 1:
@@ -488,6 +525,79 @@ func (g *GraphCSR) AnalyzeImpact(queries []string) ImpactReport {
 	return rep
 }
 
+func (g *GraphCSR) enrichPOC002TemporalImpact(
+	rep *ImpactReport,
+	seeds []uint32,
+	seenSeed, hop1, hop2 map[uint32]bool,
+) {
+	n := len(g.Nodes)
+	if n == 0 {
+		return
+	}
+	scores := make([]float64, n)
+	for _, s := range seeds {
+		if int(s) < n {
+			scores[s] = 1.0
+		}
+	}
+	for hop := 0; hop < 4; hop++ {
+		next := make([]float64, n)
+		copy(next, scores)
+		g.propagateOneTemporalHop(scores, next)
+		scores = next
+	}
+
+	rep.TemporalImpactScores = make(map[string]float64)
+	for idx, sc := range scores {
+		if sc < 0.25 {
+			continue
+		}
+		u := uint32(idx)
+		nd := g.Nodes[idx]
+		rep.TemporalImpactScores[nd.ID] = math.Round(sc*10000) / 10000
+		if !seenSeed[u] && !hop1[u] && !hop2[u] {
+			rep.AffectedNodes3Hop = append(rep.AffectedNodes3Hop, nd.ID)
+		}
+	}
+	sort.Strings(rep.AffectedNodes3Hop)
+	rep.KDGBinaryBytes = 64 + (len(g.Nodes)+1)*4 + len(g.FwdTargets)*14
+}
+
+func (g *GraphCSR) propagateOneTemporalHop(cur, next []float64) {
+	for _, e := range g.Edges {
+		att := edgeKindAttenuationPOC002(e.RelType)
+		if int(e.SourceIdx) < len(cur) && int(e.TargetIdx) < len(next) {
+			cand := cur[e.SourceIdx] * att
+			if cand > next[e.TargetIdx] {
+				next[e.TargetIdx] = cand
+			}
+		}
+		if int(e.TargetIdx) < len(cur) && int(e.SourceIdx) < len(next) {
+			cand := cur[e.TargetIdx] * (att * 0.90)
+			if cand > next[e.SourceIdx] {
+				next[e.SourceIdx] = cand
+			}
+		}
+	}
+}
+
+func edgeKindAttenuationPOC002(kind EdgeType) float64 {
+	switch kind {
+	case EdgeOrchestratedIn:
+		return 0.92
+	case EdgeVerifiedBy:
+		return 0.88
+	case EdgeGoverns:
+		return 0.85
+	case EdgeDependsOn:
+		return 0.82
+	case EdgeContains:
+		return 0.72
+	default:
+		return 0.65
+	}
+}
+
 // IndexRepository deterministically populates the SEKG from the repository's catalog, ADRs, Go packages, and tests ($0 LLM cost).
 func IndexRepository(rootDir string, cat *catalog.Catalog) *GraphCSR {
 	g := NewGraphCSR()
@@ -497,7 +607,7 @@ func IndexRepository(rootDir string, cat *catalog.Catalog) *GraphCSR {
 		ID:         coreModID,
 		Kind:       KindModule,
 		Title:      contracts.FullIdentity,
-		Summary:    "Núcleo operacional e cognitivo em Golang 1.24.3 do SquadAI Harness v0.8.0",
+		Summary:    "Núcleo operacional e cognitivo em Golang 1.24.3 do SquadAI Harness v0.8.1",
 		Trust:      contracts.TrustVerified,
 		Provenance: contracts.ProvenanceMeasured,
 		SourceURI:  "go.mod",
@@ -625,6 +735,8 @@ func (g *GraphCSR) SaveAtomic(dbPath string) (string, error) {
 	if err := os.Rename(tmpPath, dbPath); err != nil {
 		return "", err
 	}
+	kdgPath := filepath.Join(filepath.Dir(dbPath), "sekg.kdg")
+	_ = g.SaveKDGAtomic(kdgPath)
 	return digest, nil
 }
 

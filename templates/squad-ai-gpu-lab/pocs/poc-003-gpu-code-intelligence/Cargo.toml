@@ -1,0 +1,15 @@
+[package]
+name = "poc-003-gpu-code-intelligence"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../../crates/gpu-runtime" }
+cpu-baselines = { path = "../../crates/cpu-baselines" }
+telemetry = { path = "../../crates/telemetry" }
+
+[lib]
+name = "poc_003_gpu_code_intelligence"
+path = "src/lib.rs"

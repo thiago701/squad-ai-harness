@@ -1,0 +1,29 @@
+[package]
+name = "squad-kumo-cuda-lab"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+description = "Microserviço experimental de laboratório para o SquadAI Harness: Kumo ML (DiskGraph, PQL, RelGT, ICL) + NVIDIA/cuda-rust (cuda-core, cuda-async, cutile-rs, cuda-oxide) + Ponte IPC Zero-CGO Go<->Rust"
+license = "MIT"
+
+[[bin]]
+name = "kumo-cuda-sidecar"
+path = "src/main.rs"
+
+[lib]
+name = "squad_kumo_cuda_lab"
+path = "src/lib.rs"
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+dbg_macro = "deny"
+todo = "deny"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = false

@@ -1,0 +1,14 @@
+[package]
+name = "poc-002-dependency-impact"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+kumo-adapter = { path = "../../crates/kumo-adapter" }
+telemetry = { path = "../../crates/telemetry" }
+
+[lib]
+name = "poc_002_dependency_impact"
+path = "src/lib.rs"

@@ -1,0 +1,14 @@
+[package]
+name = "poc-006-semantic-retrieval"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpu-runtime = { path = "../../crates/gpu-runtime" }
+cpu-baselines = { path = "../../crates/cpu-baselines" }
+
+[lib]
+name = "poc_006_semantic_retrieval"
+path = "src/lib.rs"

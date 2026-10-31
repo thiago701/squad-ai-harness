@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/thiago701/squad-ai-harness/internal/aiops"
 	"github.com/thiago701/squad-ai-harness/internal/catalog"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/harness"
 	"github.com/thiago701/squad-ai-harness/internal/installer"
@@ -75,7 +76,40 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/skills/sync", s.handleSyncSkills)
 	mux.HandleFunc("/api/telemetry/report", s.handleTelemetryReport)
 	mux.HandleFunc("/api/telemetry/ascii", s.handleTelemetryASCII)
+	mux.HandleFunc("/monitor-graphrag", s.handleMonitorGraphRAG)
+	mux.HandleFunc("/api/aiops/status", s.handleAIOpsStatus)
 	return mux
+}
+
+func (s *Server) handleMonitorGraphRAG(w http.ResponseWriter, _ *http.Request) {
+	monEng, err := aiops.NewEngine(s.rootDir, s.rootDir)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = monEng.DiscoverWorkspace(s.rootDir)
+	htmlBytes, err := monEng.RenderMonitorHTML()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write(htmlBytes)
+}
+
+func (s *Server) handleAIOpsStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	monEng, err := aiops.NewEngine(s.rootDir, s.rootDir)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = monEng.EnsureLocalStack(r.Context(), false)
+	_ = monEng.DiscoverWorkspace(s.rootDir)
+	writeJSON(w, monEng.Snapshot())
 }
 
 func (s *Server) handleTelemetryReport(w http.ResponseWriter, r *http.Request) {

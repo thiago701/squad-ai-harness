@@ -12,6 +12,7 @@ import (
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/memory"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/router"
 	"github.com/thiago701/squad-ai-harness/internal/cognitive/sekg"
+	"github.com/thiago701/squad-ai-harness/internal/compute"
 	"github.com/thiago701/squad-ai-harness/internal/jev"
 	"github.com/thiago701/squad-ai-harness/pkg/contracts"
 )
@@ -24,21 +25,25 @@ type StageSpan struct {
 	Detail     string  `json:"detail,omitempty"`
 }
 
-// PreflightResult holds the complete output of a Layer 0 CognitiveHarness run.
+// PreflightResult holds the complete output of a Layer 0 CognitiveHarness run,
+// integrating POC-006 (128D Cross-Encoder), POC-002 (4-hop Temporal CSR), and POC-007 (Predictive Quality).
 type PreflightResult struct {
-	TaskQuery      string                `json:"task_query"`
-	SizeClass      string                `json:"size_class"`
-	BudgetTier     contracts.ContextTier `json:"budget_tier"`
-	BudgetTokens   int                   `json:"budget_tokens"`
-	TopSkills      []router.MatchResult  `json:"top_skills"`
-	Impact         sekg.ImpactReport     `json:"impact"`
-	GraphContext   string                `json:"graph_context"`
-	RiskTier       jev.RiskTier          `json:"risk_tier"`
-	Spans          []StageSpan           `json:"spans"`
-	TotalDurMs     float64               `json:"total_dur_ms"`
-	P50StageUs     int64                 `json:"p50_stage_us"`
-	P95StageUs     int64                 `json:"p95_stage_us"`
-	P99StageUs     int64                 `json:"p99_stage_us"`
+	TaskQuery              string                `json:"task_query"`
+	SizeClass              string                `json:"size_class"`
+	BudgetTier             contracts.ContextTier `json:"budget_tier"`
+	BudgetTokens           int                   `json:"budget_tokens"`
+	TopSkills              []router.MatchResult  `json:"top_skills"`
+	CrossEncoderTopSkills  []router.MatchResult  `json:"cross_encoder_top_skills,omitempty"`
+	Impact                 sekg.ImpactReport     `json:"impact"`
+	GraphContext           string                `json:"graph_context"`
+	RiskTier               jev.RiskTier          `json:"risk_tier"`
+	RegressionRiskProb     float64               `json:"regression_risk_prob"`
+	PredictiveQualityScore float64               `json:"predictive_quality_score"`
+	Spans                  []StageSpan           `json:"spans"`
+	TotalDurMs             float64               `json:"total_dur_ms"`
+	P50StageUs             int64                 `json:"p50_stage_us"`
+	P95StageUs             int64                 `json:"p95_stage_us"`
+	P99StageUs             int64                 `json:"p99_stage_us"`
 }
 
 // Engine coordinates the 10 Layer 0 cognitive stages in memory.
@@ -89,6 +94,7 @@ func (e *Engine) RunPreflight(taskQuery string, filesChanged []string) Preflight
 	var impact sekg.ImpactReport
 	var budgetTier contracts.ContextTier
 	var topSkills []router.MatchResult
+	var crossEncoderSkills []router.MatchResult
 	var ragResp graphrag.QueryResponse
 	var tribunal jev.TribunalVerdict
 
@@ -116,9 +122,11 @@ func (e *Engine) RunPreflight(taskQuery string, filesChanged []string) Preflight
 		return string(budgetTier)
 	})
 
-	// 3. RETRIEVAL (Hybrid BM25 + SEKG GraphRAG)
+	// 3. RETRIEVAL (Hybrid BM25 + POC-006 128D Cross-Encoder + SEKG GraphRAG)
 	recordStage("RETRIEVAL", func() string {
 		topSkills = e.router.Route(taskQuery, 5)
+		prof := compute.DetectWorkstation()
+		crossEncoderSkills, _ = e.router.RerankWithCrossEncoder(prof, taskQuery, nil, 3)
 		ragResp = e.rag.Search(graphrag.QueryRequest{
 			Query:      taskQuery,
 			BudgetTier: budgetTier,
@@ -182,19 +190,22 @@ func (e *Engine) RunPreflight(taskQuery string, filesChanged []string) Preflight
 	p50, p95, p99 := computePercentiles(spans)
 
 	return PreflightResult{
-		TaskQuery:    taskQuery,
-		SizeClass:    impact.ClassifiedSize,
-		BudgetTier:   budgetTier,
-		BudgetTokens: contracts.ContextBudgetTokens(budgetTier),
-		TopSkills:    topSkills,
-		Impact:       impact,
-		GraphContext: ragResp.SynthesizedContext,
-		RiskTier:     tribunal.RiskTier,
-		Spans:        spans,
-		TotalDurMs:   float64(time.Since(startAll).Microseconds()) / 1000.0,
-		P50StageUs:   p50,
-		P95StageUs:   p95,
-		P99StageUs:   p99,
+		TaskQuery:              taskQuery,
+		SizeClass:              impact.ClassifiedSize,
+		BudgetTier:             budgetTier,
+		BudgetTokens:           contracts.ContextBudgetTokens(budgetTier),
+		TopSkills:              topSkills,
+		CrossEncoderTopSkills:  crossEncoderSkills,
+		Impact:                 impact,
+		GraphContext:           ragResp.SynthesizedContext,
+		RiskTier:               tribunal.RiskTier,
+		RegressionRiskProb:     tribunal.RegressionRiskProb,
+		PredictiveQualityScore: tribunal.PredictiveQualityScore,
+		Spans:                  spans,
+		TotalDurMs:             float64(time.Since(startAll).Microseconds()) / 1000.0,
+		P50StageUs:             p50,
+		P95StageUs:             p95,
+		P99StageUs:             p99,
 	}
 }
 
