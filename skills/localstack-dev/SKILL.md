@@ -250,6 +250,7 @@ O cookbook operacional (montar o ambiente, scripts e troubleshooting) vive em re
 | Guia | Ler quando... |
 |---|---|
 | `references/setup-cookbook.md` | montar o ambiente: docker-compose (LocalStack+Postgres+Redis), `localstack-init.sh`, `.env` local/prod, deploy CloudFormation local, comandos `awslocal`, teste de integração Testcontainers, **Lambda local (sam local invoke, SQS→Lambda, hot reload)** e troubleshooting |
+| `../vault-aws-vpc-localstack/SKILL.md` | simular **HashiCorp Vault + AWS VPC (Sub-redes, Security Groups, VPC Endpoints) + KMS Auto-Unseal + Credenciais Dinâmicas IAM/STS** apontando `iam_endpoint` e `sts_endpoint` para `http://localstack:4566` com Terraform multi-provider (`tflocal`/`lstk`) |
 
 ## Checklist: LocalStack + Spring Boot
 

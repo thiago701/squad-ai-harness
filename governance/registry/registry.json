@@ -2,10 +2,10 @@
   "schema_version": "1.0",
   "fonte_unica": true,
   "gerado_por": "scripts/generate_registry.py",
-  "gerado_em": "2026-10-29",
+  "gerado_em": "2026-10-30",
   "proveniencia": "MEDIDO por varredura de disco (glob + regex de frontmatter); regenerar com scripts/generate_registry.py",
   "contagens": {
-    "skills_canonicas": 106,
+    "skills_canonicas": 109,
     "skills_instaladas": 2,
     "agentes": 34,
     "comandos": 35
@@ -14,7 +14,7 @@
     "skills_canonicas": {
       "raiz": "skills",
       "padrao": "skills/*/SKILL.md",
-      "contagem": 106,
+      "contagem": 109,
       "nomes": [
         "ai-evaluation",
         "ai-imagem-generativa",
@@ -59,6 +59,7 @@
         "especialista-frontend",
         "especialista-qualidade",
         "estrategia-testes-aws",
+        "eval-agentic-api",
         "git-sync",
         "go-cloud-services",
         "go-concurrency-expert",
@@ -82,6 +83,7 @@
         "markitdown",
         "mcp-builder",
         "memoria-sessao",
+        "monitor-aiops",
         "nodejs-pro",
         "orquestracao-step-functions",
         "orquestrador-multiagente",
@@ -120,6 +122,7 @@
         "ui-ux-pro-max",
         "validacao-veracode",
         "validador-navegador",
+        "vault-aws-vpc-localstack",
         "verificacao-loop",
         "visao-computacional"
       ]

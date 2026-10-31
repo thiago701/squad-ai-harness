@@ -1,0 +1,29 @@
+{
+  "skill_name": "eval-agentic-api",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": 1,
+      "name": "migracao-api-legada-com-eval-e-retrocompatibilidade-v1-v2",
+      "prompt": "Squad ai, prepare a equipe. Quero migrar uma api usando o eval. Hoje temos uma API de pagamentos em Node.js/Express rodando em EC2 e queremos migrar para Go na AWS Lambda preservando o contrato v1 atual dos clientes mobile e criando uma v2 melhorada.",
+      "expected_output": "O agente ativa eval-agentic-api como maestro junto com a squad (go-cloud-services, aws-lambda-go, contrato-reverso, engenheiro-iac), confirma as escolhas (1a Go, 2b AWS Lambda, 3b Migração de API existente, 4b Preservação do contrato legado v1 + evolução v2), aciona o GATE obrigatório solicitando os repositórios de código legado/infraestrutura e perguntando sobre o reuso da infra atual do API Gateway, e estrutura a suíte de Agent Evals (Tasks, Trials k=5, Transcript, Outcome, Code/Model/Human Graders e meta pass^5 = 1.00).",
+      "assertions": [
+        "Confirma ou conduz as 4 perguntas-chave (Stack Go, AWS Lambda, Migração de API, Saída JSON v1 legado + v2 evoluído)",
+        "Exige como GATE os repositórios da API legada e pergunta explicitamente se deve reusar a infraestrutura atual do API Gateway",
+        "Prioriza retrocompatibilidade máxima no contrato v1 enquanto separa melhorias estruturais em v2/v3",
+        "Aplica os conceitos do artigo Demystifying Evals for AI Agents: Task, Trial, Transcript, Outcome, Graders em 3 camadas e pass@k vs pass^k (meta pass^5 = 1.00 em contrato)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "nova-api-com-decida-por-mim-na-aws",
+      "prompt": "Quero criar uma nova API de fechamento de pedido que valida estoque, reserva limite no cartão em parceiro externo com compensação se falhar e emite nota fiscal. Quero usar Java 25, na AWS escolha a opção 'Decida por mim' e me sugira o JSON de saída e as URLs usando eval-agentic-api.",
+      "expected_output": "O agente registra 1b (Java 25), 2d (Decida por mim -> recomenda API Gateway + AWS Step Functions Express + Lambda com base em P1>P2>P3 por envolver orquestração Saga multi-etapas com compensação), 3a (Nova API respeitando padrões Clean Architecture/DDD da Squad) e 4a (sugere URLs RESTful como POST /v1/orders e GET /v1/orders/{order_id} com JSON de resposta tipado e RFC 9457 Problem Details), definindo a suíte de Agent Evals antes do código.",
+      "assertions": [
+        "Analisa a arquitetura no modo 'Decida por mim' (2d) sob P1>P2>P3 e recomenda AWS Step Functions + Lambda por causa da Saga/compensação",
+        "Sugere URLs RESTful e estrutura de payload JSON para a Nova API (4a)",
+        "Define Code-Based Graders determinísticos sobre o Outcome real (e não apenas sobre o Transcript) e critério de aceite pass^5"
+      ]
+    }
+  ]
+}

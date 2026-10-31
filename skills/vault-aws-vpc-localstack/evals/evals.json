@@ -1,0 +1,34 @@
+{
+  "skill_name": "vault-aws-vpc-localstack",
+  "version": "1.0.0",
+  "model_version": "2.0.0-continuous-skill-eval",
+  "evals": [
+    {
+      "id": "EVAL-VAULT-VPC-001",
+      "prompt": "Projete uma arquitetura AWS VPC Zero Trust para um cluster HashiCorp Vault com Auto-Unseal KMS, exposto para múltiplas Spoke VPCs sem sobreposição de CIDR e sem usar segredos estáticos nas Lambdas.",
+      "expected_outcome": {
+        "status": "PROVEN_SUCCESS",
+        "required_concepts": [
+          "Sub-rede isolada sem rota 0.0.0.0/0 para IGW/NAT",
+          "AWS KMS Auto-Unseal via Interface VPC Endpoint (PrivateLink)",
+          "Exposição cross-VPC via AWS PrivateLink (NLB + Endpoint Service) ou Amazon VPC Lattice",
+          "Security Groups encadeados SG-to-SG na porta 8200 com TLS 1.3",
+          "Autenticação auth/aws (método iam com sts:GetCallerIdentity e X-Vault-AWS-IAM-Server-ID)"
+        ]
+      }
+    },
+    {
+      "id": "EVAL-VAULT-LOCALSTACK-002",
+      "prompt": "Como simular localmente o HashiCorp Vault gerando credenciais dinâmicas da AWS e usando KMS Auto-Unseal junto com o LocalStack e Terraform?",
+      "expected_outcome": {
+        "status": "PROVEN_SUCCESS",
+        "required_concepts": [
+          "Docker Compose compartilhando rede bridge entre localstack (:4566) e vault (:8200)",
+          "Configuração de iam_endpoint=http://localstack:4566 e sts_endpoint=http://localstack:4566 no aws/config/root",
+          "Configuração de seal awskms ou AWS_KMS_ENDPOINT=http://localstack:4566 apontando para chave KMS do LocalStack",
+          "Terraform multi-provider (hashicorp/aws apontando para localhost:4566 + hashicorp/vault apontando para 127.0.0.1:8200)"
+        ]
+      }
+    }
+  ]
+}

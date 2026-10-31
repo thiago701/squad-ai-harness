@@ -105,3 +105,33 @@ hook no CI.
 | `ativa` | Em uso, dentro dos limites estruturais | Manter; eval na CI |
 | `a-refatorar` | Funcional, mas viola limite (token/monólito) | Aplicar hub+references (O3) |
 | `deprecated` | Substituída/obsoleta | Mover para `archive/`; remover frontmatter (não dispara) |
+
+---
+
+## 7. Modelo Canônico de Testes Contínuos para Novas Skills e Evoluções (`skilleval` / `stage1.skill_continuous_eval`)
+
+Toda skill **nova** ou **evoluída** é validada continuamente pelo motor nativo em Go ([`internal/evallab/continuous_skill_eval.go`](../internal/evallab/continuous_skill_eval.go)), derivado da arquitetura científica da `eval-agentic-api` v2.0 (*Demystifying Evals for AI Agents*) e integrado ao DAG do `.\squad-harness.exe gate` (`stage1.skill_continuous_eval`):
+
+| Gate Contínuo | O que verifica deterministicamente (`< 35 ms` para as 108 skills) | Critério de Aprovação |
+|---|---|---|
+| **`G1` — Contrato Estrutural** | UTF-8 válido, `Linha de Defesa de Prompt` (6 regras), `description`, `origin`, `model` e `version`. | `100%` obrigatório (Bloqueante) |
+| **`G2` — Selo Criptográfico `SHA-256`** | Assinatura imutável sobre identidade e critérios (`SealAcceptanceCriteria`) contra *reward hacking*. | `VerifyCriteriaSeal == true` |
+| **`G3` — Consistência de Roteamento ($\text{pass}\text{\textasciicircum}5$)** | Executa $k = 5$ `Trials` de recuperação no `HybridRouter` (BM25 + `128D` Cross-Encoder). | $\text{pass}\text{\textasciicircum}5 = p^5 \ge 0.99$ (`1.0000`) |
+| **`G4` — Least Agency & Segurança** | Escopo mínimo de ferramentas declarado em `tools:` + guarda anti-injeção ativa. | `100%` obrigatório (Bloqueante) |
+| **`G5` — Integridade de Referências** | Verifica que todos os arquivos em `references/*.md` existem e não estão vazios/órfãos. | Zero links ou arquivos quebrados |
+| **`G6` — Suíte Agent Evals (`evals/evals.json`)** | Valida o schema JSON de tarefas, `Outcomes` esperados e asserções verificáveis. | JSON válido e $\ge 1$ cenário |
+| **`G7` — Orçamento Computacional** | Tempo de avaliação por skill dentro do orçamento de recursos (`< 50 ms`). | Zero gargalo de CPU/RAM |
+
+### Comandos para Testar Nova Skill ou Evolução de Skill
+
+```powershell
+# 1. Gerar automaticamente o template evals/evals.json no modelo Agentic Eval v2.0 para uma skill
+.\squad-harness.exe skilleval --init <nome-da-skill>
+
+# 2. Executar a bateria contínua G1-G7 (pass@5, pass^5, selo SHA-256 e veredito) em uma skill específica
+.\squad-harness.exe skilleval <nome-da-skill>
+
+# 3. Executar a suíte contínua em todas as 108 skills do catálogo (também roda em .\squad-harness.exe gate)
+.\squad-harness.exe skilleval
+```
+
